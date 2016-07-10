@@ -1,14 +1,124 @@
 group 'com.github.kahalemakai'
 version '0.1.0-SNAPSHOT'
 
-apply plugin: 'java'
+import pmd.gradle.plugins.IdeaWithResourcesPlugin
 
-sourceCompatibility = 1.5
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "http://nexus.pmd.local:8081/nexus/content/groups/PIA_Private/" }
+        maven { url "http://nexus.pmd.local:8081/nexus/content/groups/public/" }
+        maven { url "file://${System.getProperty("user.home")}/.m2/repository" }
+        jcenter()
+    }
+    dependencies {
+        classpath "pia.gradle.plugins:idea-with-resources:0.1.0-SNAPSHOT"
+        classpath "io.spring.gradle:dependency-management-plugin:0.6.0.RELEASE"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'application'
+apply plugin: IdeaWithResourcesPlugin
+apply plugin: "io.spring.dependency-management"
+
+idea {
+    project {
+        languageLevel = '1.8'
+        vcs = 'Git'
+        ipr {
+            withXml { provider ->
+                // Get XML as groovy.util.Node to work with.
+                def projectXml = provider.asNode()
+                // Find compiler configuration component.
+                def compilerConfiguration = projectXml.component.find { component ->
+                    component.'@name' == 'CompilerConfiguration'
+                }
+                // Replace current annotationProcessing
+                // that is part of the compiler configuration.
+                def currentAnnotationProcessing = compilerConfiguration.annotationProcessing
+                currentAnnotationProcessing.replaceNode {
+                    annotationProcessing {
+                        profile(name: 'Default', default: true, enabled: true) {
+                            processorPath(useClasspath: true)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    module {
+        jdkName = '1.8'
+        downloadJavadoc = true
+        downloadSources = false
+    }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
-    mavenCentral()
+    jcenter()
+    maven { url "file://${System.getProperty("user.home")}/.m2/repository" }
+    maven { url "https://plugins.gradle.org/m2/" }
+    maven { url "http://nexus.pmd.local:8081/nexus/content/groups/PIA_Private/" }
+    maven { url "http://nexus.pmd.local:8081/nexus/content/groups/public/" }
+    maven { url "https://repository.jboss.org/nexus/content/groups/public" }
+}
+
+dependencyManagement {
+    compile {
+        dependencies {
+            dependencySet(group: "log4j", version: "1.2.17") {
+                entry "log4j"
+                entry "apache-log4j-extras"
+            }
+        }
+    }
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.11'
+    compile "org.projectlombok:lombok:1.16.8"
+    compile "log4j:log4j"
+    compile "log4j:apache-log4j-extras"
+    compile 'com.opencsv:opencsv:3.8'
+
+    // For static code analyis in IntelliJ
+    compile(group: 'com.intellij', name: 'annotations', version: '12.0') {
+        exclude group: "com.intellij"
+    }
+//    compile 'org.mapdb:mapdb:3.0.0'
+//    compile 'pia.utils:config:0.3.5-SNAPSHOT'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
 }
+
+configurations.compile.transitive = true
+
+gradle.projectsEvaluated {
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+}
+
+/*
+ pass cli args from gradle to java's main() method
+ usage:
+   ./gradlew run -P_args='--my first --arg and --other args'
+*/
+run {
+    doFirst {
+        if (project.hasProperty("maxHeapSize"))
+            maxHeapSize = project.maxHeapSize
+
+        if (project.hasProperty("args"))
+            project.args.split().each { args it }
+    }
+}
+
+task cleanTests(group: "verification") {
+    dependsOn cleanTest
+}
+mainClassName = "com.github.kahalemakai.opencsv.Main"
+
+defaultTasks 'clean', 'test', 'build'
