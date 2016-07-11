@@ -1,14 +1,8 @@
 package com.github.kahalemakai.opencsv.examples;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString
+@Data
 public class Person {
     private int age;
     private String givenName;

@@ -2,7 +2,6 @@ package com.github.kahalemakai.opencsv.beans;
 
 import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBean;
-import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 import com.opencsv.exceptions.CsvConstraintViolationException;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
@@ -21,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper<T> {
     @Getter(AccessLevel.PACKAGE)
-    private final HeaderColumnNameMappingStrategy<T> strategy;
+    private final HeaderDirectMappingStrategy<T> strategy;
     @Getter(AccessLevel.PACKAGE)
     private boolean headerDefined = false;
     private final AtomicBoolean readerSetup = new AtomicBoolean(false);
@@ -32,9 +31,24 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     private Iterable<String[]> source;
 
     @Builder
-    public static <S> CsvToBeanMapperOfHeader<S> of(@NonNull final Class<? extends S> type, @NonNull final HeaderColumnNameMappingStrategy<S> strategy) {
+    public static <S> CsvToBeanMapperOfHeader<S> of(@NonNull final Class<? extends S> type, @NonNull final HeaderDirectMappingStrategy<S> strategy) {
         strategy.setType(type);
         return new CsvToBeanMapperOfHeader<>(strategy);
+    }
+
+    @Override
+    public CsvToBeanMapperOfHeader<T> withLines(@NonNull final Iterable<String[]> lines) throws IllegalStateException {
+        final Iterator<String[]> iterator = lines.iterator();
+        if (!iterator.hasNext()) {
+            throw new IllegalStateException("the iterable's iterator is empty, thus no column headers can be retrieved from it");
+        }
+        final String[] header = iterator.next();
+        final CsvToBeanMapperOfHeader<T> copy = getCopy();
+        // an Iterable may return a fresh iterator on every call to iterator()
+        // thus we should rather reuse the iterator we have already read a line from
+        copy.setSource(() -> iterator);
+        copy.strategy.captureHeader(header);
+        return copy;
     }
 
     @Override
@@ -119,7 +133,7 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     }
 
     private CsvToBeanMapperOfHeader<T> getCopy() {
-        final HeaderColumnNameMappingStrategy<T> strategy = new HeaderColumnNameMappingStrategy<>();
+        final HeaderDirectMappingStrategy<T> strategy = new HeaderDirectMappingStrategy<>();
         strategy.setType(getType());
         return new CsvToBeanMapperOfHeader<>(strategy);
     }
