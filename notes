@@ -1,0 +1,18 @@
+input is file, stream, url, string or similar
+file and url can be defined in config
+objects must be explicitely passed
+
+define separator, skipLines, quoting character(s)
+
+use column names from first line
+
+interface Decoder<T> {
+  T decode(String data);
+}
+column name and line number can be included into an error message in case of a DecodingException (Decoder has no need to know them)
+
+Auto-decoders for primitive types and nulls
+
+model:
+  - List<Field>
+  -

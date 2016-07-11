@@ -17,30 +17,18 @@ public class CsvToBeanMapperOfHeaderTest {
     CsvToBeanMapper<Person> mapper;
     String[] lines;
     Person picard;
+    Iterator<String[]> iterator;
+
+    @Test
+    public void testDecoding() throws Exception {
+        mapper.registerDecoder("surName", (data) -> "Mr. "+data);
+        final Person person = mapper.withLines(iterator).iterator().next().get();
+        picard.setSurName("Mr. Picard");
+        assertEquals(picard, person);
+    }
 
     @Test
     public void testWithLines() throws Exception {
-        Iterator<String[]> iterator = new Iterator<String[]>() {
-            int counter = 0;
-            @Override
-            public boolean hasNext() {
-                return counter < lines.length;
-            }
-
-            @Override
-            public String[] next() {
-                if (!hasNext())
-                    throw new NoSuchElementException();
-                try {
-                    final String[] line = parser.parseLine(lines[counter]);
-                    counter++;
-                    return line;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        };
         final CsvToBeanMapper<Person> beanMapper = mapper.withLines(iterator);
         final Iterator<BeanAccessor<Person>> it = beanMapper.iterator();
         assertEquals(picard, it.next().get());
@@ -70,5 +58,27 @@ public class CsvToBeanMapperOfHeaderTest {
         picard.setGivenName("Jean-Luc");
         picard.setSurName("Picard");
         picard.setAddress("Captain's room, Enterprise");
+        iterator = new Iterator<String[]>() {
+            int counter = 0;
+            @Override
+            public boolean hasNext() {
+                return counter < lines.length;
+            }
+
+            @Override
+            public String[] next() {
+                if (!hasNext())
+                    throw new NoSuchElementException();
+                try {
+                    final String[] line = parser.parseLine(lines[counter]);
+                    counter++;
+                    return line;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+
     }
 }

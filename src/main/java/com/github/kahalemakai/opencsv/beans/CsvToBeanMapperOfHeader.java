@@ -8,6 +8,8 @@ import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import lombok.*;
 
 import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.beans.PropertyEditor;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -27,13 +29,25 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     @Setter(AccessLevel.PRIVATE)
     @Getter(AccessLevel.PRIVATE)
     private boolean errorOnClosingReader = false;
+    private final DecoderManager decoderManager;
     @Setter(AccessLevel.PACKAGE)
     private Iterable<String[]> source;
+
+    @Override
+    protected PropertyEditor getPropertyEditor(PropertyDescriptor desc) throws InstantiationException, IllegalAccessException {
+        final String column = desc.getName();
+        return decoderManager.get(column).orElse(super.getPropertyEditor(desc));
+    }
+
+    @Override
+    public void registerDecoder(final String column, final Decoder<?> decoder) {
+        decoderManager.put(column, decoder);
+    }
 
     @Builder
     public static <S> CsvToBeanMapperOfHeader<S> of(@NonNull final Class<? extends S> type, @NonNull final HeaderDirectMappingStrategy<S> strategy) {
         strategy.setType(type);
-        return new CsvToBeanMapperOfHeader<>(strategy);
+        return new CsvToBeanMapperOfHeader<>(strategy, DecoderManager.init());
     }
 
     @Override
@@ -133,9 +147,7 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     }
 
     private CsvToBeanMapperOfHeader<T> getCopy() {
-        final HeaderDirectMappingStrategy<T> strategy = new HeaderDirectMappingStrategy<>();
-        strategy.setType(getType());
-        return new CsvToBeanMapperOfHeader<>(strategy);
+        return new CsvToBeanMapperOfHeader<>(this.strategy, this.decoderManager.immutableCopy());
     }
 
 }

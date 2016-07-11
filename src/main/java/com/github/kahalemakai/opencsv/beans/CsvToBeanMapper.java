@@ -15,6 +15,8 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<BeanAccessor<T>>
         return withLines(() -> lines);
     }
 
+    default void registerDecoder(String column, Decoder<?> decoder) { }
+
     Class<? extends T> getType();
 
     static <S> CsvToBeanMapperOfHeader<S> fromHeader(Class<? extends S> type) {
