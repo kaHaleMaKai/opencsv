@@ -2,6 +2,8 @@ package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
+import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
+import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.exceptions.CsvConstraintViolationException;
@@ -54,7 +56,29 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
         return this;
     }
 
+    @Override
+    public CsvToBeanMapper<T> registerPostProcessor(String column, PostProcessor postProcessor) {
+        decoderManager.addPostProcessor(column, postProcessor);
+        return this;
+    }
 
+    @Override
+    public CsvToBeanMapper<T> registerPostProcessor(String column, Class<? extends PostProcessor> postProcessorClass) throws InstantiationException {
+        decoderManager.addPostProcessor(column, postProcessorClass);
+        return this;
+    }
+
+    @Override
+    public CsvToBeanMapper<T> registerPostValidator(String column, PostValidator postValidator) {
+        decoderManager.addPostValidator(column, postValidator);
+        return this;
+    }
+
+    @Override
+    public CsvToBeanMapper<T> registerPostValidator(String column, Class<? extends PostValidator> postValidatorClass) throws InstantiationException {
+        decoderManager.addPostValidator(column, postValidatorClass);
+        return this;
+    }
 
     @Builder
     public static <S> CsvToBeanMapperOfHeader<S> of(@NonNull final Class<? extends S> type, @NonNull final HeaderDirectMappingStrategy<S> strategy) {

@@ -7,7 +7,9 @@ import java.util.Optional;
 
 public class DecoderManager {
     private final Map<String, DecoderPropertyEditor<?>> decoderMap;
-    private final Map<Class<? extends Decoder<?, ? extends Throwable>>, Decoder<?, ? extends Throwable>> classMap;
+    private final Map<Class<? extends Decoder<?, ? extends Throwable>>, Decoder<?, ? extends Throwable>> decoderClassMap;
+    private final Map<Class<? extends PostProcessor>, PostProcessor> postProcessorClassMap;
+    private final Map<Class<? extends PostValidator>, PostValidator> postValidatorClassMap;
 
     public static DecoderManager init() {
         return new DecoderManager();
@@ -23,18 +25,62 @@ public class DecoderManager {
         return this;
     }
 
-    public <T> DecoderManager add(final String column,
+    public DecoderManager add(final String column,
                                   Class<? extends Decoder<?, ? extends Throwable>> decoderClass)
                               throws InstantiationException {
-        if (!classMap.containsKey(decoderClass)) {
+        if (!decoderClassMap.containsKey(decoderClass)) {
             try {
                 final Decoder<?, ? extends Throwable> decoder = decoderClass.newInstance();
-                classMap.put(decoderClass, decoder);
+                decoderClassMap.put(decoderClass, decoder);
             } catch (InstantiationException | IllegalAccessException e) {
                 throw new InstantiationException(e.getMessage());
             }
         }
-        return add(column, classMap.get(decoderClass));
+        return add(column, decoderClassMap.get(decoderClass));
+    }
+
+    public DecoderManager addPostProcessor(final String column, PostProcessor postProcessor) {
+        if (!decoderMap.containsKey(column)) {
+            decoderMap.put(column, DecoderPropertyEditor.init());
+        }
+        final DecoderPropertyEditor<?> propertyEditor = decoderMap.get(column);
+        propertyEditor.addPostProcessor(postProcessor);
+        return this;
+    }
+
+    public DecoderManager addPostProcessor(final String column, Class<? extends PostProcessor> postProcessorClass)
+            throws InstantiationException {
+        if (!postProcessorClassMap.containsKey(postProcessorClass)) {
+            try {
+                final PostProcessor postProcessor = postProcessorClass.newInstance();
+                postProcessorClassMap.put(postProcessorClass, postProcessor);
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new InstantiationException(e.getMessage());
+            }
+        }
+        return addPostProcessor(column, postProcessorClassMap.get(postProcessorClass));
+    }
+
+    public DecoderManager addPostValidator(final String column, PostValidator postValidator) {
+        if (!decoderMap.containsKey(column)) {
+            decoderMap.put(column, DecoderPropertyEditor.init());
+        }
+        final DecoderPropertyEditor<?> propertyEditor = decoderMap.get(column);
+        propertyEditor.addPostValidator(postValidator);
+        return this;
+    }
+
+    public DecoderManager addPostValidator(final String column, Class<? extends PostValidator> postValidatorClass)
+            throws InstantiationException {
+        if (!postValidatorClassMap.containsKey(postValidatorClass)) {
+            try {
+                final PostValidator postValidator = postValidatorClass.newInstance();
+                postValidatorClassMap.put(postValidatorClass, postValidator);
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new InstantiationException(e.getMessage());
+            }
+        }
+        return addPostValidator(column, postValidatorClassMap.get(postValidatorClass));
     }
 
     public Optional<PropertyEditor> get(final String column) {
@@ -42,19 +88,25 @@ public class DecoderManager {
     }
 
     public DecoderManager immutableCopy() {
-        return new DecoderManager(decoderMap, classMap);
+        return new DecoderManager(decoderMap, decoderClassMap, postProcessorClassMap, postValidatorClassMap);
     }
 
     private DecoderManager(Map<String, DecoderPropertyEditor<?>> decoderMap,
                            Map<Class<? extends Decoder<?, ? extends Throwable>>,
-                               Decoder<?, ? extends Throwable>> classMap) {
+                               Decoder<?, ? extends Throwable>> decoderClassMap,
+                           Map<Class<? extends PostProcessor>, PostProcessor> postProcessorClassMap,
+                           Map<Class<? extends PostValidator>, PostValidator> postValidatorClassMap) {
         this.decoderMap = decoderMap;
-        this.classMap = classMap;
+        this.decoderClassMap = decoderClassMap;
+        this.postProcessorClassMap = postProcessorClassMap;
+        this.postValidatorClassMap = postValidatorClassMap;
     }
 
     private DecoderManager() {
         this.decoderMap = new HashMap<>();
-        this.classMap = new HashMap<>();
+        this.decoderClassMap = new HashMap<>();
+        this.postProcessorClassMap = new HashMap<>();
+        this.postValidatorClassMap = new HashMap<>();
     }
 
 }

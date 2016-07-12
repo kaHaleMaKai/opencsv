@@ -2,6 +2,7 @@ package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
+import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 import com.opencsv.CSVReader;
 
 import java.io.Closeable;
@@ -51,7 +52,22 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<BeanAccessor<T>>
     }
 
     // should be override by subclasses
-    default CsvToBeanMapper<T> registerPostProcessor(String column, PostProcessor<?, ?> postProcessor) {
+    default CsvToBeanMapper<T> registerPostProcessor(String column, PostProcessor postProcessor) {
+        return this;
+    }
+
+    // should be override by subclasses
+    default CsvToBeanMapper<T> registerPostProcessor(String column, Class<? extends PostProcessor> postProcessorClass) throws InstantiationException {
+        return this;
+    }
+
+    // should be override by subclasses
+    default CsvToBeanMapper<T> registerPostValidator(String column, PostValidator postValidator) {
+        return this;
+    }
+
+    // should be override by subclasses
+    default CsvToBeanMapper<T> registerPostValidator(String column, Class<? extends PostValidator> postValidatorClass) throws InstantiationException {
         return this;
     }
 
