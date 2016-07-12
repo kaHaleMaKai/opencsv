@@ -1,13 +1,14 @@
 package com.github.kahalemakai.opencsv.beans.processing;
 
-import java.util.function.Function;
-
 @FunctionalInterface
-public interface PostProcessor<T, R> extends Function<T, R> {
-    @Override
-    R apply(T value) throws PostProcessingException;
+public interface PostProcessor<T> {
+    T process(T value);
 
-    static <A, B, C> Function<A, C> compose(Function<A, B> f1, Function<B, C> f2) {
-        return f1.andThen(f2);
+    PostProcessor<?> IDENTITY = x -> x;
+
+    static <R> PostProcessor<R> identity() {
+        @SuppressWarnings("unchecked")
+        final PostProcessor<R> identity = (PostProcessor<R>) IDENTITY;
+        return identity;
     }
 }

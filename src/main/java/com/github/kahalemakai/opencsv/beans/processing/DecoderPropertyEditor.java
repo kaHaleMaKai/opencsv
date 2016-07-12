@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor(staticName = "init")
 public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     private final List<Decoder<? extends T, ? extends Throwable>> decoders = new LinkedList<>();
-    private final List<PostProcessor> postProcessors = new LinkedList<>();
+    private PostProcessor<T> postProcessor = PostProcessor.identity();
     private final List<PostValidator> postValidators = new LinkedList<>();
     private String data;
     @Getter @Setter
@@ -24,8 +24,11 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
         return this;
     }
 
-    public DecoderPropertyEditor<T> addPostProcessor(final PostProcessor postProcessor) {
-        postProcessors.add(postProcessor);
+    public DecoderPropertyEditor<T> setPostProcessor(final PostProcessor<T> postProcessor) {
+        if (this.postProcessor != PostProcessor.IDENTITY) {
+            throw new UnsupportedOperationException("trying to re-set postprocessor");
+        }
+        this.postProcessor = postProcessor;
         return this;
     }
 
@@ -49,20 +52,12 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
         return null;
     }
 
-    private Object postProcess(final T value) throws PostProcessingException {
-        Object result = value;
-
-        int counter = 0;
-        for (PostProcessor postProcessor : postProcessors) {
-            counter++;
-            try {
-                result = postProcessor.apply(result);
-            } catch (Exception e) {
-                throw new PostProcessingException(String.format("could not process data\ninput: %s\nprocessing step: %d\nlast value: %s",
-                        value, counter, result));
-            }
+    private T postProcess(final T value) throws PostProcessingException {
+        try {
+            return postProcessor.process(value);
+        } catch (Exception e) {
+            throw new PostProcessingException(String.format("error while trying to postprocess value %s", value), e);
         }
-        return result;
     }
 
     private void postValidate(final Object value) throws PostValidationException {

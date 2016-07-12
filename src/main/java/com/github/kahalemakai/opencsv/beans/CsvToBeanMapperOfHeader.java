@@ -57,14 +57,14 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     }
 
     @Override
-    public CsvToBeanMapper<T> registerPostProcessor(String column, PostProcessor postProcessor) {
-        decoderManager.addPostProcessor(column, postProcessor);
+    public <R> CsvToBeanMapper<T> registerPostProcessor(String column, PostProcessor<R> postProcessor) {
+        decoderManager.setPostProcessor(column, postProcessor);
         return this;
     }
 
     @Override
-    public CsvToBeanMapper<T> registerPostProcessor(String column, Class<? extends PostProcessor> postProcessorClass) throws InstantiationException {
-        decoderManager.addPostProcessor(column, postProcessorClass);
+    public <R> CsvToBeanMapper<T> registerPostProcessor(String column, Class<? extends PostProcessor<R>> postProcessorClass) throws InstantiationException {
+        decoderManager.setPostProcessor(column, postProcessorClass);
         return this;
     }
 

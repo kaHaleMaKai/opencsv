@@ -52,12 +52,12 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<BeanAccessor<T>>
     }
 
     // should be override by subclasses
-    default CsvToBeanMapper<T> registerPostProcessor(String column, PostProcessor postProcessor) {
+    default <R> CsvToBeanMapper<T> registerPostProcessor(String column, PostProcessor<R> postProcessor) {
         return this;
     }
 
     // should be override by subclasses
-    default CsvToBeanMapper<T> registerPostProcessor(String column, Class<? extends PostProcessor> postProcessorClass) throws InstantiationException {
+    default <R> CsvToBeanMapper<T> registerPostProcessor(String column, Class<? extends PostProcessor<R>> postProcessorClass) throws InstantiationException {
         return this;
     }
 

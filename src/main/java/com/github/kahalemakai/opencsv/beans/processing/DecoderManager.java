@@ -8,7 +8,7 @@ import java.util.Optional;
 public class DecoderManager {
     private final Map<String, DecoderPropertyEditor<?>> decoderMap;
     private final Map<Class<? extends Decoder<?, ? extends Throwable>>, Decoder<?, ? extends Throwable>> decoderClassMap;
-    private final Map<Class<? extends PostProcessor>, PostProcessor> postProcessorClassMap;
+    private final Map<Class<? extends PostProcessor<?>>, PostProcessor<?>> postProcessorClassMap;
     private final Map<Class<? extends PostValidator>, PostValidator> postValidatorClassMap;
 
     public static DecoderManager init() {
@@ -39,16 +39,17 @@ public class DecoderManager {
         return add(column, decoderClassMap.get(decoderClass));
     }
 
-    public DecoderManager addPostProcessor(final String column, PostProcessor postProcessor) {
+    public <T> DecoderManager setPostProcessor(final String column, PostProcessor<T> postProcessor) {
         if (!decoderMap.containsKey(column)) {
             decoderMap.put(column, DecoderPropertyEditor.init());
         }
-        final DecoderPropertyEditor<?> propertyEditor = decoderMap.get(column);
-        propertyEditor.addPostProcessor(postProcessor);
+        @SuppressWarnings("unchecked")
+        final DecoderPropertyEditor<T> propertyEditor = (DecoderPropertyEditor<T>) decoderMap.get(column);
+        propertyEditor.setPostProcessor(postProcessor);
         return this;
     }
 
-    public DecoderManager addPostProcessor(final String column, Class<? extends PostProcessor> postProcessorClass)
+    public <T> DecoderManager setPostProcessor(final String column, Class<? extends PostProcessor<T>> postProcessorClass)
             throws InstantiationException {
         if (!postProcessorClassMap.containsKey(postProcessorClass)) {
             try {
@@ -58,7 +59,7 @@ public class DecoderManager {
                 throw new InstantiationException(e.getMessage());
             }
         }
-        return addPostProcessor(column, postProcessorClassMap.get(postProcessorClass));
+        return setPostProcessor(column, postProcessorClassMap.get(postProcessorClass));
     }
 
     public DecoderManager addPostValidator(final String column, PostValidator postValidator) {
@@ -94,7 +95,7 @@ public class DecoderManager {
     private DecoderManager(Map<String, DecoderPropertyEditor<?>> decoderMap,
                            Map<Class<? extends Decoder<?, ? extends Throwable>>,
                                Decoder<?, ? extends Throwable>> decoderClassMap,
-                           Map<Class<? extends PostProcessor>, PostProcessor> postProcessorClassMap,
+                           Map<Class<? extends PostProcessor<?>>, PostProcessor<?>> postProcessorClassMap,
                            Map<Class<? extends PostValidator>, PostValidator> postValidatorClassMap) {
         this.decoderMap = decoderMap;
         this.decoderClassMap = decoderClassMap;

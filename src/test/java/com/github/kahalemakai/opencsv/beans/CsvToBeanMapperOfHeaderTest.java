@@ -43,14 +43,16 @@ public class CsvToBeanMapperOfHeaderTest {
 
     @Test
     public void testPostProcessing() throws Exception {
-    mapper.registerDecoder("age", NullDecoder.class)
-            .registerDecoder("age", Integer::parseInt)
-            .registerPostProcessor("age",
-    final Iterator<BeanAccessor<Person>> it = mapper.withLines(this.iterator).iterator();
-    final Person person1 = it.next().get();
-    final Person person2 = it.next().get();
-    assertEquals(picard, person1);
-    assertEquals(drObvious, person2);
+        mapper.registerDecoder("age", NullDecoder.class)
+                .registerDecoder("age", Integer::parseInt)
+                .registerPostProcessor("age", (Integer i) -> i == null?null:i + 1);
+        final Iterator<BeanAccessor<Person>> it = mapper.withLines(this.iterator).iterator();
+        final Person person1 = it.next().get();
+        final Person person2 = it.next().get();
+        picard.setAge(51);
+        assertEquals(picard, person1);
+        assertEquals(drObvious, person2);
+    }
 
     @Test
     public void testWithLines() throws Exception {
