@@ -1,5 +1,10 @@
-package com.github.kahalemakai.opencsv.beans;
+package com.github.kahalemakai.opencsv.beans.decoders;
 
+import com.github.kahalemakai.opencsv.beans.DataDecodingException;
+import com.github.kahalemakai.opencsv.beans.Decoder;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
 public class NullDecoder implements Decoder<Object, DataDecodingException> {
     private static final String NULL = "null";
 

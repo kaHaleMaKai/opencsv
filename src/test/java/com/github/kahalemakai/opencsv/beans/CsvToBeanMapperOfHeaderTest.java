@@ -1,5 +1,6 @@
 package com.github.kahalemakai.opencsv.beans;
 
+import com.github.kahalemakai.opencsv.beans.decoders.NullDecoder;
 import com.github.kahalemakai.opencsv.examples.Person;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
