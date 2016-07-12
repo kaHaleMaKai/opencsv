@@ -1,24 +1,17 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
-import com.github.kahalemakai.opencsv.beans.processing.DataDecodingException;
-import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @NoArgsConstructor
-public class NullDecoder implements Decoder<Object, DataDecodingException> {
-    private static final String NULL = "null";
-
-    public NullDecoder() {
-        System.out.println("being instantiated");
-    }
+public class NullDecoder extends AbstractNullDecoder {
+    @Setter(AccessLevel.PROTECTED)
+    private String NULL = "null";
 
     @Override
-    public Object decode(String value) throws DataDecodingException {
-        if (value.equals(NULL)) {
-            return null;
-        }
-        else {
-            throw new DataDecodingException(String.format("cannot decode value '%s' as null", value));
-        }
+    boolean isNullValued(String value) {
+        return NULL.equals(value);
     }
+
 }
