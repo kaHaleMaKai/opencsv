@@ -1,5 +1,7 @@
 package com.github.kahalemakai.opencsv.beans;
 
+import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
 import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.exceptions.CsvConstraintViolationException;

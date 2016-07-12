@@ -1,5 +1,7 @@
 package com.github.kahalemakai.opencsv.beans;
 
+import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.opencsv.CSVReader;
 
 import java.io.Closeable;
@@ -45,6 +47,11 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<BeanAccessor<T>>
         for (Class<? extends Decoder<?, ? extends Throwable>> aClass : decoderClasses) {
             registerDecoder(column, aClass);
         }
+        return this;
+    }
+
+    // should be override by subclasses
+    default CsvToBeanMapper<T> registerPostProcessor(String column, PostProcessor<?, ?> postProcessor) {
         return this;
     }
 

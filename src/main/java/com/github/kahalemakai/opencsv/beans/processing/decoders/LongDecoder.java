@@ -1,6 +1,6 @@
-package com.github.kahalemakai.opencsv.beans.decoders;
+package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
-import com.github.kahalemakai.opencsv.beans.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor

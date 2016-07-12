@@ -1,4 +1,4 @@
-package com.github.kahalemakai.opencsv.beans;
+package com.github.kahalemakai.opencsv.beans.processing;
 
 public class DataDecodingException extends RuntimeException {
     public DataDecodingException(String message) {

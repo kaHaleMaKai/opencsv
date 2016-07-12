@@ -1,4 +1,4 @@
-package com.github.kahalemakai.opencsv.beans;
+package com.github.kahalemakai.opencsv.beans.processing;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,7 +32,7 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     }
 
     @Override
-    public T getValue() throws DataDecodingException, PostProcessingException {
+    public T getValue() throws DataDecodingException {
         final int almostNumDecoders = decoders.size() - 1;
         for (int i = 0; i <= almostNumDecoders; ++i) {
             final Decoder<? extends T, ? extends Throwable> decoder = decoders.get(i);

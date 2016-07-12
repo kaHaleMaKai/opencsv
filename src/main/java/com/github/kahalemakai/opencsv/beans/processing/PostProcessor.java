@@ -1,8 +1,8 @@
-package com.github.kahalemakai.opencsv.beans;
+package com.github.kahalemakai.opencsv.beans.processing;
 
 @FunctionalInterface
 public interface PostProcessor<R, T> {
-    R process(T value) throws PostProcessingException;
+    R process(T value);
 
     static <U, V> PostProcessor<U, V> identity() {
         @SuppressWarnings("unchecked")

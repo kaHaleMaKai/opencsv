@@ -1,4 +1,4 @@
-package com.github.kahalemakai.opencsv.beans;
+package com.github.kahalemakai.opencsv.beans.processing;
 
 import java.beans.PropertyEditor;
 import java.util.HashMap;
