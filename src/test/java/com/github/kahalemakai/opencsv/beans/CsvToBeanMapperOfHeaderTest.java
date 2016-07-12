@@ -17,14 +17,28 @@ public class CsvToBeanMapperOfHeaderTest {
     CsvToBeanMapper<Person> mapper;
     String[] lines;
     Person picard;
+    Person drObvious;
     Iterator<String[]> iterator;
 
     @Test
     public void testDecoding() throws Exception {
         mapper.registerDecoder("surName", (data) -> "Mr. "+data);
-        final Person person = mapper.withLines(iterator).iterator().next().get();
+        final Iterator<BeanAccessor<Person>> it = mapper.withLines(this.iterator).iterator();
+        final Person person = it.next().get();
         picard.setSurName("Mr. Picard");
         assertEquals(picard, person);
+    }
+
+    @Test
+    public void testDecoderChain() throws Exception {
+        mapper.registerDecoder("age", NullDecoder.class)
+              .registerDecoder("age", Integer::parseInt);
+        final Iterator<BeanAccessor<Person>> it = mapper.withLines(this.iterator).iterator();
+        final Person person1 = it.next().get();
+        final Person person2 = it.next().get();
+        assertEquals(picard, person1);
+        assertEquals(drObvious, person2);
+
     }
 
     @Test
@@ -51,13 +65,21 @@ public class CsvToBeanMapperOfHeaderTest {
                 .build();
         lines = new String[] {
                 "age,givenName,surName,address",
-                "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise'"
+                "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise'",
+                "null,Dr.,Obvious,Somewhere"
         };
         picard = new Person();
         picard.setAge(50);
         picard.setGivenName("Jean-Luc");
         picard.setSurName("Picard");
         picard.setAddress("Captain's room, Enterprise");
+
+        drObvious = new Person();
+        drObvious.setAge(null);
+        drObvious.setGivenName("Dr.");
+        drObvious.setSurName("Obvious");
+        drObvious.setAddress("Somewhere");
+
         iterator = new Iterator<String[]>() {
             int counter = 0;
             @Override
@@ -81,4 +103,5 @@ public class CsvToBeanMapperOfHeaderTest {
         };
 
     }
+
 }

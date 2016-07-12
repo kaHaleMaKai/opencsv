@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class Person {
-    private int age;
+    private Integer age;
     private String givenName;
     private String surName;
     private String address;

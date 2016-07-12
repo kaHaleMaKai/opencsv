@@ -7,21 +7,34 @@ import java.util.Optional;
 
 public class DecoderManager {
     private final Map<String, DecoderPropertyEditor<?>> decoderMap;
+    private final Map<Class<? extends Decoder<?, ? extends Throwable>>, Decoder<?, ? extends Throwable>> classMap;
 
     public static DecoderManager init() {
         return new DecoderManager();
     }
 
-    public void put(final String column, Decoder<?> decoder) {
+    public <T> DecoderManager add(final String column, Decoder<? extends T, ? extends Throwable> decoder) {
         if (!decoderMap.containsKey(column)) {
-            @SuppressWarnings("unchecked")
-            final Decoder<Object> objectDecoder = (Decoder<Object>) decoder;
-            decoderMap.put(column, DecoderPropertyEditor.of(objectDecoder));
+            decoderMap.put(column, DecoderPropertyEditor.init());
         }
-        else {
-            final String msg = String.format("trying to re-assign a decoder for column %s", column);
-            throw new UnsupportedOperationException(msg);
+        @SuppressWarnings("unchecked")
+        final DecoderPropertyEditor<T> propertyEditor = (DecoderPropertyEditor<T>) decoderMap.get(column);
+        propertyEditor.add(decoder);
+        return this;
+    }
+
+    public <T> DecoderManager add(final String column,
+                                  Class<? extends Decoder<?, ? extends Throwable>> decoderClass)
+                              throws InstantiationException {
+        if (!classMap.containsKey(decoderClass)) {
+            try {
+                final Decoder<?, ? extends Throwable> decoder = decoderClass.newInstance();
+                classMap.put(decoderClass, decoder);
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new InstantiationException(e.getMessage());
+            }
         }
+        return add(column, classMap.get(decoderClass));
     }
 
     public Optional<PropertyEditor> get(final String column) {
@@ -29,15 +42,19 @@ public class DecoderManager {
     }
 
     public DecoderManager immutableCopy() {
-        return new DecoderManager(decoderMap);
+        return new DecoderManager(decoderMap, classMap);
     }
 
-    private DecoderManager(Map<String, DecoderPropertyEditor<?>> decoderMap) {
+    private DecoderManager(Map<String, DecoderPropertyEditor<?>> decoderMap,
+                           Map<Class<? extends Decoder<?, ? extends Throwable>>,
+                               Decoder<?, ? extends Throwable>> classMap) {
         this.decoderMap = decoderMap;
+        this.classMap = classMap;
     }
 
     private DecoderManager() {
         this.decoderMap = new HashMap<>();
+        this.classMap = new HashMap<>();
     }
 
 }

@@ -40,9 +40,19 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     }
 
     @Override
-    public void registerDecoder(final String column, final Decoder<?> decoder) {
-        decoderManager.put(column, decoder);
+    public CsvToBeanMapper<T> registerDecoder(String column, Class<? extends Decoder<?, ? extends Throwable>> decoderClass) throws InstantiationException {
+        decoderManager.add(column, decoderClass);
+        return this;
     }
+
+    @Override
+    public CsvToBeanMapper<T> registerDecoder(final String column,
+                                              final Decoder<?, ? extends Throwable> decoder) {
+        decoderManager.add(column, decoder);
+        return this;
+    }
+
+
 
     @Builder
     public static <S> CsvToBeanMapperOfHeader<S> of(@NonNull final Class<? extends S> type, @NonNull final HeaderDirectMappingStrategy<S> strategy) {
