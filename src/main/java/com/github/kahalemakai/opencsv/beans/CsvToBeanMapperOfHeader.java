@@ -7,6 +7,7 @@ import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBean;
 import lombok.*;
+import lombok.extern.log4j.Log4j;
 
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyEditor;
@@ -19,6 +20,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
+@Log4j
 class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper<T> {
     @Getter(AccessLevel.PACKAGE)
     private final HeaderDirectMappingStrategy<T> strategy;
@@ -83,7 +85,9 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     public CsvToBeanMapperOfHeader<T> withLines(@NonNull final Iterable<String[]> lines) throws IllegalStateException {
         final Iterator<String[]> iterator = lines.iterator();
         if (!iterator.hasNext()) {
-            throw new IllegalStateException("the iterable's iterator is empty, thus no column headers can be retrieved from it");
+            final String msg = "the iterable's iterator is empty, thus no column headers can be retrieved from it";
+            log.error(msg);
+            throw new IllegalStateException(msg);
         }
         final CsvToBeanMapperOfHeader<T> copy = getCopy();
 
@@ -111,7 +115,9 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     @Override
     public Iterator<BeanAccessor<T>> iterator() {
         if (source == null) {
-            throw new IllegalStateException("no csv data source defined");
+            final String msg = "no csv data source defined";
+            log.error(msg);
+            throw new IllegalStateException(msg);
         }
 
         return new Iterator<BeanAccessor<T>>() {
@@ -139,6 +145,7 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
                                 counter,
                                 new ArrayList<>(Arrays.asList(nextLine)),
                                 getType().getCanonicalName());
+                        log.error(msg);
                         throw new CsvToBeanException(msg, e);
                     }
                 };
@@ -181,7 +188,9 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     @Override
     public void setHeader(String...header) throws IllegalArgumentException {
         if (header.length == 0) {
-            throw new IllegalArgumentException("expected: header.length > 0, got: header.length = 0");
+            final String msg = "expected: header.length > 0, got: header.length = 0";
+            log.error(msg);
+            throw new IllegalArgumentException(msg);
         }
         strategy.captureHeader(header);
     }

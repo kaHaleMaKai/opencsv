@@ -1,10 +1,13 @@
 package com.github.kahalemakai.opencsv.beans.processing;
 
+import lombok.extern.log4j.Log4j;
+
 import java.beans.PropertyEditor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@Log4j
 public class DecoderManager {
     private final Map<String, DecoderPropertyEditor<?>> decoderMap;
     private final Map<Class<? extends Decoder<?, ? extends Throwable>>, Decoder<?, ? extends Throwable>> decoderClassMap;
@@ -30,7 +33,9 @@ public class DecoderManager {
                 final Decoder<?, ? extends Throwable> decoder = decoderClass.newInstance();
                 decoderClassMap.put(decoderClass, decoder);
             } catch (InstantiationException | IllegalAccessException e) {
-                throw new InstantiationException(e.getMessage());
+                final String msg = e.getMessage();
+                log.error(msg);
+                throw new InstantiationException(msg);
             }
         }
         return add(column, decoderClassMap.get(decoderClass));
@@ -50,7 +55,9 @@ public class DecoderManager {
                 final PostProcessor postProcessor = postProcessorClass.newInstance();
                 postProcessorClassMap.put(postProcessorClass, postProcessor);
             } catch (InstantiationException | IllegalAccessException e) {
-                throw new InstantiationException(e.getMessage());
+                final String msg = e.getMessage();
+                log.error(msg);
+                throw new InstantiationException(msg);
             }
         }
         return addPostProcessor(column, postProcessorClassMap.get(postProcessorClass));
@@ -69,7 +76,9 @@ public class DecoderManager {
                 final PostValidator postValidator = postValidatorClass.newInstance();
                 postValidatorClassMap.put(postValidatorClass, postValidator);
             } catch (InstantiationException | IllegalAccessException e) {
-                throw new InstantiationException(e.getMessage());
+                final String msg = e.getMessage();
+                log.error(msg);
+                throw new InstantiationException(msg);
             }
         }
         return addPostValidator(column, postValidatorClassMap.get(postValidatorClass));

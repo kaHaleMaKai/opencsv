@@ -3,12 +3,14 @@ package com.github.kahalemakai.opencsv.beans.processing;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j;
 
 import java.beans.PropertyEditorSupport;
 import java.util.LinkedList;
 import java.util.List;
 
 @NoArgsConstructor(staticName = "init")
+@Log4j
 public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     private final List<Decoder<? extends T, ? extends Throwable>> decoders = new LinkedList<>();
     private PostProcessor<T> postProcessor = PostProcessor.identity();
@@ -46,7 +48,9 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
                 return decoder.decode(data);
             } catch (Throwable e) {
                 if (i == almostNumDecoders) {
-                    throw new DataDecodingException(String.format("could not decode value '%s'", data), e);
+                    final String msg = String.format("could not decode value '%s'", data);
+                    log.error(msg);
+                    throw new DataDecodingException(msg, e);
                 }
             }
         }
@@ -61,7 +65,9 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
             try {
                 return postProcessor.process(value);
             } catch (Exception e) {
-                throw new PostProcessingException(String.format("error while trying to postprocess value %s", value), e);
+                final String msg = String.format("error while trying to postprocess value %s", value);
+                log.error(msg);
+                throw new PostProcessingException(msg, e);
             }
         }
     }
@@ -71,8 +77,9 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
             int counter = 1;
             for (PostValidator<T> postValidator : postValidators) {
                 if (!postValidator.validate(value)) {
-                    throw new PostValidationException(String.format("could not validate data\ninput: %s\nvalidation step: %d",
-                            value, counter));
+                   final String msg = String.format("could not validate data\ninput: %s\nvalidation step: %d", value, counter);
+                    log.error(msg);
+                    throw new PostValidationException(msg);
                 }
                 counter++;
             }
