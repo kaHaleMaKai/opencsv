@@ -133,67 +133,7 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
             log.error(msg);
             throw new IllegalStateException(msg);
         }
-
-        return new Iterator<T>() {
-            private Iterator<String[]> iterator = source.iterator();
-            private long counter = 0;
-            private T nextElement;
-
-            @Override
-            public boolean hasNext() {
-                if (!isOnErrorSkipLine())
-                    return iterator.hasNext();
-                else if (nextElement != null)
-                    return true;
-                else if (iterator.hasNext()) {
-                    nextElement = this.next();
-                    return nextElement != null;
-                } else {
-                    return false;
-                }
-            }
-
-            @Override
-            public T next() {
-                if (nextElement != null) {
-                    T tmp = nextElement;
-                    nextElement = null;
-                    return tmp;
-                }
-                if (!iterator.hasNext()) {
-                    if (isOnErrorSkipLine()) {
-                        return null;
-                    }
-                    else {
-                        throw new NoSuchElementException();
-                    }
-                }
-                final String[] nextLine = iterator.next();
-                counter++;
-                try {
-                    if (log.isDebugEnabled()) {
-                        log.debug(String.format("processing line %d", counter));
-                    }
-                    return processLine(getStrategy(), nextLine);
-                } catch (Throwable e) {
-                    if (isOnErrorSkipLine()) {
-                        if (log.isDebugEnabled()) {
-                            log.debug(String.format("found error on line %d\n%s", counter, e));
-                        }
-                        return next();
-                    }
-                    else {
-                        final String msg = String.format(
-                                "could not generate bean from line %d\nline: %s\nbean class: %s",
-                                counter,
-                                new ArrayList<>(Arrays.asList(nextLine)),
-                                getType().getCanonicalName());
-                        log.error(msg);
-                        throw new CsvToBeanException(msg, e);
-                    }
-                }
-            }
-        };
+        return isOnErrorSkipLine() ? new SkippingIterator() : new NonSkippingIterator();
     }
 
     @Override
@@ -265,6 +205,111 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
             mapper.setReaderIsSetup();
         }
         return mapper;
+    }
+
+    private class NonSkippingIterator implements Iterator {
+        private Iterator<String[]> iterator = source.iterator();
+        private long counter = 0;
+
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public T next() {
+            if (!iterator.hasNext()) {
+                throw new NoSuchElementException();
+            }
+            final String[] nextLine = iterator.next();
+            counter++;
+            try {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("processing line %d", counter));
+                }
+                return processLine(getStrategy(), nextLine);
+            } catch (Throwable e) {
+                final String msg = String.format(
+                        "could not generate bean from line %d\nline: %s\nbean class: %s",
+                        counter,
+                        new ArrayList<>(Arrays.asList(nextLine)),
+                        getType().getCanonicalName());
+                log.error(msg);
+                throw new CsvToBeanException(msg, e);
+            }
+        }
+
+    }
+
+    private class SkippingIterator implements Iterator<T> {
+        private Iterator<String[]> iterator = source.iterator();
+        private long counter;
+        private T nextElement;
+        private boolean nextElementIsEmpty = true;
+        private boolean calledByHasNext;
+
+        @Override
+        public boolean hasNext() {
+            if (!nextElementIsEmpty)
+                return true;
+            else if (iterator.hasNext()) {
+                calledByHasNext = true;
+                nextElement = this.next();
+                calledByHasNext = false;
+                if (nextElementIsEmpty)
+                    return false;
+                nextElementIsEmpty = false;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public T next() {
+            if (!nextElementIsEmpty) {
+                T tmp = nextElement;
+                nextElement = null;
+                nextElementIsEmpty = true;
+                return tmp;
+            }
+            if (!iterator.hasNext()) {
+                if (calledByHasNext) {
+                    nextElementIsEmpty = true;
+                    return null;
+                }
+                else {
+                    throw new NoSuchElementException();
+                }
+            }
+            final String[] nextLine = iterator.next();
+            counter++;
+            try {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("processing line %d", counter));
+                }
+                final T t = processLine(getStrategy(), nextLine);
+                nextElementIsEmpty = false;
+                return t;
+            } catch (Throwable e) {
+                if (isOnErrorSkipLine()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("found error on line %d\n%s", counter, e));
+                    }
+                    return next();
+                }
+                else {
+                    final String msg = String.format(
+                            "could not generate bean from line %d\nline: %s\nbean class: %s",
+                            counter,
+                            new ArrayList<>(Arrays.asList(nextLine)),
+                            getType().getCanonicalName());
+                    log.error(msg);
+                    throw new CsvToBeanException(msg, e);
+                }
+            }
+        }
+
     }
 
 }

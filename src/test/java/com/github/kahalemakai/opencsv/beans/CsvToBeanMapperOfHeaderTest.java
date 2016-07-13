@@ -48,6 +48,30 @@ public class CsvToBeanMapperOfHeaderTest {
         }
     }
 
+    @Test(expected = NoSuchElementException.class)
+    public void testDecoderSuppressesErrorAndFinallyThrows() throws Exception {
+        mapper.registerDecoder("age", NullDecoder.class)
+                .registerDecoder("age", Integer::parseInt)
+                .registerPostProcessor("age", (Integer i) -> i + 10)
+                .setOnErrorSkipLine(true);
+        final Iterator<Person> it = mapper.withLines(this.iterator).iterator();
+        if (it.hasNext()) {
+            final Person person1 = it.next();
+            picard.setAge(60);
+            assertEquals(picard, person1);
+        }
+        try {
+            it.hasNext();
+            it.hasNext();
+            it.hasNext();
+            it.hasNext();
+            it.hasNext();
+        } catch (NoSuchElementException e) {
+            throw new AssertionError("got assertion exception in incorrect place", e);
+        }
+        it.next();
+    }
+
     @Test
     public void testDecoderChain() throws Exception {
         mapper.registerDecoder("age", NullDecoder.class)
