@@ -24,19 +24,37 @@ public class CsvToBeanMapperOfHeaderTest {
     @Test
     public void testDecoding() throws Exception {
         mapper.registerDecoder("surName", (data) -> "Mr. "+data);
-        final Iterator<BeanAccessor<Person>> it = mapper.withLines(this.iterator).iterator();
-        final Person person = it.next().get();
+        final Iterator<Person> it = mapper.withLines(this.iterator).iterator();
+        final Person person = it.next();
         picard.setSurName("Mr. Picard");
         assertEquals(picard, person);
+    }
+
+    @Test
+    public void testDecoderSuppressesError() throws Exception {
+        mapper.registerDecoder("age", NullDecoder.class)
+                .registerDecoder("age", Integer::parseInt)
+                .registerPostProcessor("age", (Integer i) -> i + 10)
+                .setOnErrorSkipLine(true);
+        final Iterator<Person> it = mapper.withLines(this.iterator).iterator();
+        if (it.hasNext()) {
+            final Person person1 = it.next();
+            picard.setAge(60);
+            assertEquals(picard, person1);
+        }
+        if (it.hasNext()) {
+            final Person person2 = it.next();
+            assertEquals(drObvious, person2);
+        }
     }
 
     @Test
     public void testDecoderChain() throws Exception {
         mapper.registerDecoder("age", NullDecoder.class)
               .registerDecoder("age", Integer::parseInt);
-        final Iterator<BeanAccessor<Person>> it = mapper.withLines(this.iterator).iterator();
-        final Person person1 = it.next().get();
-        final Person person2 = it.next().get();
+        final Iterator<Person> it = mapper.withLines(this.iterator).iterator();
+        final Person person1 = it.next();
+        final Person person2 = it.next();
         assertEquals(picard, person1);
         assertEquals(drObvious, person2);
     }
@@ -44,34 +62,34 @@ public class CsvToBeanMapperOfHeaderTest {
     @Test(expected = CsvToBeanException.class)
     public void testDecoderThrows() throws Exception {
         mapper.registerDecoder("age", Integer::parseInt);
-        final Iterator<BeanAccessor<Person>> it = mapper.withLines(this.iterator).iterator();
-        it.next().get();
-        it.next().get();
+        final Iterator<Person> it = mapper.withLines(this.iterator).iterator();
+        it.next();
+        it.next();
     }
 
     @Test(expected = CsvToBeanException.class)
     public void testPostProcessingThrows() throws Exception {
-        final Iterator<BeanAccessor<Person>> it = mapper
+        final Iterator<Person> it = mapper
                 .registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i / 0)
                 .setNullFallthroughForPostProcessors("age", true)
                 .withLines(this.iterator).iterator();
-        it.next().get();
-        it.next().get();
+        it.next();
+        it.next();
     }
 
     @Test
     public void testPostProcessing() throws Exception {
-        final Iterator<BeanAccessor<Person>> it = mapper
+        final Iterator<Person> it = mapper
                 .registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 1)
                 .setNullFallthroughForPostProcessors("age", true)
                 .withLines(this.iterator).iterator();
 
-        final Person person1 = it.next().get();
-        final Person person2 = it.next().get();
+        final Person person1 = it.next();
+        final Person person2 = it.next();
         picard.setAge(51);
         assertEquals(picard, person1);
         assertEquals(drObvious, person2);
@@ -79,7 +97,7 @@ public class CsvToBeanMapperOfHeaderTest {
 
     @Test(expected = CsvToBeanException.class)
     public void testPostValidationThrows() throws Exception {
-        final Iterator<BeanAccessor<Person>> it = mapper
+        final Iterator<Person> it = mapper
                 .registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 1)
@@ -87,21 +105,21 @@ public class CsvToBeanMapperOfHeaderTest {
                 .setNullFallthroughForPostProcessors("age", true)
                 .setNullFallthroughForPostValidators("age", true)
                 .withLines(this.iterator).iterator();
-        assertEquals(picard, it.next().get());
-        assertEquals(drObvious, it.next().get());
+        assertEquals(picard, it.next());
+        assertEquals(drObvious, it.next());
     }
 
     @Test
     public void testPostValidation() throws Exception {
-        final Iterator<BeanAccessor<Person>> it = mapper
+        final Iterator<Person> it = mapper
                 .registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostValidator("age", (Integer i) -> i > 0)
                 .setNullFallthroughForPostValidators("age", true)
                 .withLines(this.iterator).iterator();
 
-        final Person person1 = it.next().get();
-        final Person person2 = it.next().get();
+        final Person person1 = it.next();
+        final Person person2 = it.next();
         assertEquals(picard, person1);
         assertEquals(drObvious, person2);
     }
@@ -109,8 +127,8 @@ public class CsvToBeanMapperOfHeaderTest {
     @Test
     public void testWithLines() throws Exception {
         final CsvToBeanMapper<Person> beanMapper = mapper.withLines(iterator);
-        final Iterator<BeanAccessor<Person>> it = beanMapper.iterator();
-        assertEquals(picard, it.next().get());
+        final Iterator<Person> it = beanMapper.iterator();
+        assertEquals(picard, it.next());
     }
 
     @Test
@@ -118,8 +136,8 @@ public class CsvToBeanMapperOfHeaderTest {
         final String[] header = iterator.next();
         mapper.setHeader(header);
         final CsvToBeanMapper<Person> beanMapper = mapper.withLines(iterator);
-        final Iterator<BeanAccessor<Person>> it = beanMapper.iterator();
-        assertEquals(picard, it.next().get());
+        final Iterator<Person> it = beanMapper.iterator();
+        assertEquals(picard, it.next());
     }
 
     @Test(expected = IllegalStateException.class)

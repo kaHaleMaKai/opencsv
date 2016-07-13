@@ -1,6 +1,5 @@
 package com.github.kahalemakai.opencsv;
 
-import com.github.kahalemakai.opencsv.beans.BeanAccessor;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanException;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
 import com.github.kahalemakai.opencsv.examples.Person;
@@ -42,8 +41,8 @@ public class Main {
                     .withCSVParser(csvParser)
                     .build();
                  final CsvToBeanMapper<Person> c = mapper.withReader(reader)) {
-                for (BeanAccessor<Person> beanAccessor : c) {
-                    final Person person = beanAccessor.get();
+                for (Person beanAccessor : c) {
+                    final Person person = beanAccessor;
                     System.out.println(person);
                 }
             } catch (CsvToBeanException | IOException e) {

@@ -9,7 +9,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
 
-public interface CsvToBeanMapper<T> extends Closeable, Iterable<BeanAccessor<T>> {
+public interface CsvToBeanMapper<T> extends Closeable, Iterable<T> {
     CsvToBeanMapper<T> withReader(CSVReader reader) throws IOException;
 
     CsvToBeanMapper<T> withLines(Iterable<String[]> lines) throws IllegalStateException;
@@ -77,6 +77,8 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<BeanAccessor<T>>
     Class<? extends T> getType();
 
     void setHeader(final String...header) throws IllegalArgumentException;
+
+    CsvToBeanMapper<T> setOnErrorSkipLine(boolean value);
 
     static <S> CsvToBeanMapperOfHeader<S> fromHeader(Class<? extends S> type) {
         return CsvToBeanMapperOfHeader.of(type, new HeaderDirectMappingStrategy<S>());

@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper<T> {
     @Getter(AccessLevel.PACKAGE)
     private final HeaderDirectMappingStrategy<T> strategy;
+    @Getter(AccessLevel.PRIVATE)
     private final AtomicBoolean readerSetup = new AtomicBoolean(false);
     @Setter(AccessLevel.PRIVATE)
     @Getter(AccessLevel.PRIVATE)
@@ -31,6 +32,8 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     private final DecoderManager decoderManager;
     @Setter(AccessLevel.PACKAGE)
     private Iterable<String[]> source;
+    @Getter
+    private boolean onErrorSkipLine = false;
 
     @Override
     protected PropertyEditor getPropertyEditor(PropertyDescriptor desc) throws InstantiationException, IllegalAccessException {
@@ -124,34 +127,62 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     }
 
     @Override
-    public Iterator<BeanAccessor<T>> iterator() {
+    public Iterator<T> iterator() {
         if (source == null) {
             final String msg = "no csv data source defined";
             log.error(msg);
             throw new IllegalStateException(msg);
         }
 
-        return new Iterator<BeanAccessor<T>>() {
+        return new Iterator<T>() {
             private Iterator<String[]> iterator = source.iterator();
             private long counter = 0;
+            private T nextElement;
 
             @Override
             public boolean hasNext() {
-                return iterator.hasNext();
+                if (!isOnErrorSkipLine())
+                    return iterator.hasNext();
+                else if (nextElement != null)
+                    return true;
+                else if (iterator.hasNext()) {
+                    nextElement = this.next();
+                    return nextElement != null;
+                } else {
+                    return false;
+                }
             }
 
             @Override
-            public BeanAccessor<T> next() {
+            public T next() {
+                if (nextElement != null) {
+                    T tmp = nextElement;
+                    nextElement = null;
+                    return tmp;
+                }
                 if (!iterator.hasNext()) {
-                    throw new NoSuchElementException();
+                    if (isOnErrorSkipLine()) {
+                        return null;
+                    }
+                    else {
+                        throw new NoSuchElementException();
+                    }
                 }
                 final String[] nextLine = iterator.next();
                 counter++;
-                return () -> {
-                    try {
+                try {
+                    if (log.isDebugEnabled()) {
                         log.debug(String.format("processing line %d", counter));
-                        return processLine(getStrategy(), nextLine);
-                    } catch (Throwable e) {
+                    }
+                    return processLine(getStrategy(), nextLine);
+                } catch (Throwable e) {
+                    if (isOnErrorSkipLine()) {
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format("found error on line %d\n%s", counter, e));
+                        }
+                        return next();
+                    }
+                    else {
                         final String msg = String.format(
                                 "could not generate bean from line %d\nline: %s\nbean class: %s",
                                 counter,
@@ -160,7 +191,7 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
                         log.error(msg);
                         throw new CsvToBeanException(msg, e);
                     }
-                };
+                }
             }
         };
     }
@@ -210,6 +241,13 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
         strategy.captureHeader(header);
     }
 
+    @Override
+    public CsvToBeanMapper<T> setOnErrorSkipLine(boolean value) {
+        log.info(String.format("set onErrorSkipLine to %b", value));
+        this.onErrorSkipLine = value;
+        return this;
+    }
+
     boolean unsetReaderIsSetup() {
         log.debug("marking reader as no setup");
         return readerSetup.getAndSet(false);
@@ -221,7 +259,12 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     }
 
     private CsvToBeanMapperOfHeader<T> getCopy() {
-        return new CsvToBeanMapperOfHeader<>(this.strategy, this.decoderManager.immutableCopy());
+        final CsvToBeanMapperOfHeader<T> mapper = new CsvToBeanMapperOfHeader<>(this.strategy, this.decoderManager.immutableCopy());
+        mapper.setOnErrorSkipLine(isOnErrorSkipLine());
+        if (getReaderSetup().get()) {
+            mapper.setReaderIsSetup();
+        }
+        return mapper;
     }
 
 }
