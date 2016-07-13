@@ -13,15 +13,20 @@ import java.beans.PropertyDescriptor;
 import java.beans.PropertyEditor;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.github.kahalemakai.opencsv.beans.HeaderDirectMappingStrategy.IGNORE_COLUMN;
 
 @RequiredArgsConstructor
 @Log4j
 class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper<T> {
+    private final static Pattern ignorePattern = Pattern.compile("^\\$ignore[0-9]+\\$$");
+    private final static Pattern numberPattern = Pattern.compile("^[^\\d]+(\\d+)\\$$");
+    private final static Pattern acceptedNames = Pattern.compile("[_a-zA-Z][_a-zA-Z0-9]*");
+
     @Getter(AccessLevel.PACKAGE)
     private final HeaderDirectMappingStrategy<T> strategy;
     @Getter(AccessLevel.PRIVATE)
@@ -178,7 +183,39 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
             throw new IllegalArgumentException(msg);
         }
         log.debug("setting header manually");
-        strategy.captureHeader(header);
+        List<String> headerList = new LinkedList<>();
+        for (final String column : header) {
+            final Matcher matcher = ignorePattern.matcher(column);
+            if (matcher.matches()) {
+                final Matcher numberMatcher = numberPattern.matcher(column);
+                int number = 1;
+                if (numberMatcher.matches()) {
+                    final String numberAsString = numberMatcher.group(1);
+                    number = Integer.parseInt(numberAsString);
+                    if (number == 0) {
+                        final String msg = "using column name $ignore0$ is not permitted";
+                        log.error(msg);
+                        throw new IllegalArgumentException(msg);
+                    }
+                }
+                for (int i = 0; i < number; ++i) {
+                    headerList.add(IGNORE_COLUMN);
+                }
+            }
+            else {
+                final Matcher accpedtedNamesMatcher = acceptedNames.matcher(column);
+                if (accpedtedNamesMatcher.matches() || IGNORE_COLUMN.equals(column)) {
+                    headerList.add(column);
+                }
+                else {
+                    final String msg = String.format("invalid column name specified: '%s'", column);
+                    log.error(msg);
+                    throw new IllegalArgumentException(msg);
+                }
+            }
+        }
+        final String[] completeHeader = headerList.toArray(new String[headerList.size()]);
+        strategy.captureHeader(completeHeader);
     }
 
     @Override

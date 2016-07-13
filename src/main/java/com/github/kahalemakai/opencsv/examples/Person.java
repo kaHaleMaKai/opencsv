@@ -8,4 +8,8 @@ public class Person {
     private String givenName;
     private String surName;
     private String address;
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
 }

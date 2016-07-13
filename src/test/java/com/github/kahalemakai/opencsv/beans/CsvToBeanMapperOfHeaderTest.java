@@ -16,10 +16,33 @@ import static org.junit.Assert.assertEquals;
 public class CsvToBeanMapperOfHeaderTest {
     CSVParser parser;
     CsvToBeanMapper<Person> mapper;
+    String[] linesWithIgnore;
     String[] lines;
     Person picard;
     Person drObvious;
     Iterator<String[]> iterator;
+    Iterator<String[]> iteratorWithIgnore;
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIgnoreColumnThrowsOnIgnore0() throws Exception {
+        final String[] header = {"$ignore0$","age","$ignore$","givenName","surName","address","$ignore4$"};
+        mapper.setHeader(header);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIgnoreColumnThrowsOnBadName() throws Exception {
+        final String[] header = {"$ignore2$","1age","$ignore$","givenName","surName","address","$ignore4$"};
+        mapper.setHeader(header);
+    }
+
+    @Test
+    public void testIgnoreColumn() throws Exception {
+        final String[] header = {"$ignore2$","age","$ignore$","givenName","surName","address","$ignore4$"};
+        mapper.setHeader(header);
+        final CsvToBeanMapper<Person> beanMapper = mapper.withLines(iteratorWithIgnore);
+        final Iterator<Person> it = beanMapper.iterator();
+        assertEquals(picard, it.next());
+    }
 
     @Test
     public void testDecoding() throws Exception {
@@ -184,6 +207,10 @@ public class CsvToBeanMapperOfHeaderTest {
                 "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise'",
                 "null,Dr.,Obvious,Somewhere"
         };
+        linesWithIgnore = new String[] {
+                "X,X,50,X,Jean-Luc,Picard,'Captain\\'s room, Enterprise',X,X,X,X",
+                "X,X,33,X,Dr.,Obvious,Somewhere,X,X,X,X"
+        };
         picard = new Person();
         picard.setAge(50);
         picard.setGivenName("Jean-Luc");
@@ -209,6 +236,28 @@ public class CsvToBeanMapperOfHeaderTest {
                     throw new NoSuchElementException();
                 try {
                     final String[] line = parser.parseLine(lines[counter]);
+                    counter++;
+                    return line;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+
+        iteratorWithIgnore = new Iterator<String[]>() {
+            int counter = 0;
+            @Override
+            public boolean hasNext() {
+                return counter < linesWithIgnore.length;
+            }
+
+            @Override
+            public String[] next() {
+                if (!hasNext())
+                    throw new NoSuchElementException();
+                try {
+                    final String[] line = parser.parseLine(linesWithIgnore[counter]);
                     counter++;
                     return line;
                 } catch (IOException e) {
