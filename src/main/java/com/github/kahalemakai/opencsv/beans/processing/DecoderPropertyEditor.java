@@ -12,27 +12,28 @@ import java.util.List;
 public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     private final List<Decoder<? extends T, ? extends Throwable>> decoders = new LinkedList<>();
     private PostProcessor<T> postProcessor = PostProcessor.identity();
-    private final List<PostValidator> postValidators = new LinkedList<>();
+    private final List<PostValidator<T>> postValidators = new LinkedList<>();
     private String data;
     @Getter @Setter
     private boolean trimField = false;
     @Getter @Setter
     private Class<? extends T> type;
+    @Getter @Setter
+    private boolean nullFallthroughForPostProcessors;
+    @Getter @Setter
+    private boolean nullFallthroughForPostValidators;
 
     public DecoderPropertyEditor<T> add(Decoder<? extends T, ? extends Throwable> decoder) {
         decoders.add(decoder);
         return this;
     }
 
-    public DecoderPropertyEditor<T> setPostProcessor(final PostProcessor<T> postProcessor) {
-        if (this.postProcessor != PostProcessor.IDENTITY) {
-            throw new UnsupportedOperationException("trying to re-set postprocessor");
-        }
-        this.postProcessor = postProcessor;
+    public DecoderPropertyEditor<T> addPostProcessor(final PostProcessor<T> postProcessor) {
+        this.postProcessor = PostProcessor.compose(this.postProcessor, postProcessor);
         return this;
     }
 
-    public DecoderPropertyEditor<T> addPostValidator(final PostValidator postValidator) {
+    public DecoderPropertyEditor<T> addPostValidator(final PostValidator<T> postValidator) {
         postValidators.add(postValidator);
         return this;
 
@@ -53,28 +54,35 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     }
 
     private T postProcess(final T value) throws PostProcessingException {
-        try {
-            return postProcessor.process(value);
-        } catch (Exception e) {
-            throw new PostProcessingException(String.format("error while trying to postprocess value %s", value), e);
+        if (isNullFallthroughForPostProcessors() && value == null) {
+            return null;
+        }
+        else {
+            try {
+                return postProcessor.process(value);
+            } catch (Exception e) {
+                throw new PostProcessingException(String.format("error while trying to postprocess value %s", value), e);
+            }
         }
     }
 
-    private void postValidate(final Object value) throws PostValidationException {
-        int counter = 1;
-        for (PostValidator postValidator : postValidators) {
-            if (!postValidator.validate(value)) {
-                throw new PostValidationException(String.format("could not validate data\ninput: %s\nvalidation step: %d",
-                        value, counter));
+    private void postValidate(final T value) throws PostValidationException {
+        if (!isNullFallthroughForPostValidators() || value != null) {
+            int counter = 1;
+            for (PostValidator<T> postValidator : postValidators) {
+                if (!postValidator.validate(value)) {
+                    throw new PostValidationException(String.format("could not validate data\ninput: %s\nvalidation step: %d",
+                            value, counter));
+                }
+                counter++;
             }
-            counter++;
         }
     }
 
     @Override
-    public Object getValue() throws DataDecodingException, PostProcessingException, PostValidationException {
+    public T getValue() throws DataDecodingException, PostProcessingException, PostValidationException {
         final T decodedValue = decodeValue();
-        final Object postProcessedValue = postProcess(decodedValue);
+        final T postProcessedValue = postProcess(decodedValue);
         postValidate(postProcessedValue);
         return postProcessedValue;
     }

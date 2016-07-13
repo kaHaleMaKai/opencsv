@@ -17,10 +17,7 @@ import java.beans.PropertyEditor;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
@@ -58,13 +55,13 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
 
     @Override
     public <R> CsvToBeanMapper<T> registerPostProcessor(String column, PostProcessor<R> postProcessor) {
-        decoderManager.setPostProcessor(column, postProcessor);
+        decoderManager.addPostProcessor(column, postProcessor);
         return this;
     }
 
     @Override
     public <R> CsvToBeanMapper<T> registerPostProcessor(String column, Class<? extends PostProcessor<R>> postProcessorClass) throws InstantiationException {
-        decoderManager.setPostProcessor(column, postProcessorClass);
+        decoderManager.addPostProcessor(column, postProcessorClass);
         return this;
     }
 
@@ -75,7 +72,7 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     }
 
     @Override
-    public CsvToBeanMapper<T> registerPostValidator(String column, Class<? extends PostValidator> postValidatorClass) throws InstantiationException {
+    public CsvToBeanMapper<T> registerPostValidator(String column, Class<? extends PostValidator<?>> postValidatorClass) throws InstantiationException {
         decoderManager.addPostValidator(column, postValidatorClass);
         return this;
     }
@@ -172,6 +169,18 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public CsvToBeanMapper<T> setNullFallthroughForPostProcessors(String column, boolean value) {
+        decoderManager.setNullFallthroughForPostProcessors(column, value);
+        return this;
+    }
+
+    @Override
+    public CsvToBeanMapper<T> setNullFallthroughForPostValidators(String column, boolean value) {
+        decoderManager.setNullFallthroughForPostValidators(column, value);
+        return this;
     }
 
     boolean unsetReaderIsSetup() {

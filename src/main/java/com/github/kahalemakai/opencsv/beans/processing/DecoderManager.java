@@ -9,18 +9,15 @@ public class DecoderManager {
     private final Map<String, DecoderPropertyEditor<?>> decoderMap;
     private final Map<Class<? extends Decoder<?, ? extends Throwable>>, Decoder<?, ? extends Throwable>> decoderClassMap;
     private final Map<Class<? extends PostProcessor<?>>, PostProcessor<?>> postProcessorClassMap;
-    private final Map<Class<? extends PostValidator>, PostValidator> postValidatorClassMap;
+    private final Map<Class<? extends PostValidator<?>>, PostValidator<?>> postValidatorClassMap;
 
     public static DecoderManager init() {
         return new DecoderManager();
     }
 
     public <T> DecoderManager add(final String column, Decoder<? extends T, ? extends Throwable> decoder) {
-        if (!decoderMap.containsKey(column)) {
-            decoderMap.put(column, DecoderPropertyEditor.init());
-        }
         @SuppressWarnings("unchecked")
-        final DecoderPropertyEditor<T> propertyEditor = (DecoderPropertyEditor<T>) decoderMap.get(column);
+        final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
         propertyEditor.add(decoder);
         return this;
     }
@@ -39,17 +36,14 @@ public class DecoderManager {
         return add(column, decoderClassMap.get(decoderClass));
     }
 
-    public <T> DecoderManager setPostProcessor(final String column, PostProcessor<T> postProcessor) {
-        if (!decoderMap.containsKey(column)) {
-            decoderMap.put(column, DecoderPropertyEditor.init());
-        }
+    public <T> DecoderManager addPostProcessor(final String column, PostProcessor<T> postProcessor) {
         @SuppressWarnings("unchecked")
-        final DecoderPropertyEditor<T> propertyEditor = (DecoderPropertyEditor<T>) decoderMap.get(column);
-        propertyEditor.setPostProcessor(postProcessor);
+        final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
+        propertyEditor.addPostProcessor(postProcessor);
         return this;
     }
 
-    public <T> DecoderManager setPostProcessor(final String column, Class<? extends PostProcessor<T>> postProcessorClass)
+    public <T> DecoderManager addPostProcessor(final String column, Class<? extends PostProcessor<T>> postProcessorClass)
             throws InstantiationException {
         if (!postProcessorClassMap.containsKey(postProcessorClass)) {
             try {
@@ -59,19 +53,16 @@ public class DecoderManager {
                 throw new InstantiationException(e.getMessage());
             }
         }
-        return setPostProcessor(column, postProcessorClassMap.get(postProcessorClass));
+        return addPostProcessor(column, postProcessorClassMap.get(postProcessorClass));
     }
 
-    public DecoderManager addPostValidator(final String column, PostValidator postValidator) {
-        if (!decoderMap.containsKey(column)) {
-            decoderMap.put(column, DecoderPropertyEditor.init());
-        }
-        final DecoderPropertyEditor<?> propertyEditor = decoderMap.get(column);
+    public <T> DecoderManager addPostValidator(final String column, PostValidator<T> postValidator) {
+        final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
         propertyEditor.addPostValidator(postValidator);
         return this;
     }
 
-    public DecoderManager addPostValidator(final String column, Class<? extends PostValidator> postValidatorClass)
+    public DecoderManager addPostValidator(final String column, Class<? extends PostValidator<?>> postValidatorClass)
             throws InstantiationException {
         if (!postValidatorClassMap.containsKey(postValidatorClass)) {
             try {
@@ -92,11 +83,30 @@ public class DecoderManager {
         return new DecoderManager(decoderMap, decoderClassMap, postProcessorClassMap, postValidatorClassMap);
     }
 
+
+    public DecoderManager setNullFallthroughForPostProcessors(String column, boolean value) {
+        getPropertyEditor(column).setNullFallthroughForPostProcessors(value);
+        return this;
+    }
+
+    public DecoderManager setNullFallthroughForPostValidators(String column, boolean value) {
+        getPropertyEditor(column).setNullFallthroughForPostValidators(value);
+        return this;
+    }
+
+    private <R> DecoderPropertyEditor<R> getPropertyEditor(final String column) {
+        if (!decoderMap.containsKey(column)) {
+            decoderMap.put(column, DecoderPropertyEditor.init());
+        }
+        final DecoderPropertyEditor<R> propertyEditor = (DecoderPropertyEditor<R>) decoderMap.get(column);
+        return propertyEditor;
+    }
+
     private DecoderManager(Map<String, DecoderPropertyEditor<?>> decoderMap,
                            Map<Class<? extends Decoder<?, ? extends Throwable>>,
                                Decoder<?, ? extends Throwable>> decoderClassMap,
                            Map<Class<? extends PostProcessor<?>>, PostProcessor<?>> postProcessorClassMap,
-                           Map<Class<? extends PostValidator>, PostValidator> postValidatorClassMap) {
+                           Map<Class<? extends PostValidator<?>>, PostValidator<?>> postValidatorClassMap) {
         this.decoderMap = decoderMap;
         this.decoderClassMap = decoderClassMap;
         this.postProcessorClassMap = postProcessorClassMap;

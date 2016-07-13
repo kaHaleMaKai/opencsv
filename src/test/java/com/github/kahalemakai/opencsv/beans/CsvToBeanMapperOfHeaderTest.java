@@ -1,5 +1,7 @@
 package com.github.kahalemakai.opencsv.beans;
 
+import com.github.kahalemakai.opencsv.beans.processing.PostProcessingException;
+import com.github.kahalemakai.opencsv.beans.processing.PostValidationException;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import com.github.kahalemakai.opencsv.examples.Person;
 import com.opencsv.CSVParser;
@@ -41,15 +43,59 @@ public class CsvToBeanMapperOfHeaderTest {
         assertEquals(drObvious, person2);
     }
 
+    @Test(expected = PostProcessingException.class)
+    public void testPostProcessingThrows() throws Exception {
+        final Iterator<BeanAccessor<Person>> it = mapper
+                .registerDecoder("age", NullDecoder.class)
+                .registerDecoder("age", Integer::parseInt)
+                .registerPostProcessor("age", (Integer i) -> i / 0)
+                .setNullFallthroughForPostProcessors("age", true)
+                .withLines(this.iterator).iterator();
+        it.next().get();
+        it.next().get();
+    }
+
     @Test
     public void testPostProcessing() throws Exception {
-        mapper.registerDecoder("age", NullDecoder.class)
+        final Iterator<BeanAccessor<Person>> it = mapper
+                .registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
-                .registerPostProcessor("age", (Integer i) -> i == null?null:i + 1);
-        final Iterator<BeanAccessor<Person>> it = mapper.withLines(this.iterator).iterator();
+                .registerPostProcessor("age", (Integer i) -> i + 1)
+                .setNullFallthroughForPostProcessors("age", true)
+                .withLines(this.iterator).iterator();
+
         final Person person1 = it.next().get();
         final Person person2 = it.next().get();
         picard.setAge(51);
+        assertEquals(picard, person1);
+        assertEquals(drObvious, person2);
+    }
+
+    @Test(expected = PostValidationException.class)
+    public void testPostValidationThrows() throws Exception {
+        final Iterator<BeanAccessor<Person>> it = mapper
+                .registerDecoder("age", NullDecoder.class)
+                .registerDecoder("age", Integer::parseInt)
+                .registerPostProcessor("age", (Integer i) -> i + 1)
+                .registerPostValidator("age", (Integer i) -> i > 100)
+                .setNullFallthroughForPostProcessors("age", true)
+                .setNullFallthroughForPostValidators("age", true)
+                .withLines(this.iterator).iterator();
+        assertEquals(picard, it.next().get());
+        assertEquals(drObvious, it.next().get());
+    }
+
+    @Test
+    public void testPostValidation() throws Exception {
+        final Iterator<BeanAccessor<Person>> it = mapper
+                .registerDecoder("age", NullDecoder.class)
+                .registerDecoder("age", Integer::parseInt)
+                .registerPostValidator("age", (Integer i) -> i > 0)
+                .setNullFallthroughForPostValidators("age", true)
+                .withLines(this.iterator).iterator();
+
+        final Person person1 = it.next().get();
+        final Person person2 = it.next().get();
         assertEquals(picard, person1);
         assertEquals(drObvious, person2);
     }

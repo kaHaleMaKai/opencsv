@@ -62,12 +62,15 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<BeanAccessor<T>>
     }
 
     // should be override by subclasses
-    default CsvToBeanMapper<T> registerPostValidator(String column, PostValidator postValidator) {
+    default CsvToBeanMapper<T> registerPostValidator(String column, PostValidator<?> postValidator) {
         return this;
     }
 
+    CsvToBeanMapper<T> setNullFallthroughForPostProcessors(String column, boolean value);
+    CsvToBeanMapper<T> setNullFallthroughForPostValidators(String column, boolean value);
+
     // should be override by subclasses
-    default CsvToBeanMapper<T> registerPostValidator(String column, Class<? extends PostValidator> postValidatorClass) throws InstantiationException {
+    default CsvToBeanMapper<T> registerPostValidator(String column, Class<? extends PostValidator<?>> postValidatorClass) throws InstantiationException {
         return this;
     }
 
