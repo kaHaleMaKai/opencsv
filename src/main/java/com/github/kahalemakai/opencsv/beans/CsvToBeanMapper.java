@@ -76,6 +76,8 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<BeanAccessor<T>>
 
     Class<? extends T> getType();
 
+    void setHeader(final String...header) throws IllegalArgumentException;
+
     static <S> CsvToBeanMapperOfHeader<S> fromHeader(Class<? extends S> type) {
         return CsvToBeanMapperOfHeader.of(type, new HeaderDirectMappingStrategy<S>());
     }

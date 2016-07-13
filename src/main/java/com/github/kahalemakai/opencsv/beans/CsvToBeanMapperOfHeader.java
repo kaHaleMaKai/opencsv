@@ -22,8 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper<T> {
     @Getter(AccessLevel.PACKAGE)
     private final HeaderDirectMappingStrategy<T> strategy;
-    @Getter(AccessLevel.PACKAGE)
-    private boolean headerDefined = false;
     private final AtomicBoolean readerSetup = new AtomicBoolean(false);
     @Setter(AccessLevel.PRIVATE)
     @Getter(AccessLevel.PRIVATE)
@@ -87,12 +85,15 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
         if (!iterator.hasNext()) {
             throw new IllegalStateException("the iterable's iterator is empty, thus no column headers can be retrieved from it");
         }
-        final String[] header = iterator.next();
         final CsvToBeanMapperOfHeader<T> copy = getCopy();
+
+        if (!strategy.isHeaderDefined()) {
+            final String[] header = iterator.next();
+            copy.strategy.captureHeader(header);
+        }
         // an Iterable may return a fresh iterator on every call to iterator()
         // thus we should rather reuse the iterator we have already read a line from
         copy.setSource(() -> iterator);
-        copy.strategy.captureHeader(header);
         return copy;
     }
 
@@ -100,7 +101,9 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     public CsvToBeanMapperOfHeader<T> withReader(final CSVReader csvReader) throws IOException {
         final CsvToBeanMapperOfHeader<T> copy = getCopy();
         copy.setSource(csvReader);
-        copy.strategy.captureHeader(csvReader);
+        if (!strategy.isHeaderDefined()) {
+            copy.strategy.captureHeader(csvReader);
+        }
         copy.setReaderIsSetup();
         return copy;
     }
@@ -173,6 +176,14 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     public CsvToBeanMapper<T> setNullFallthroughForPostValidators(String column, boolean value) {
         decoderManager.setNullFallthroughForPostValidators(column, value);
         return this;
+    }
+
+    @Override
+    public void setHeader(String...header) throws IllegalArgumentException {
+        if (header.length == 0) {
+            throw new IllegalArgumentException("expected: header.length > 0, got: header.length = 0");
+        }
+        strategy.captureHeader(header);
     }
 
     boolean unsetReaderIsSetup() {

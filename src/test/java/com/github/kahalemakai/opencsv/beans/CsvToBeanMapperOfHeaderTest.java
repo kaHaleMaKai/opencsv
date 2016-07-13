@@ -113,6 +113,15 @@ public class CsvToBeanMapperOfHeaderTest {
         assertEquals(picard, it.next().get());
     }
 
+    @Test
+    public void testWithLinesWithManuallyInsertedHeader() throws Exception {
+        final String[] header = iterator.next();
+        mapper.setHeader(header);
+        final CsvToBeanMapper<Person> beanMapper = mapper.withLines(iterator);
+        final Iterator<BeanAccessor<Person>> it = beanMapper.iterator();
+        assertEquals(picard, it.next().get());
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testIteratorThrows() throws Exception {
         mapper.iterator();
