@@ -6,18 +6,16 @@ import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBean;
-import com.opencsv.exceptions.CsvConstraintViolationException;
-import com.opencsv.exceptions.CsvDataTypeMismatchException;
-import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import lombok.*;
 
-import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyEditor;
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
@@ -132,15 +130,9 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
                 return () -> {
                     try {
                         return processLine(getStrategy(), nextLine);
-                    } catch (IllegalAccessException
-                            | InvocationTargetException
-                            | IntrospectionException
-                            | InstantiationException
-                            | CsvConstraintViolationException
-                            | CsvDataTypeMismatchException
-                            | CsvRequiredFieldEmptyException e) {
+                    } catch (Throwable e) {
                         final String msg = String.format(
-                                "could not generate bean from line nr. %d\nline: %s\nbean class: %s",
+                                "could not generate bean from line %d\nline: %s\nbean class: %s",
                                 counter,
                                 new ArrayList<>(Arrays.asList(nextLine)),
                                 getType().getCanonicalName());

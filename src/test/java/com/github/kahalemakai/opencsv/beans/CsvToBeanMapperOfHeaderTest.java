@@ -1,7 +1,5 @@
 package com.github.kahalemakai.opencsv.beans;
 
-import com.github.kahalemakai.opencsv.beans.processing.PostProcessingException;
-import com.github.kahalemakai.opencsv.beans.processing.PostValidationException;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import com.github.kahalemakai.opencsv.examples.Person;
 import com.opencsv.CSVParser;
@@ -43,7 +41,15 @@ public class CsvToBeanMapperOfHeaderTest {
         assertEquals(drObvious, person2);
     }
 
-    @Test(expected = PostProcessingException.class)
+    @Test(expected = CsvToBeanException.class)
+    public void testDecoderThrows() throws Exception {
+        mapper.registerDecoder("age", Integer::parseInt);
+        final Iterator<BeanAccessor<Person>> it = mapper.withLines(this.iterator).iterator();
+        it.next().get();
+        it.next().get();
+    }
+
+    @Test(expected = CsvToBeanException.class)
     public void testPostProcessingThrows() throws Exception {
         final Iterator<BeanAccessor<Person>> it = mapper
                 .registerDecoder("age", NullDecoder.class)
@@ -71,7 +77,7 @@ public class CsvToBeanMapperOfHeaderTest {
         assertEquals(drObvious, person2);
     }
 
-    @Test(expected = PostValidationException.class)
+    @Test(expected = CsvToBeanException.class)
     public void testPostValidationThrows() throws Exception {
         final Iterator<BeanAccessor<Person>> it = mapper
                 .registerDecoder("age", NullDecoder.class)
