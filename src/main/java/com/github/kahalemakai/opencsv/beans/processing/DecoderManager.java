@@ -3,6 +3,7 @@ package com.github.kahalemakai.opencsv.beans.processing;
 import lombok.extern.log4j.Log4j;
 
 import java.beans.PropertyEditor;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +27,7 @@ public class DecoderManager {
     }
 
     public DecoderManager add(final String column,
-                                  Class<? extends Decoder<?, ? extends Throwable>> decoderClass)
+                              Class<? extends Decoder<?, ? extends Throwable>> decoderClass)
                               throws InstantiationException {
         if (!decoderClassMap.containsKey(decoderClass)) {
             try {
@@ -89,7 +90,10 @@ public class DecoderManager {
     }
 
     public DecoderManager immutableCopy() {
-        return new DecoderManager(decoderMap, decoderClassMap, postProcessorClassMap, postValidatorClassMap);
+        return new DecoderManager(Collections.unmodifiableMap(decoderMap),
+                                  Collections.unmodifiableMap(decoderClassMap),
+                                  Collections.unmodifiableMap(postProcessorClassMap),
+                                  Collections.unmodifiableMap(postValidatorClassMap));
     }
 
 

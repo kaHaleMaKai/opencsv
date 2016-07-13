@@ -17,6 +17,7 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
     private boolean headerDefined;
 
     public void captureHeader(final String[] headerLine) {
+        log.info(String.format("set header to %s", Arrays.toString(headerLine)));
         this.header = headerLine;
         setHeaderDefined(true);
     }

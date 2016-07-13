@@ -40,6 +40,7 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
 
     @Override
     public CsvToBeanMapper<T> registerDecoder(String column, Class<? extends Decoder<?, ? extends Throwable>> decoderClass) throws InstantiationException {
+        log.debug(String.format("registering decoder of class <%s> for column '%s'", decoderClass.getCanonicalName(), column));
         decoderManager.add(column, decoderClass);
         return this;
     }
@@ -47,42 +48,49 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     @Override
     public CsvToBeanMapper<T> registerDecoder(final String column,
                                               final Decoder<?, ? extends Throwable> decoder) {
+        log.debug(String.format("registering decoder for column '%s'", column));
         decoderManager.add(column, decoder);
         return this;
     }
 
     @Override
     public <R> CsvToBeanMapper<T> registerPostProcessor(String column, PostProcessor<R> postProcessor) {
+        log.debug(String.format("registering postprocessor for column '%s'", column));
         decoderManager.addPostProcessor(column, postProcessor);
         return this;
     }
 
     @Override
     public <R> CsvToBeanMapper<T> registerPostProcessor(String column, Class<? extends PostProcessor<R>> postProcessorClass) throws InstantiationException {
+        log.debug(String.format("registering postprocessor of class <%s> for column '%s'", postProcessorClass, column));
         decoderManager.addPostProcessor(column, postProcessorClass);
         return this;
     }
 
     @Override
     public CsvToBeanMapper<T> registerPostValidator(String column, PostValidator postValidator) {
+        log.debug(String.format("registering postvalidator for column '%s'", column));
         decoderManager.addPostValidator(column, postValidator);
         return this;
     }
 
     @Override
     public CsvToBeanMapper<T> registerPostValidator(String column, Class<? extends PostValidator<?>> postValidatorClass) throws InstantiationException {
+        log.debug(String.format("registering postvalidator of class <%s> for column '%s'", postValidatorClass, column));
         decoderManager.addPostValidator(column, postValidatorClass);
         return this;
     }
 
     @Builder
     public static <S> CsvToBeanMapperOfHeader<S> of(@NonNull final Class<? extends S> type, @NonNull final HeaderDirectMappingStrategy<S> strategy) {
+        log.debug(String.format("instantiating new CsvToBeanMapperOfHeader for type <%s>", type.getCanonicalName()));
         strategy.setType(type);
         return new CsvToBeanMapperOfHeader<>(strategy, DecoderManager.init());
     }
 
     @Override
     public CsvToBeanMapperOfHeader<T> withLines(@NonNull final Iterable<String[]> lines) throws IllegalStateException {
+        log.debug("using iterable as source");
         final Iterator<String[]> iterator = lines.iterator();
         if (!iterator.hasNext()) {
             final String msg = "the iterable's iterator is empty, thus no column headers can be retrieved from it";
@@ -92,6 +100,7 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
         final CsvToBeanMapperOfHeader<T> copy = getCopy();
 
         if (!strategy.isHeaderDefined()) {
+            log.debug("retrieving header from input source");
             final String[] header = iterator.next();
             copy.strategy.captureHeader(header);
         }
@@ -103,9 +112,11 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
 
     @Override
     public CsvToBeanMapperOfHeader<T> withReader(final CSVReader csvReader) throws IOException {
+        log.debug("using csvreader as source");
         final CsvToBeanMapperOfHeader<T> copy = getCopy();
         copy.setSource(csvReader);
         if (!strategy.isHeaderDefined()) {
+            log.debug("retrieving header from input source");
             copy.strategy.captureHeader(csvReader);
         }
         copy.setReaderIsSetup();
@@ -138,6 +149,7 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
                 counter++;
                 return () -> {
                     try {
+                        log.debug(String.format("processing line %d", counter));
                         return processLine(getStrategy(), nextLine);
                     } catch (Throwable e) {
                         final String msg = String.format(
@@ -175,12 +187,14 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
 
     @Override
     public CsvToBeanMapper<T> setNullFallthroughForPostProcessors(String column, boolean value) {
+        log.debug(String.format("set fallthrough behaviour of nulls for postprocessing to %b", value));
         decoderManager.setNullFallthroughForPostProcessors(column, value);
         return this;
     }
 
     @Override
     public CsvToBeanMapper<T> setNullFallthroughForPostValidators(String column, boolean value) {
+        log.debug(String.format("set fallthrough behaviour of nulls for postvalidation to %b", value));
         decoderManager.setNullFallthroughForPostValidators(column, value);
         return this;
     }
@@ -192,14 +206,17 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
             log.error(msg);
             throw new IllegalArgumentException(msg);
         }
+        log.debug("setting header manually");
         strategy.captureHeader(header);
     }
 
     boolean unsetReaderIsSetup() {
+        log.debug("marking reader as no setup");
         return readerSetup.getAndSet(false);
     }
 
     boolean setReaderIsSetup() {
+        log.debug("marking reader as setup");
         return readerSetup.getAndSet(true);
     }
 
