@@ -36,7 +36,7 @@ class MinimalBuilder<T> {
     @Getter
     private boolean onErrorSkipLine;
     @Getter
-    private boolean headerFromFields;
+    private boolean headerSet;
 
     public MinimalBuilder(final Class<? extends T> type) {
         this.decoderManager = DecoderManager.init();
@@ -87,15 +87,15 @@ class MinimalBuilder<T> {
         return this;
     }
 
-    public MinimalBuilder<T> setNullFallthroughForPostProcessors(String column, boolean value) {
-        log.debug(String.format("set fallthrough behaviour of nulls for postprocessing to %b", value));
-        decoderManager.setNullFallthroughForPostProcessors(column, value);
+    public MinimalBuilder<T> setNullFallthroughForPostProcessors(String column) {
+        log.debug("set fallthrough behaviour of nulls for postprocessing");
+        decoderManager.setNullFallthroughForPostProcessors(column, true);
         return this;
     }
 
-    public MinimalBuilder<T> setNullFallthroughForPostValidators(String column, boolean value) {
-        log.debug(String.format("set fallthrough behaviour of nulls for postvalidation to %b", value));
-        decoderManager.setNullFallthroughForPostValidators(column, value);
+    public MinimalBuilder<T> setNullFallthroughForPostValidators(String column) {
+        log.debug("set fallthrough behaviour of nulls for postvalidation");
+        decoderManager.setNullFallthroughForPostValidators(column, true);
         return this;
     }
 
@@ -145,9 +145,9 @@ class MinimalBuilder<T> {
         return this;
     }
 
-    public MinimalBuilder<T> setOnErrorSkipLine(boolean value) {
-        log.info(String.format("set onErrorSkipLine to %b", value));
-        this.onErrorSkipLine = value;
+    public MinimalBuilder<T> setOnErrorSkipLine() {
+        log.info("set onErrorSkipLine");
+        this.onErrorSkipLine = true;
         return this;
     }
 

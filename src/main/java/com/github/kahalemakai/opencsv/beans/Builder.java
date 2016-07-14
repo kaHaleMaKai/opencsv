@@ -87,20 +87,20 @@ public class Builder<T> extends MinimalBuilder<T> {
     }
 
     @Override
-    public Builder<T> setNullFallthroughForPostProcessors(String column, boolean value) {
-        super.setNullFallthroughForPostProcessors(column, value);
+    public Builder<T> setNullFallthroughForPostProcessors(String column) {
+        super.setNullFallthroughForPostProcessors(column);
         return this;
     }
 
     @Override
-    public Builder<T> setNullFallthroughForPostValidators(String column, boolean value) {
-        super.setNullFallthroughForPostValidators(column, value);
+    public Builder<T> setNullFallthroughForPostValidators(String column) {
+        super.setNullFallthroughForPostValidators(column);
         return this;
     }
 
     @Override
-    public Builder<T> setOnErrorSkipLine(boolean value) {
-        super.setOnErrorSkipLine(value);
+    public Builder<T> setOnErrorSkipLine() {
+        super.setOnErrorSkipLine();
         return this;
     }
 

@@ -58,7 +58,7 @@ public class CsvToBeanMapperImplTest {
         builder.registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 10)
-                .setOnErrorSkipLine(true);
+                .setOnErrorSkipLine();
         final Iterator<Person> it = builder.withLines(this.iterator).build().iterator();
         if (it.hasNext()) {
             final Person person1 = it.next();
@@ -76,7 +76,7 @@ public class CsvToBeanMapperImplTest {
         builder.registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 10)
-                .setOnErrorSkipLine(true);
+                .setOnErrorSkipLine();
         final Iterator<Person> it = builder.withLines(this.iterator).build().iterator();
         if (it.hasNext()) {
             final Person person1 = it.next();
@@ -120,7 +120,7 @@ public class CsvToBeanMapperImplTest {
                 .registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i / 0)
-                .setNullFallthroughForPostProcessors("age", true)
+                .setNullFallthroughForPostProcessors("age")
                 .withLines(this.iterator).build().iterator();
         it.next();
         it.next();
@@ -132,7 +132,7 @@ public class CsvToBeanMapperImplTest {
                 .registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 1)
-                .setNullFallthroughForPostProcessors("age", true)
+                .setNullFallthroughForPostProcessors("age")
                 .withLines(this.iterator).build().iterator();
 
         final Person person1 = it.next();
@@ -149,8 +149,8 @@ public class CsvToBeanMapperImplTest {
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 1)
                 .registerPostValidator("age", (Integer i) -> i > 100)
-                .setNullFallthroughForPostProcessors("age", true)
-                .setNullFallthroughForPostValidators("age", true)
+                .setNullFallthroughForPostProcessors("age")
+                .setNullFallthroughForPostValidators("age")
                 .withLines(this.iterator)
                 .build()
                 .iterator();
@@ -164,7 +164,7 @@ public class CsvToBeanMapperImplTest {
                 .registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostValidator("age", (Integer i) -> i > 0)
-                .setNullFallthroughForPostValidators("age", true)
+                .setNullFallthroughForPostValidators("age")
                 .withLines(this.iterator)
                 .build()
                 .iterator();
