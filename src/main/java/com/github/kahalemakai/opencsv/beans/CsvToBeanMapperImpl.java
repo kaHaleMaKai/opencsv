@@ -26,6 +26,7 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
     private final static Pattern ignorePattern = Pattern.compile("^\\$ignore[0-9]+\\$$");
     private final static Pattern numberPattern = Pattern.compile("^[^\\d]+(\\d+)\\$$");
     private final static Pattern acceptedNames = Pattern.compile("[_a-zA-Z][_a-zA-Z0-9]*");
+    private final static String ELLIPSIS = "...";
 
     @Getter(AccessLevel.PACKAGE)
     private final HeaderDirectMappingStrategy<T> strategy;
@@ -176,7 +177,7 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
     }
 
     @Override
-    public void setHeader(String...header) throws IllegalArgumentException {
+    public void setHeader(String[] header) throws IllegalArgumentException {
         if (header.length == 0) {
             final String msg = "expected: header.length > 0, got: header.length = 0";
             log.error(msg);
@@ -206,6 +207,9 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
                 final Matcher accpedtedNamesMatcher = acceptedNames.matcher(column);
                 if (accpedtedNamesMatcher.matches() || IGNORE_COLUMN.equals(column)) {
                     headerList.add(column);
+                }
+                else if (ELLIPSIS.equals(column)) {
+                    headerList.add(IGNORE_COLUMN);
                 }
                 else {
                     final String msg = String.format("invalid column name specified: '%s'", column);
