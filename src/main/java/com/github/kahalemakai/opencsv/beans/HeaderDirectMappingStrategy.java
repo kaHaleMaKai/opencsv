@@ -37,6 +37,12 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
         return headerAsList;
     }
 
+    public static <S> HeaderDirectMappingStrategy<S> of(final Class<? extends S> type) {
+        final HeaderDirectMappingStrategy<S> strategy = new HeaderDirectMappingStrategy<S>();
+        strategy.setType(type);
+        return strategy;
+    }
+
     @Override
     public PropertyDescriptor findDescriptor(int col) throws IntrospectionException {
         final String columnName = header[col];
