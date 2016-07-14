@@ -34,7 +34,7 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
     @Getter
     private final boolean onErrorSkipLine;
 
-    CsvToBeanMapperImpl(Builder<T> builder) {
+    CsvToBeanMapperImpl(MinimalBuilder<T> builder) {
         this.strategy = nonNull(builder.getStrategy(), "strategy");
         this.readerSetup = nonNull(builder.getReaderSetup(), "readerSetup");
         this.decoderManager = nonNull(builder.getDecoderManager(), "decoderManager");
