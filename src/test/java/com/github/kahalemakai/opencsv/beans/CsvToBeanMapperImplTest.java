@@ -13,7 +13,7 @@ import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertEquals;
 
-public class CsvToBeanMapperOfHeaderTest {
+public class CsvToBeanMapperImplTest {
     CSVParser parser;
     CsvToBeanMapper<Person> mapper;
     String[] linesWithIgnore;

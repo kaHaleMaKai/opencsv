@@ -80,7 +80,7 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<T> {
 
     CsvToBeanMapper<T> setOnErrorSkipLine(boolean value);
 
-    static <S> CsvToBeanMapperOfHeader<S> fromHeader(Class<? extends S> type) {
-        return CsvToBeanMapperOfHeader.of(type, new HeaderDirectMappingStrategy<S>());
+    static <S> CsvToBeanMapperImpl<S> fromHeader(Class<? extends S> type) {
+        return CsvToBeanMapperImpl.of(type, new HeaderDirectMappingStrategy<S>());
     }
 }

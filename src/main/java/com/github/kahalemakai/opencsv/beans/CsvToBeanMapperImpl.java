@@ -22,7 +22,7 @@ import static com.github.kahalemakai.opencsv.beans.HeaderDirectMappingStrategy.I
 
 @RequiredArgsConstructor
 @Log4j
-class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper<T> {
+class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> {
     private final static Pattern ignorePattern = Pattern.compile("^\\$ignore[0-9]+\\$$");
     private final static Pattern numberPattern = Pattern.compile("^[^\\d]+(\\d+)\\$$");
     private final static Pattern acceptedNames = Pattern.compile("[_a-zA-Z][_a-zA-Z0-9]*");
@@ -90,14 +90,14 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     }
 
     @Builder
-    public static <S> CsvToBeanMapperOfHeader<S> of(@NonNull final Class<? extends S> type, @NonNull final HeaderDirectMappingStrategy<S> strategy) {
-        log.debug(String.format("instantiating new CsvToBeanMapperOfHeader for type <%s>", type.getCanonicalName()));
+    public static <S> CsvToBeanMapperImpl<S> of(@NonNull final Class<? extends S> type, @NonNull final HeaderDirectMappingStrategy<S> strategy) {
+        log.debug(String.format("instantiating new CsvToBeanMapperImpl for type <%s>", type.getCanonicalName()));
         strategy.setType(type);
-        return new CsvToBeanMapperOfHeader<>(strategy, DecoderManager.init());
+        return new CsvToBeanMapperImpl<>(strategy, DecoderManager.init());
     }
 
     @Override
-    public CsvToBeanMapperOfHeader<T> withLines(@NonNull final Iterable<String[]> lines) throws IllegalStateException {
+    public CsvToBeanMapperImpl<T> withLines(@NonNull final Iterable<String[]> lines) throws IllegalStateException {
         log.debug("using iterable as source");
         final Iterator<String[]> iterator = lines.iterator();
         if (!iterator.hasNext()) {
@@ -105,7 +105,7 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
             log.error(msg);
             throw new IllegalStateException(msg);
         }
-        final CsvToBeanMapperOfHeader<T> copy = getCopy();
+        final CsvToBeanMapperImpl<T> copy = getCopy();
 
         if (!strategy.isHeaderDefined()) {
             log.debug("retrieving header from input source");
@@ -119,9 +119,9 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
     }
 
     @Override
-    public CsvToBeanMapperOfHeader<T> withReader(final CSVReader csvReader) throws IOException {
+    public CsvToBeanMapperImpl<T> withReader(final CSVReader csvReader) throws IOException {
         log.debug("using csvreader as source");
-        final CsvToBeanMapperOfHeader<T> copy = getCopy();
+        final CsvToBeanMapperImpl<T> copy = getCopy();
         copy.setSource(csvReader);
         if (!strategy.isHeaderDefined()) {
             log.debug("retrieving header from input source");
@@ -235,8 +235,8 @@ class CsvToBeanMapperOfHeader<T> extends CsvToBean<T> implements CsvToBeanMapper
         return readerSetup.getAndSet(true);
     }
 
-    private CsvToBeanMapperOfHeader<T> getCopy() {
-        final CsvToBeanMapperOfHeader<T> mapper = new CsvToBeanMapperOfHeader<>(this.strategy, this.decoderManager.immutableCopy());
+    private CsvToBeanMapperImpl<T> getCopy() {
+        final CsvToBeanMapperImpl<T> mapper = new CsvToBeanMapperImpl<>(this.strategy, this.decoderManager.immutableCopy());
         mapper.setOnErrorSkipLine(isOnErrorSkipLine());
         if (getReaderSetup().get()) {
             mapper.setReaderIsSetup();
