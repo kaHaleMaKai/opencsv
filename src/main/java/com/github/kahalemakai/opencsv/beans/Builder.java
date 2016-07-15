@@ -31,7 +31,7 @@ public class Builder<T> extends MinimalBuilder<T> {
         }
         // an Iterable may return a fresh iterator on every call to iterator()
         // thus we should rather reuse the iterator we have already read a line from
-        setSource(() -> iterator);
+        source(() -> iterator);
         return this;
     }
 
@@ -41,7 +41,7 @@ public class Builder<T> extends MinimalBuilder<T> {
 
     public MinimalBuilder<T> withReader(final CSVReader csvReader) throws IOException {
         log.debug("using csvreader as source");
-        setSource(csvReader);
+        source(csvReader);
         setReaderSetup(true);
         if (!getStrategy().isHeaderDefined()) {
             log.debug("retrieving header from input source");
@@ -99,8 +99,8 @@ public class Builder<T> extends MinimalBuilder<T> {
     }
 
     @Override
-    public Builder<T> setOnErrorSkipLine() {
-        super.setOnErrorSkipLine();
+    public Builder<T> onErrorSkipLine() {
+        super.onErrorSkipLine();
         return this;
     }
 
@@ -117,9 +117,50 @@ public class Builder<T> extends MinimalBuilder<T> {
     }
 
     @Override
-    protected Builder<T> setSource(Iterable<String[]> source) {
-        super.setSource(source);
+    protected Builder<T> source(Iterable<String[]> source) {
+        super.source(source);
         return this;
     }
 
+    @Override
+    protected Builder<T> escapeChar(char escapeChar) {
+        super.escapeChar(escapeChar);
+        return this;
+    }
+
+    @Override
+    public Builder<T> ignoreQuotes() {
+        super.ignoreQuotes();
+        return this;
+    }
+
+    @Override
+    public Builder<T> nonStrictQuotes() {
+        super.nonStrictQuotes();
+        return this;
+    }
+
+    @Override
+    protected Builder<T> quoteChar(char quoteChar) {
+        super.quoteChar(quoteChar);
+        return this;
+    }
+
+    @Override
+    protected Builder<T> separator(char separator) {
+        super.separator(separator);
+        return this;
+    }
+
+    @Override
+    protected Builder<T> skipLines(int skipLines) {
+        super.skipLines(skipLines);
+        return this;
+    }
+
+    @Override
+    public Builder<T> strictQuotes() {
+        super.strictQuotes();
+        return this;
+    }
 }

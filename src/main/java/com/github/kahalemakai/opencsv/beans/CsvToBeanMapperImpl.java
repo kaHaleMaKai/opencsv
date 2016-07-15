@@ -2,10 +2,7 @@ package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
 import com.opencsv.bean.CsvToBean;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.log4j.Log4j;
 
 import java.beans.PropertyDescriptor;
@@ -26,29 +23,38 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
     private final HeaderDirectMappingStrategy<T> strategy;
     @Getter(AccessLevel.PRIVATE)
     private final AtomicBoolean readerSetup;
-    @Setter(AccessLevel.PRIVATE)
-    @Getter(AccessLevel.PRIVATE)
-    private boolean errorOnClosingReader;
     private final DecoderManager decoderManager;
     private final Iterable<String[]> source;
-    @Getter
-    private final boolean onErrorSkipLine;
+
+    @Getter(AccessLevel.PRIVATE) @Setter
+    private boolean errorOnClosingReader;
+    @Getter private final boolean onErrorSkipLine;
+    @Getter private final int skipLines;
+    @Getter private final char escapeChar;
+    @Getter private final char quoteChar;
+    @Getter private final char separator;
+
+    /*************************************
+     * boolean members and custom setters
+     *************************************/
+    private final boolean ignoreLeadingWhiteSpace;
+    private final boolean strictQuotes;
+    private final boolean ignoreQuotes;
 
     CsvToBeanMapperImpl(MinimalBuilder<T> builder) {
         this.strategy = nonNull(builder.getStrategy(), "strategy");
         this.readerSetup = nonNull(builder.getReaderSetup(), "readerSetup");
         this.decoderManager = nonNull(builder.getDecoderManager(), "decoderManager");
-        this.source = nonNull(builder.getSource(), "source");
-        this.onErrorSkipLine = nonNull(builder.isOnErrorSkipLine(), "onErrorSkipLine");
-    }
-
-    private <S> S nonNull(final S obj, final String name) {
-        if (obj == null) {
-            final String msg = String.format("expected: argument %s != null, got: null", name);
-            log.error(msg);
-            throw new IllegalArgumentException(msg);
-        }
-        return obj;
+        this.source = nonNull(builder.source(), "source");
+        this.onErrorSkipLine = builder.isOnErrorSkipLine();
+        this.skipLines = builder.skipLines();
+        this.escapeChar = builder.escapeChar();
+        this.quoteChar = builder.quoteChar();
+        this.separator = builder.separator();
+        this.ignoreQuotes = builder.isIgnoreQuotes();
+        this.ignoreLeadingWhiteSpace = builder.isIgnoreLeadingWhiteSpace();
+        this.strictQuotes = builder.isStrictQuotes();
+        System.out.println(this.source);
     }
 
     @Override
@@ -95,6 +101,15 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
     boolean setReaderIsSetup() {
         log.debug("marking reader as setup");
         return readerSetup.getAndSet(true);
+    }
+
+    private <S> S nonNull(final S obj, final String name) throws IllegalStateException {
+        if (obj == null) {
+            final String msg = String.format("expected: argument %s != null, got: null", name);
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
+        return obj;
     }
 
     private class NonSkippingIterator implements Iterator {

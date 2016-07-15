@@ -58,7 +58,7 @@ public class CsvToBeanMapperImplTest {
         builder.registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 10)
-                .setOnErrorSkipLine();
+                .onErrorSkipLine();
         final Iterator<Person> it = builder.withLines(this.iterator).build().iterator();
         if (it.hasNext()) {
             final Person person1 = it.next();
@@ -76,7 +76,7 @@ public class CsvToBeanMapperImplTest {
         builder.registerDecoder("age", NullDecoder.class)
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 10)
-                .setOnErrorSkipLine();
+                .onErrorSkipLine();
         final Iterator<Person> it = builder.withLines(this.iterator).build().iterator();
         if (it.hasNext()) {
             final Person person1 = it.next();
@@ -191,8 +191,8 @@ public class CsvToBeanMapperImplTest {
         assertEquals(picard, it.next());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testIteratorThrows() throws Exception {
+    @Test(expected = IllegalStateException.class)
+    public void testBuildThrows() throws Exception {
         builder.build();
     }
 

@@ -20,23 +20,64 @@ import static com.github.kahalemakai.opencsv.beans.HeaderDirectMappingStrategy.I
 
 @Log4j
 class MinimalBuilder<T> {
+    /*******************************
+     * public static final members
+     *******************************/
+    public static final char DEFAULT_ESCAPE_CHAR = '\\';
+    public static final char DEFAULT_QUOTE_CHAR = '"';
+    public static final char DEFAULT_SEPARATOR = ',';
+    public static final boolean DEFAULT_IGNORE_LEADING_WHITESPACE = true;
+    public static final boolean DEFAULT_STRICT_QUOTES = false;
+    public static final boolean DEFAULT_IGNORE_QUOTES = false;
+    public static final int DEFAULT_SKIP_LINES = 0;
+
+    /********************************
+     * private static final members
+     ********************************/
     private final static Pattern ignorePattern = Pattern.compile("^\\$ignore[0-9]+\\$$");
     private final static Pattern numberPattern = Pattern.compile("^[^\\d]+(\\d+)\\$$");
     private final static Pattern acceptedNames = Pattern.compile("[_a-zA-Z][_a-zA-Z0-9]*");
     private final static String ELLIPSIS = "...";
+
+    /**********************************
+     * members with chainable setters
+     **********************************/
+    @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
+    private Iterable<String[]> source;
+    @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
+    private int skipLines = DEFAULT_SKIP_LINES;
+    @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
+    private char escapeChar = DEFAULT_ESCAPE_CHAR;
+    @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
+    private char quoteChar = DEFAULT_QUOTE_CHAR;
+    @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
+    private char separator = DEFAULT_SEPARATOR;
+
+    /*************************************
+     * boolean members and custom setters
+     *************************************/
+    @Getter
+    private boolean ignoreLeadingWhiteSpace = DEFAULT_IGNORE_LEADING_WHITESPACE;
+    @Getter
+    private boolean strictQuotes = DEFAULT_STRICT_QUOTES;
+    @Getter
+    private boolean ignoreQuotes = DEFAULT_IGNORE_QUOTES;
+    @Getter
+    private boolean onErrorSkipLine;
+
+    /*****************************
+     * variables for bookkeeping
+     *****************************/
     @Getter
     private HeaderDirectMappingStrategy<T> strategy;
     @Getter
     private final AtomicBoolean readerSetup;
     @Getter
     private final DecoderManager decoderManager;
-    @Accessors(chain = true)
-    @Getter @Setter(AccessLevel.PROTECTED)
-    private Iterable<String[]> source;
-    @Getter
-    private boolean onErrorSkipLine;
-    @Getter
-    private boolean headerSet;
+
+    /***************************
+     * constructor and builder
+     ***************************/
 
     public MinimalBuilder(final Class<? extends T> type) {
         this.decoderManager = DecoderManager.init();
@@ -45,19 +86,27 @@ class MinimalBuilder<T> {
         this.strategy = HeaderDirectMappingStrategy.of(type);
     }
 
-    protected MinimalBuilder<T> setReaderSetup(final boolean value) {
-        readerSetup.set(value);
-        return this;
+    public CsvToBeanMapper<T> build() throws IllegalStateException {
+        log.debug("building CsvToBeanMapperImpl instance");
+        if (this.onErrorSkipLine) {
+            log.warn("set onErrorSkipLine - only use it if you really need it");
+        }
+        return new CsvToBeanMapperImpl<>(this);
     }
 
-    public MinimalBuilder<T> registerDecoder(String column, Class<? extends Decoder<?, ? extends Throwable>> decoderClass) throws InstantiationException {
+    /*****************************************************
+     * register decoders, postprocessors and -validators
+     *****************************************************/
+
+    public MinimalBuilder<T> registerDecoder(String column, Class<? extends Decoder<?, ? extends Throwable>> decoderClass)
+            throws InstantiationException {
         log.debug(String.format("registering decoder of class <%s> for column '%s'", decoderClass.getCanonicalName(), column));
         decoderManager.add(column, decoderClass);
         return this;
     }
 
     public MinimalBuilder<T> registerDecoder(final String column,
-                                   final Decoder<?, ? extends Throwable> decoder) {
+                                             final Decoder<?, ? extends Throwable> decoder) {
         log.debug(String.format("registering decoder for column '%s'", column));
         decoderManager.add(column, decoder);
         return this;
@@ -69,7 +118,8 @@ class MinimalBuilder<T> {
         return this;
     }
 
-    public <R> MinimalBuilder<T> registerPostProcessor(String column, Class<? extends PostProcessor<R>> postProcessorClass) throws InstantiationException {
+    public <R> MinimalBuilder<T> registerPostProcessor(String column, Class<? extends PostProcessor<R>> postProcessorClass)
+            throws InstantiationException {
         log.debug(String.format("registering postprocessor of class <%s> for column '%s'", postProcessorClass, column));
         decoderManager.addPostProcessor(column, postProcessorClass);
         return this;
@@ -81,9 +131,41 @@ class MinimalBuilder<T> {
         return this;
     }
 
-    public MinimalBuilder<T> registerPostValidator(String column, Class<? extends PostValidator<?>> postValidatorClass) throws InstantiationException {
+    public MinimalBuilder<T> registerPostValidator(String column, Class<? extends PostValidator<?>> postValidatorClass)
+            throws InstantiationException {
         log.debug(String.format("registering postvalidator of class <%s> for column '%s'", postValidatorClass, column));
         decoderManager.addPostValidator(column, postValidatorClass);
+        return this;
+    }
+
+    /****************************************************
+     * custom setters with as few arguments as possible
+     ****************************************************/
+
+    public MinimalBuilder<T> onErrorSkipLine() {
+        log.debug("on error skip line");
+        this.onErrorSkipLine = true;
+        return this;
+    }
+
+    public MinimalBuilder<T> strictQuotes() {
+        log.debug("set strict quotes");
+        this.strictQuotes = true;
+        this.ignoreQuotes = false;
+        return this;
+    }
+
+    public MinimalBuilder<T> nonStrictQuotes() {
+        log.debug("set non-strict quotes");
+        this.strictQuotes = false;
+        this.ignoreQuotes = false;
+        return this;
+    }
+
+    public MinimalBuilder<T> ignoreQuotes() {
+        log.debug("ignore quotes");
+        this.strictQuotes = false;
+        this.ignoreQuotes = true;
         return this;
     }
 
@@ -145,15 +227,13 @@ class MinimalBuilder<T> {
         return this;
     }
 
-    public MinimalBuilder<T> setOnErrorSkipLine() {
-        log.info("set onErrorSkipLine");
-        this.onErrorSkipLine = true;
-        return this;
-    }
+    /**********************
+     * non-public methods
+     **********************/
 
-    public CsvToBeanMapper<T> build() {
-        log.debug("building CsvToBeanMapperImpl instance");
-        return new CsvToBeanMapperImpl<>(this);
+    protected MinimalBuilder<T> setReaderSetup(final boolean value) {
+        readerSetup.set(value);
+        return this;
     }
 
 }
