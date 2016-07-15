@@ -8,6 +8,7 @@ import lombok.NonNull;
 import lombok.extern.log4j.Log4j;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Iterator;
 
 @Log4j
@@ -47,6 +48,12 @@ public class Builder<T> extends MinimalBuilder<T> {
             log.debug("retrieving header from input source");
             getStrategy().captureHeader(csvReader);
         }
+        return this;
+    }
+
+    public MinimalBuilder<T> withReader(final Reader reader) throws IOException {
+        log.debug(String.format("using reader of type %s as source", reader.getClass().getCanonicalName()));
+        this.setReader(reader);
         return this;
     }
 

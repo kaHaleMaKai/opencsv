@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.log4j.Log4j;
 
+import java.io.Reader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,6 +75,8 @@ class MinimalBuilder<T> {
     private final AtomicBoolean readerSetup;
     @Getter
     private final DecoderManager decoderManager;
+    @Getter @Setter(AccessLevel.PROTECTED)
+    private Reader reader;
 
     /***************************
      * constructor and builder

@@ -1,14 +1,22 @@
 package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import com.opencsv.bean.CsvToBean;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyEditor;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -45,7 +53,6 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
         this.strategy = nonNull(builder.getStrategy(), "strategy");
         this.readerSetup = nonNull(builder.getReaderSetup(), "readerSetup");
         this.decoderManager = nonNull(builder.getDecoderManager(), "decoderManager");
-        this.source = nonNull(builder.source(), "source");
         this.onErrorSkipLine = builder.isOnErrorSkipLine();
         this.skipLines = builder.skipLines();
         this.escapeChar = builder.escapeChar();
@@ -54,7 +61,35 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
         this.ignoreQuotes = builder.isIgnoreQuotes();
         this.ignoreLeadingWhiteSpace = builder.isIgnoreLeadingWhiteSpace();
         this.strictQuotes = builder.isStrictQuotes();
-        System.out.println(this.source);
+        this.source = setSource(builder.source(), builder.getReader());
+    }
+
+    private Iterable<String[]> setSource(final Iterable<String[]> iterator, final Reader reader) throws IllegalStateException {
+        if (iterator != null) {
+            return iterator;
+        }
+        else if (reader != null) {
+            final CSVParser csvParser = new CSVParserBuilder()
+                    .withStrictQuotes(this.strictQuotes)
+                    .withIgnoreLeadingWhiteSpace(this.ignoreLeadingWhiteSpace)
+                    .withQuoteChar(this.quoteChar)
+                    .withEscapeChar(this.escapeChar)
+                    .withIgnoreQuotations(this.ignoreQuotes)
+                    .withSeparator(this.separator)
+                    .build();
+            final CSVReader csvReader = new CSVReaderBuilder(reader)
+                    .withSkipLines(this.skipLines)
+                    .withCSVParser(csvParser)
+                    .withVerifyReader(false)
+                    .build();
+            this.setReaderIsSetup();
+            return csvReader;
+        }
+        else {
+            final String msg = "one of iterator and reader must not be null";
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
     }
 
     @Override
