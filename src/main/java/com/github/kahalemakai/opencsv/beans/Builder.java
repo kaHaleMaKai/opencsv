@@ -80,9 +80,11 @@ class Builder<T> {
     private final AtomicBoolean readerSetup;
     @Getter
     private final DecoderManager decoderManager;
-    @Getter @Setter(AccessLevel.PROTECTED)
+    @Getter
     private Reader reader;
-
+    @Getter
+    private Iterator<String> lineIterator;
+    private boolean sourceWasChosen;
     /***************************
      * constructor and builder
      ***************************/
@@ -96,6 +98,11 @@ class Builder<T> {
 
     public CsvToBeanMapper<T> build() throws IllegalStateException {
         log.debug("building CsvToBeanMapperImpl instance");
+        if (!sourceWasChosen) {
+            final String msg = "a CsvToBeanMapper cannot be built without a valid source";
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
         if (this.onErrorSkipLine) {
             log.warn("set onErrorSkipLine - only use it if you really need it");
         }
@@ -105,9 +112,31 @@ class Builder<T> {
     /**************
      * set source
      **************/
-    public Builder<T> withLines(@NonNull final Iterable<String[]> lines) throws IllegalStateException {
-        log.debug("using iterable as source");
+
+    public Builder<T> withLines(@NonNull final Iterable<String> lines) throws IllegalStateException {
+        onSourceChosenThrow();
+        sourceWasChosen = true;
+        log.debug("using iterable of whole lines as source");
+        final Iterator<String> iterator = lines.iterator();
+        if (iterator == null) {
+            final String msg = "passed-into iterable's iterator() returns null";
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
+        this.lineIterator = iterator;
+        return this;
+    }
+
+    public Builder<T> withParsedLines(@NonNull final Iterable<String[]> lines) throws IllegalStateException {
+        onSourceChosenThrow();
+        sourceWasChosen = true;
+        log.debug("using iterable of splitted lines as source");
         final Iterator<String[]> iterator = lines.iterator();
+        if (iterator == null) {
+            final String msg = "passed-into iterable's iterator() returns null";
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
         if (!iterator.hasNext()) {
             final String msg = "the iterable's iterator is empty, thus no column headers can be retrieved from it";
             log.error(msg);
@@ -124,11 +153,9 @@ class Builder<T> {
         return this;
     }
 
-    public Builder<T> withLines(Iterator<String[]> lines) {
-        return withLines(() -> lines);
-    }
-
     public Builder<T> withReader(final CSVReader csvReader) throws IOException {
+        onSourceChosenThrow();
+        sourceWasChosen = true;
         log.debug("using csvreader as source");
         source(csvReader);
         setReaderSetup(true);
@@ -140,8 +167,10 @@ class Builder<T> {
     }
 
     public Builder<T> withReader(final Reader reader) throws IOException {
+        onSourceChosenThrow();
+        sourceWasChosen = true;
         log.debug(String.format("using reader of type %s as source", reader.getClass().getCanonicalName()));
-        this.setReader(reader);
+        this.reader = reader;
         return this;
     }
     /*****************************************************
@@ -290,6 +319,14 @@ class Builder<T> {
     protected Builder<T> setReaderSetup(final boolean value) {
         readerSetup.set(value);
         return this;
+    }
+
+    private void onSourceChosenThrow() throws IllegalStateException {
+        if (sourceWasChosen) {
+            final String msg = "source has already been set and may not be set twice";
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
     }
 
 }

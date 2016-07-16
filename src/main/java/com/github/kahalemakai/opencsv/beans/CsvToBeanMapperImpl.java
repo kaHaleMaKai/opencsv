@@ -6,10 +6,7 @@ import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.bean.CsvToBean;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.log4j.Log4j;
 
 import java.beans.PropertyDescriptor;
@@ -26,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
 @Log4j
+@ToString
 class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> {
     @Getter(AccessLevel.PACKAGE)
     private final HeaderDirectMappingStrategy<T> strategy;
@@ -61,22 +59,26 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
         this.ignoreQuotes = builder.isIgnoreQuotes();
         this.ignoreLeadingWhiteSpace = builder.isIgnoreLeadingWhiteSpace();
         this.strictQuotes = builder.isStrictQuotes();
-        this.source = setSource(builder.source(), builder.getReader());
+        this.source = defineSource(builder.source(), builder.getReader(), builder.getLineIterator());
+        log.debug(String.format("new CsvToBeanMapper instance built:\n%s", this.toString()));
     }
 
-    private Iterable<String[]> setSource(final Iterable<String[]> iterator, final Reader reader) throws IllegalStateException {
-        if (iterator != null) {
-            return iterator;
+    private Iterable<String[]> defineSource(final Iterable<String[]> parsedIterable,
+                                            final Reader reader,
+                                            final Iterator<String> lineIterator)
+            throws IllegalStateException {
+        if (parsedIterable != null) {
+            return parsedIterable;
         }
-        else if (reader != null) {
-            final CSVParser csvParser = new CSVParserBuilder()
-                    .withStrictQuotes(this.strictQuotes)
-                    .withIgnoreLeadingWhiteSpace(this.ignoreLeadingWhiteSpace)
-                    .withQuoteChar(this.quoteChar)
-                    .withEscapeChar(this.escapeChar)
-                    .withIgnoreQuotations(this.ignoreQuotes)
-                    .withSeparator(this.separator)
-                    .build();
+        final CSVParser csvParser = new CSVParserBuilder()
+                .withStrictQuotes(this.strictQuotes)
+                .withIgnoreLeadingWhiteSpace(this.ignoreLeadingWhiteSpace)
+                .withQuoteChar(this.quoteChar)
+                .withEscapeChar(this.escapeChar)
+                .withIgnoreQuotations(this.ignoreQuotes)
+                .withSeparator(this.separator)
+                .build();
+        if (reader != null) {
             final CSVReader csvReader = new CSVReaderBuilder(reader)
                     .withSkipLines(this.skipLines)
                     .withCSVParser(csvParser)
@@ -85,11 +87,27 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
             this.setReaderIsSetup();
             return csvReader;
         }
-        else {
-            final String msg = "one of iterator and reader must not be null";
-            log.error(msg);
-            throw new IllegalStateException(msg);
-        }
+        // lineIterator != null if we reach this line
+        return () -> new Iterator<String[]>() {
+            @Override
+            public boolean hasNext() {
+                return lineIterator.hasNext();
+            }
+
+            @Override
+            public String[] next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                try {
+                    return csvParser.parseLine(lineIterator.next());
+                } catch (IOException e) {
+                    final String msg = "could not parse line";
+                    log.error(msg);
+                    throw new CsvToBeanException(msg, e);
+                }
+            }
+        };
     }
 
     @Override
@@ -105,7 +123,8 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
             log.error(msg);
             throw new IllegalStateException(msg);
         }
-        return isOnErrorSkipLine() ? new SkippingIterator() : new NonSkippingIterator();
+        final int linesToSkip = getReaderSetup().get() ? 0 : getSkipLines();
+        return isOnErrorSkipLine() ? new SkippingIterator(linesToSkip) : new NonSkippingIterator(linesToSkip);
     }
 
     @Override
@@ -149,7 +168,19 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
 
     private class NonSkippingIterator implements Iterator {
         private Iterator<String[]> iterator = source.iterator();
-        private long counter = 0;
+        private long counter;
+
+        public NonSkippingIterator(final int skipLines) {
+            try {
+                for (int i = 0; i < skipLines; ++i) {
+                    if (iterator.hasNext())
+                        iterator.next();
+                }
+            } catch (CsvToBeanException e) {
+                final String msg = "caught exception when trying to skip lines on iterator invocation";
+                log.warn(msg, e);
+            }
+        }
 
         @Override
         public boolean hasNext() {
@@ -187,6 +218,18 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
         private T nextElement;
         private boolean nextElementIsEmpty = true;
         private boolean calledByHasNext;
+
+        public SkippingIterator(final int skipLines) {
+            try {
+                for (int i = 0; i < skipLines; ++i) {
+                    if (iterator.hasNext())
+                        iterator.next();
+                }
+            } catch (CsvToBeanException e) {
+                final String msg = "caught exception when trying to skip lines on iterator invocation";
+                log.warn(msg, e);
+            }
+        }
 
         @Override
         public boolean hasNext() {

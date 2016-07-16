@@ -22,6 +22,8 @@ public class CsvToBeanMapperImplTest {
     Person drObvious;
     Iterator<String[]> iterator;
     Iterator<String[]> iteratorWithIgnore;
+    Iterator<String> unparsedIterator;
+    Iterator<String> unparsedIteratorWithIgnore;
 
     @Test(expected = IllegalArgumentException.class)
     public void testIgnoreColumnThrowsOnIgnore0() throws Exception {
@@ -39,7 +41,9 @@ public class CsvToBeanMapperImplTest {
     public void testIgnoreColumn() throws Exception {
         final String[] header = {"$ignore2$","age","$ignore$","givenName","surName","address","$ignore4$"};
         builder.setHeader(header);
-        final CsvToBeanMapper<Person> beanMapper = builder.withLines(iteratorWithIgnore).build();
+        final CsvToBeanMapper<Person> beanMapper = builder
+                .withLines(() -> unparsedIteratorWithIgnore)
+                .build();
         final Iterator<Person> it = beanMapper.iterator();
         assertEquals(picard, it.next());
     }
@@ -47,7 +51,7 @@ public class CsvToBeanMapperImplTest {
     @Test
     public void testDecoding() throws Exception {
         builder.registerDecoder("surName", (data) -> "Mr. "+data);
-        final Iterator<Person> it = builder.withLines(this.iterator).build().iterator();
+        final Iterator<Person> it = builder.withParsedLines(() -> iterator).build().iterator();
         final Person person = it.next();
         picard.setSurName("Mr. Picard");
         assertEquals(picard, person);
@@ -59,7 +63,7 @@ public class CsvToBeanMapperImplTest {
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 10)
                 .onErrorSkipLine();
-        final Iterator<Person> it = builder.withLines(this.iterator).build().iterator();
+        final Iterator<Person> it = builder.withParsedLines(() -> iterator).build().iterator();
         if (it.hasNext()) {
             final Person person1 = it.next();
             picard.setAge(60);
@@ -77,7 +81,7 @@ public class CsvToBeanMapperImplTest {
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 10)
                 .onErrorSkipLine();
-        final Iterator<Person> it = builder.withLines(this.iterator).build().iterator();
+        final Iterator<Person> it = builder.withParsedLines(() -> iterator).build().iterator();
         if (it.hasNext()) {
             final Person person1 = it.next();
             picard.setAge(60);
@@ -99,7 +103,7 @@ public class CsvToBeanMapperImplTest {
     public void testDecoderChain() throws Exception {
         builder.registerDecoder("age", NullDecoder.class)
               .registerDecoder("age", Integer::parseInt);
-        final Iterator<Person> it = builder.withLines(this.iterator).build().iterator();
+        final Iterator<Person> it = builder.withParsedLines(() -> iterator).build().iterator();
         final Person person1 = it.next();
         final Person person2 = it.next();
         assertEquals(picard, person1);
@@ -109,7 +113,7 @@ public class CsvToBeanMapperImplTest {
     @Test(expected = CsvToBeanException.class)
     public void testDecoderThrows() throws Exception {
         builder.registerDecoder("age", Integer::parseInt);
-        final Iterator<Person> it = builder.withLines(this.iterator).build().iterator();
+        final Iterator<Person> it = builder.withParsedLines(() -> iterator).build().iterator();
         it.next();
         it.next();
     }
@@ -121,7 +125,7 @@ public class CsvToBeanMapperImplTest {
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i / 0)
                 .setNullFallthroughForPostProcessors("age")
-                .withLines(this.iterator).build().iterator();
+                .withParsedLines(() -> iterator).build().iterator();
         it.next();
         it.next();
     }
@@ -133,7 +137,7 @@ public class CsvToBeanMapperImplTest {
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostProcessor("age", (Integer i) -> i + 1)
                 .setNullFallthroughForPostProcessors("age")
-                .withLines(this.iterator).build().iterator();
+                .withParsedLines(() -> iterator).build().iterator();
 
         final Person person1 = it.next();
         final Person person2 = it.next();
@@ -151,7 +155,7 @@ public class CsvToBeanMapperImplTest {
                 .registerPostValidator("age", (Integer i) -> i > 100)
                 .setNullFallthroughForPostProcessors("age")
                 .setNullFallthroughForPostValidators("age")
-                .withLines(this.iterator)
+                .withParsedLines(() -> iterator)
                 .build()
                 .iterator();
         assertEquals(picard, it.next());
@@ -165,7 +169,7 @@ public class CsvToBeanMapperImplTest {
                 .registerDecoder("age", Integer::parseInt)
                 .registerPostValidator("age", (Integer i) -> i > 0)
                 .setNullFallthroughForPostValidators("age")
-                .withLines(this.iterator)
+                .withParsedLines(() -> iterator)
                 .build()
                 .iterator();
 
@@ -177,7 +181,7 @@ public class CsvToBeanMapperImplTest {
 
     @Test
     public void testWithLines() throws Exception {
-        final CsvToBeanMapper<Person> beanMapper = builder.withLines(iterator).build();
+        final CsvToBeanMapper<Person> beanMapper = builder.withParsedLines(() -> iterator).build();
         final Iterator<Person> it = beanMapper.iterator();
         assertEquals(picard, it.next());
     }
@@ -186,7 +190,7 @@ public class CsvToBeanMapperImplTest {
     public void testWithLinesWithManuallyInsertedHeader() throws Exception {
         final String[] header = iterator.next();
         builder.setHeader(header);
-        final CsvToBeanMapper<Person> beanMapper = builder.withLines(iterator).build();
+        final CsvToBeanMapper<Person> beanMapper = builder.withParsedLines(() -> iterator).build();
         final Iterator<Person> it = beanMapper.iterator();
         assertEquals(picard, it.next());
     }
@@ -199,7 +203,9 @@ public class CsvToBeanMapperImplTest {
     @Before
     public void setUp() throws Exception {
         builder = CsvToBeanMapper
-                .builder(Person.class);
+                .builder(Person.class)
+                .quoteChar('\'')
+                .nonStrictQuotes();
 
         parser = new CSVParserBuilder()
                 .withEscapeChar('\\')
@@ -229,7 +235,34 @@ public class CsvToBeanMapperImplTest {
         drObvious.setSurName("Obvious");
         drObvious.setAddress("Somewhere");
 
-        iterator = new Iterator<String[]>() {
+        iterator = toParsedIterator(lines);
+        iteratorWithIgnore = toParsedIterator(linesWithIgnore);
+        unparsedIterator = toUnparsedIterator(lines);
+        unparsedIteratorWithIgnore = toUnparsedIterator(linesWithIgnore);
+
+    }
+
+    private Iterator<String> toUnparsedIterator(final String[] lines) {
+        return new Iterator<String>() {
+            int counter = 0;
+            @Override
+            public boolean hasNext() {
+                return counter < lines.length;
+            }
+
+            @Override
+            public String next() {
+                if (!hasNext())
+                    throw new NoSuchElementException();
+                final String line = lines[counter];
+                counter++;
+                return line;
+            }
+        };
+    }
+
+    private Iterator<String[]> toParsedIterator(final String[] lines) {
+        return new Iterator<String[]>() {
             int counter = 0;
             @Override
             public boolean hasNext() {
@@ -250,29 +283,6 @@ public class CsvToBeanMapperImplTest {
                 return null;
             }
         };
-
-        iteratorWithIgnore = new Iterator<String[]>() {
-            int counter = 0;
-            @Override
-            public boolean hasNext() {
-                return counter < linesWithIgnore.length;
-            }
-
-            @Override
-            public String[] next() {
-                if (!hasNext())
-                    throw new NoSuchElementException();
-                try {
-                    final String[] line = parser.parseLine(linesWithIgnore[counter]);
-                    counter++;
-                    return line;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        };
-
     }
 
 }

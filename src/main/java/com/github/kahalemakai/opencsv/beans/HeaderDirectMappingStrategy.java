@@ -29,8 +29,8 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
         if (headerAsList == null) {
             if (header == null) {
                 final String msg = "header has not been set";
-                log.error(msg);
-                throw new IllegalStateException(msg);
+                log.warn(msg);
+                return Collections.emptyList();
             }
             headerAsList = Collections.unmodifiableList(new ArrayList<>(Arrays.asList(header)));
         }
@@ -47,6 +47,13 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
     public PropertyDescriptor findDescriptor(int col) throws IntrospectionException {
         final String columnName = header[col];
         return findDescriptor(columnName);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("HeaderDirectMappingStrategy(type=%s, header=%s)",
+                getType(),
+                getHeader());
     }
 
     @Override

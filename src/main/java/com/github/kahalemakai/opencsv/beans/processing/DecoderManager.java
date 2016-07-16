@@ -1,5 +1,6 @@
 package com.github.kahalemakai.opencsv.beans.processing;
 
+import lombok.ToString;
 import lombok.extern.log4j.Log4j;
 
 import java.beans.PropertyEditor;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Log4j
+@ToString
 public class DecoderManager {
     private final Map<String, DecoderPropertyEditor<?>> decoderMap;
     private final Map<Class<? extends Decoder<?, ? extends Throwable>>, Decoder<?, ? extends Throwable>> decoderClassMap;
