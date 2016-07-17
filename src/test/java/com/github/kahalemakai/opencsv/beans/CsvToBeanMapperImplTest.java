@@ -8,6 +8,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -24,6 +26,7 @@ public class CsvToBeanMapperImplTest {
     Iterator<String[]> iteratorWithIgnore;
     Iterator<String> unparsedIterator;
     Iterator<String> unparsedIteratorWithIgnore;
+    Reader reader;
 
     @Test(expected = IllegalArgumentException.class)
     public void testIgnoreColumnThrowsOnIgnore0() throws Exception {
@@ -46,6 +49,13 @@ public class CsvToBeanMapperImplTest {
                 .build();
         final Iterator<Person> it = beanMapper.iterator();
         assertEquals(picard, it.next());
+    }
+
+    @Test
+    public void testReader() throws Exception {
+        final Iterator<Person> it = builder.withReader(reader).build().iterator();
+        final Person person = it.next();
+        assertEquals(picard, person);
     }
 
     @Test
@@ -239,7 +249,12 @@ public class CsvToBeanMapperImplTest {
         iteratorWithIgnore = toParsedIterator(linesWithIgnore);
         unparsedIterator = toUnparsedIterator(lines);
         unparsedIteratorWithIgnore = toUnparsedIterator(linesWithIgnore);
+        final StringBuilder sb = new StringBuilder();
+        for (String line : lines) {
+            sb.append(line).append("\n");
+        }
 
+        reader = new StringReader(sb.toString());
     }
 
     private Iterator<String> toUnparsedIterator(final String[] lines) {

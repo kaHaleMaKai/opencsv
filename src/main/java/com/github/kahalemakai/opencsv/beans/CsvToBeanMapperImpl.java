@@ -85,6 +85,16 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
                     .withVerifyReader(false)
                     .build();
             this.setReaderIsSetup();
+            if (!isHeaderDefined()) {
+                try {
+                    strategy.captureHeader(csvReader);
+                } catch (IOException e) {
+                    final String msg = "could not obtain header from Reader instance";
+                    log.error(msg);
+                    throw new IllegalStateException(msg, e);
+                }
+                strategy.setHeaderDefined(true);
+            }
             return csvReader;
         }
         // lineIterator != null if we reach this line
@@ -166,20 +176,41 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
         return obj;
     }
 
-    private class NonSkippingIterator implements Iterator {
-        private Iterator<String[]> iterator = source.iterator();
-        private long counter;
+    private boolean isHeaderDefined() {
+        return strategy.isHeaderDefined();
+    }
 
-        public NonSkippingIterator(final int skipLines) {
+    private abstract class CsvIterator implements Iterator<T> {
+        abstract protected Iterator<String[]> getIterator();
+
+        public CsvIterator(final int skipLines) {
+            final Iterator<String[]> iterator = getIterator();
             try {
                 for (int i = 0; i < skipLines; ++i) {
                     if (iterator.hasNext())
                         iterator.next();
                 }
+                if (!isHeaderDefined()) {
+                    if (iterator.hasNext()) {
+                        final String[] nextLine = iterator.next();
+                        Builder.setHeader(getStrategy(), nextLine);
+                    }
+                }
             } catch (CsvToBeanException e) {
                 final String msg = "caught exception when trying to skip lines on iterator invocation";
                 log.warn(msg, e);
             }
+        }
+
+    }
+
+    private class NonSkippingIterator extends CsvIterator {
+        @Getter(AccessLevel.PROTECTED)
+        private Iterator<String[]> iterator = source.iterator();
+        private long counter;
+
+        public NonSkippingIterator(final int skipLines) {
+            super(skipLines);
         }
 
         @Override
@@ -212,7 +243,8 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
 
     }
 
-    private class SkippingIterator implements Iterator<T> {
+    private class SkippingIterator extends CsvIterator {
+        @Getter(AccessLevel.PROTECTED)
         private Iterator<String[]> iterator = source.iterator();
         private long counter;
         private T nextElement;
@@ -220,15 +252,7 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
         private boolean calledByHasNext;
 
         public SkippingIterator(final int skipLines) {
-            try {
-                for (int i = 0; i < skipLines; ++i) {
-                    if (iterator.hasNext())
-                        iterator.next();
-                }
-            } catch (CsvToBeanException e) {
-                final String msg = "caught exception when trying to skip lines on iterator invocation";
-                log.warn(msg, e);
-            }
+            super(skipLines);
         }
 
         @Override

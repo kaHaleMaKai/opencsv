@@ -142,7 +142,7 @@ class Builder<T> {
             log.error(msg);
             throw new IllegalStateException(msg);
         }
-        if (!getStrategy().isHeaderDefined()) {
+        if (!isHeaderDefined()) {
             log.debug("retrieving header from input source");
             final String[] header = iterator.next();
             getStrategy().captureHeader(header);
@@ -159,7 +159,7 @@ class Builder<T> {
         log.debug("using csvreader as source");
         source(csvReader);
         setReaderSetup(true);
-        if (!getStrategy().isHeaderDefined()) {
+        if (!isHeaderDefined()) {
             log.debug("retrieving header from input source");
             getStrategy().captureHeader(csvReader);
         }
@@ -267,6 +267,11 @@ class Builder<T> {
     }
 
     public Builder<T> setHeader(String[] header) throws IllegalArgumentException {
+        setHeader(getStrategy(), header);
+        return this;
+    }
+
+    public static <S> void setHeader(HeaderDirectMappingStrategy<S> strategy, String[] header) throws IllegalArgumentException {
         if (header.length == 0) {
             final String msg = "expected: header.length > 0, got: header.length = 0";
             log.error(msg);
@@ -291,16 +296,13 @@ class Builder<T> {
                 for (int i = 0; i < number; ++i) {
                     headerList.add(IGNORE_COLUMN);
                 }
-            }
-            else {
+            } else {
                 final Matcher accpedtedNamesMatcher = acceptedNames.matcher(column);
                 if (accpedtedNamesMatcher.matches() || IGNORE_COLUMN.equals(column)) {
                     headerList.add(column);
-                }
-                else if (ELLIPSIS.equals(column)) {
+                } else if (ELLIPSIS.equals(column)) {
                     headerList.add(IGNORE_COLUMN);
-                }
-                else {
+                } else {
                     final String msg = String.format("invalid column name specified: '%s'", column);
                     log.error(msg);
                     throw new IllegalArgumentException(msg);
@@ -309,7 +311,6 @@ class Builder<T> {
         }
         final String[] completeHeader = headerList.toArray(new String[headerList.size()]);
         strategy.captureHeader(completeHeader);
-        return this;
     }
 
     /**********************
@@ -327,6 +328,10 @@ class Builder<T> {
             log.error(msg);
             throw new IllegalStateException(msg);
         }
+    }
+
+    private boolean isHeaderDefined() {
+        return getStrategy().isHeaderDefined();
     }
 
 }
