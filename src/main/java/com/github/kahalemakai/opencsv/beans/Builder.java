@@ -4,7 +4,6 @@ import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
-import com.opencsv.CSVReader;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,7 +12,10 @@ import lombok.experimental.Accessors;
 import lombok.extern.log4j.Log4j;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,13 +38,22 @@ public class Builder<T> {
     public static final boolean DEFAULT_STRICT_QUOTES = false;
     public static final boolean DEFAULT_IGNORE_QUOTES = false;
     public static final int DEFAULT_SKIP_LINES = 0;
+    public static final Charset DEFAULT_CHAR_SET;
 
+    static {
+        if (Charset.isSupported("UTF-8")) {
+            DEFAULT_CHAR_SET = Charset.forName("UTF-8");
+        }
+        else {
+            DEFAULT_CHAR_SET = Charset.defaultCharset();
+        }
+    }
     /********************************
      * private static final members
      ********************************/
-    private final static Pattern ignorePattern = Pattern.compile("^\\$ignore[0-9]+\\$$");
-    private final static Pattern numberPattern = Pattern.compile("^[^\\d]+(\\d+)\\$$");
-    private final static Pattern acceptedNames = Pattern.compile("[_a-zA-Z][_a-zA-Z0-9]*");
+    private final static Pattern IGNORE_PATTERN = Pattern.compile("^\\$ignore[0-9]+\\$$");
+    private final static Pattern NUMBER_PATTERN = Pattern.compile("^[^\\d]+(\\d+)\\$$");
+    private final static Pattern ACCEPTED_NAMES = Pattern.compile("[_a-zA-Z][_a-zA-Z0-9]*");
     private final static String ELLIPSIS = "...";
 
     /**********************************
@@ -58,6 +69,8 @@ public class Builder<T> {
     private char quoteChar = DEFAULT_QUOTE_CHAR;
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private char separator = DEFAULT_SEPARATOR;
+    @Accessors(chain = true, fluent = true) @Getter @Setter
+    private Charset charset = DEFAULT_CHAR_SET;
 
     /*************************************
      * boolean members and custom setters
@@ -153,19 +166,6 @@ public class Builder<T> {
         return this;
     }
 
-    public Builder<T> withReader(final CSVReader csvReader) throws IOException {
-        onSourceChosenThrow();
-        sourceWasChosen = true;
-        log.debug("using csvreader as source");
-        source(csvReader);
-        setReaderSetup(true);
-        if (!isHeaderDefined()) {
-            log.debug("retrieving header from input source");
-            getStrategy().captureHeader(csvReader);
-        }
-        return this;
-    }
-
     public Builder<T> withReader(final Reader reader) throws IOException {
         onSourceChosenThrow();
         sourceWasChosen = true;
@@ -173,6 +173,15 @@ public class Builder<T> {
         this.reader = reader;
         return this;
     }
+
+    public Builder<T> withInputStream(final InputStream stream) throws IOException {
+        onSourceChosenThrow();
+        sourceWasChosen = true;
+        log.debug(String.format("using inputstream of type %s as source", stream.getClass().getCanonicalName()));
+        this.reader = new InputStreamReader(stream, this.charset);
+        return this;
+    }
+
     /*****************************************************
      * register decoders, postprocessors and -validators
      *****************************************************/
@@ -280,9 +289,9 @@ public class Builder<T> {
         log.debug("setting header manually");
         List<String> headerList = new LinkedList<>();
         for (final String column : header) {
-            final Matcher matcher = ignorePattern.matcher(column);
+            final Matcher matcher = IGNORE_PATTERN.matcher(column);
             if (matcher.matches()) {
-                final Matcher numberMatcher = numberPattern.matcher(column);
+                final Matcher numberMatcher = NUMBER_PATTERN.matcher(column);
                 int number = 1;
                 if (numberMatcher.matches()) {
                     final String numberAsString = numberMatcher.group(1);
@@ -297,7 +306,7 @@ public class Builder<T> {
                     headerList.add(IGNORE_COLUMN);
                 }
             } else {
-                final Matcher accpedtedNamesMatcher = acceptedNames.matcher(column);
+                final Matcher accpedtedNamesMatcher = ACCEPTED_NAMES.matcher(column);
                 if (accpedtedNamesMatcher.matches() || IGNORE_COLUMN.equals(column)) {
                     headerList.add(column);
                 } else if (ELLIPSIS.equals(column)) {

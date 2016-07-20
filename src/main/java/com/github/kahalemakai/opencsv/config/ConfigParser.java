@@ -17,6 +17,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -80,6 +81,7 @@ public class ConfigParser {
         final Optional<String> ignoreLeadingWhiteSpace = getValue(reader, "ignoreLeadingWhiteSpace");
         final Optional<String> onErrorSkipLine = getValue(reader, "onErrorSkipLine");
         final Optional<String> quotingBehaviour = getValue(reader, "quotingBehaviour");
+        final Optional<String> charset = getValue(reader, "charset");
 
         final Node config = doc.getElementsByTagName("bean:config").item(0);
         final Optional<String> className = getValue(config, "class");
@@ -139,6 +141,7 @@ public class ConfigParser {
             final int i = Integer.parseInt(skipLines.get());
             builder.skipLines(i);
         }
+        if (charset.isPresent()) builder.charset(Charset.forName(charset.get()));
         configureFields(config, builder);
         return builder.build();
     }

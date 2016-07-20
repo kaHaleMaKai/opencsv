@@ -29,6 +29,7 @@
         <xs:attribute name="ignoreLeadingWhiteSpace" type="xs:boolean" default="true" />
         <xs:attribute name="onErrorSkipLine" type="xs:boolean" default="false" />
         <xs:attribute name="quotingBehaviour" type="csv:QuotingMode" default="non-strict" />
+        <xs:attribute name="charset" type="xs:string" default="UTF-8" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="ColumnAttributes">

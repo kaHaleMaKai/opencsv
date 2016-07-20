@@ -7,9 +7,7 @@ import com.opencsv.CSVParserBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -26,6 +24,7 @@ public class CsvToBeanMapperImplTest {
     Iterator<String[]> iteratorWithIgnore;
     Iterator<String> unparsedIterator;
     Iterator<String> unparsedIteratorWithIgnore;
+    InputStream is;
     Reader reader;
 
     @Test(expected = IllegalArgumentException.class)
@@ -49,6 +48,13 @@ public class CsvToBeanMapperImplTest {
                 .build();
         final Iterator<Person> it = beanMapper.iterator();
         assertEquals(picard, it.next());
+    }
+
+    @Test
+    public void testInputStream() throws Exception {
+        final Iterator<Person> it = builder.withInputStream(is).build().iterator();
+        final Person person = it.next();
+        assertEquals(picard, person);
     }
 
     @Test
@@ -254,6 +260,7 @@ public class CsvToBeanMapperImplTest {
             sb.append(line).append("\n");
         }
         reader = new StringReader(sb.toString());
+        is = new ByteArrayInputStream(sb.toString().getBytes());
     }
 
     private Iterator<String> toUnparsedIterator(final String[] lines) {
