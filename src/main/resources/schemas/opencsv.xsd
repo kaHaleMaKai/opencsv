@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://github.com/kaHaleMaKai/opencsv"
+           xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
+           xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
+           elementFormDefault="qualified">
+
+    <xs:import schemaLocation="bean.xsd"
+               namespace="http://github.com/kaHaleMaKai/opencsv/bean" />
+    <xs:import schemaLocation="csv.xsd"
+               namespace="http://github.com/kaHaleMaKai/opencsv/csv" />
+
+    <xs:element name="resources">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="csv:reader" />
+                <xs:element ref="bean:config" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

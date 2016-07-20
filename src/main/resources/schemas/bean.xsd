@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://github.com/kaHaleMaKai/opencsv/bean"
+           xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
+           elementFormDefault="qualified">
+
+
+    <!--type definitions-->
+
+    <xs:complexType name="Processor">
+        <xs:attributeGroup ref="bean:ProcessorAttributes" />
+    </xs:complexType>
+
+
+    <xs:complexType name="Field">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="decoder" type="bean:Processor" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="postProcessor" type="bean:Processor" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="postValidator" type="bean:Processor" minOccurs="0" maxOccurs="unbounded" />
+        </xs:choice>
+
+        <xs:attributeGroup ref="bean:FieldAttributes" />
+    </xs:complexType>
+
+    <!--attribute definitions-->
+
+    <xs:attributeGroup name="BeanAttributes">
+        <xs:attribute name="class" use="required" />
+    </xs:attributeGroup>
+
+    <xs:attributeGroup name="FieldAttributes">
+        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="data" type="xs:string" use="optional" />
+        <xs:attribute name="value" type="xs:string" use="optional" />
+        <xs:attribute name="type" type="xs:string" use="optional" />
+    </xs:attributeGroup>
+
+    <xs:attributeGroup name="ProcessorAttributes">
+        <xs:attribute name="type" use="required" />
+    </xs:attributeGroup>
+
+    <!--element definitions-->
+
+    <xs:element name="config">
+        <xs:complexType>
+
+            <xs:sequence maxOccurs="unbounded">
+                <xs:element name="field" type="bean:Field" />
+            </xs:sequence>
+
+            <xs:attributeGroup ref="bean:BeanAttributes" />
+
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

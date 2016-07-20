@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 import static com.github.kahalemakai.opencsv.beans.HeaderDirectMappingStrategy.IGNORE_COLUMN;
 
 @Log4j
-class Builder<T> {
+public class Builder<T> {
 
     /*******************************
      * public static final members
@@ -50,13 +50,13 @@ class Builder<T> {
      **********************************/
     @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
     private Iterable<String[]> source;
-    @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
+    @Accessors(chain = true, fluent = true) @Getter @Setter
     private int skipLines = DEFAULT_SKIP_LINES;
-    @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
+    @Accessors(chain = true, fluent = true) @Getter @Setter
     private char escapeChar = DEFAULT_ESCAPE_CHAR;
-    @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
+    @Accessors(chain = true, fluent = true) @Getter @Setter
     private char quoteChar = DEFAULT_QUOTE_CHAR;
-    @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
+    @Accessors(chain = true, fluent = true) @Getter @Setter
     private char separator = DEFAULT_SEPARATOR;
 
     /*************************************

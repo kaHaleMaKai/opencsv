@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://github.com/kaHaleMaKai/opencsv/csv"
+           xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
+           elementFormDefault="qualified">
+
+    <!--type definitions-->
+
+    <xs:simpleType name="QuotingMode">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="strict" />
+            <xs:enumeration value="non-strict" />
+            <xs:enumeration value="ignore" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="PositiveInt">
+        <xs:restriction base="xs:int">
+            <xs:minInclusive value="1" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!--attribute definitions-->
+
+    <xs:attributeGroup name="ReaderAttributes">
+        <xs:attribute name="separator" type="xs:string" default="&#9;" />
+        <xs:attribute name="skipLines" type="xs:int" default="0" />
+        <xs:attribute name="quoteChar" type="xs:string" default="&quot;" />
+        <xs:attribute name="ignoreLeadingWhiteSpace" type="xs:boolean" default="true" />
+        <xs:attribute name="onErrorSkipLine" type="xs:boolean" default="false" />
+        <xs:attribute name="quotingBehaviour" type="csv:QuotingMode" default="non-strict" />
+    </xs:attributeGroup>
+
+    <xs:attributeGroup name="ColumnAttributes">
+        <xs:attribute name="name" type="xs:string" use="required" />
+    </xs:attributeGroup>
+
+    <xs:attributeGroup name="IgnoreAttributes">
+        <xs:attribute name="count" default="1" type="csv:PositiveInt" />
+    </xs:attributeGroup>
+
+    <!--element definitions-->
+
+    <xs:element name="reader">
+        <xs:complexType>
+            <xs:choice minOccurs="1" maxOccurs="unbounded">
+
+                <xs:element name="column">
+                    <xs:complexType>
+                        <xs:attributeGroup ref="csv:ColumnAttributes" />
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element name="ignore">
+                    <xs:complexType>
+                        <xs:attributeGroup ref="csv:IgnoreAttributes" />
+                    </xs:complexType>
+                </xs:element>
+
+            </xs:choice>
+            <xs:attributeGroup ref="csv:ReaderAttributes" />
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

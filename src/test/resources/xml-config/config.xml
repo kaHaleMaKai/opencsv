@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.2.0/opencsv.xsd"
+                   xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
+                   xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
+                   xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
+
+    <csv:reader quoteChar="&apos;">
+        <csv:ignore count="2"/>
+        <csv:column name="age" />
+        <csv:ignore />
+        <csv:column name="givenName" />
+        <csv:column name="surName" />
+        <csv:column name="address" />
+        <csv:ignore count="4"/>
+    </csv:reader>
+
+    <bean:config class="com.github.kahalemakai.opencsv.examples.Person">
+        <bean:field name="age">
+            <bean:decoder type="NullDecoder" />
+            <bean:decoder type="IntDecoder" />
+            <bean:postProcessor type="com.github.kahalemakai.opencsv.examples.IncrementBy10" />
+            <bean:postValidator type="PositiveInt" />
+        </bean:field>
+        <bean:field name="givenName" />
+        <bean:field name="surName" />
+        <bean:field name="address" data="address" />
+    </bean:config>
+
+</opencsv:resources>

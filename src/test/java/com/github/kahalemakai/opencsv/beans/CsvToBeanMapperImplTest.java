@@ -253,7 +253,6 @@ public class CsvToBeanMapperImplTest {
         for (String line : lines) {
             sb.append(line).append("\n");
         }
-
         reader = new StringReader(sb.toString());
     }
 
