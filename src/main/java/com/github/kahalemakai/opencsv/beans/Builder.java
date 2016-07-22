@@ -4,14 +4,12 @@ import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.log4j.Log4j;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -25,18 +23,50 @@ import java.util.regex.Pattern;
 
 import static com.github.kahalemakai.opencsv.beans.HeaderDirectMappingStrategy.IGNORE_COLUMN;
 
+/**
+ * Build a mapper that converts csvs into java beans.
+ * <p>
+ * All relevant methods for setting up a converter, are included in the builder.
+ * The {@code CsvToBeanMapper} class only contains a small api.
+ *
+ * @param <T> type of bean for conversion
+ */
 @Log4j
 public class Builder<T> {
 
-    /*******************************
+    /* *****************************
      * public static final members
-     *******************************/
+     * *****************************/
+    /**
+     * default escape character
+     */
     public static final char DEFAULT_ESCAPE_CHAR = '\\';
+    /**
+     * default quote character
+     */
     public static final char DEFAULT_QUOTE_CHAR = '"';
+    /**
+     * default separator
+     */
     public static final char DEFAULT_SEPARATOR = ',';
+    /**
+     * default for ignoring leading white spaces
+     */
+    /**
+     * default is ignore leading white space
+     */
     public static final boolean DEFAULT_IGNORE_LEADING_WHITESPACE = true;
+    /**
+     * default is non-strict quotes
+     */
     public static final QuotingMode DEFAULT_QUOTING_MODE = QuotingMode.NON_STRICT_QUOTES;
+    /**
+     * default is not to skip any lines
+     */
     public static final int DEFAULT_SKIP_LINES = 0;
+    /**
+     * default charset it utf-8, or if unavailable, platform default
+     */
     public static final Charset DEFAULT_CHAR_SET;
 
     static {
@@ -47,58 +77,154 @@ public class Builder<T> {
             DEFAULT_CHAR_SET = Charset.defaultCharset();
         }
     }
-    /********************************
+    /* ******************************
      * private static final members
-     ********************************/
+     ** *****************************/
     private final static Pattern IGNORE_PATTERN = Pattern.compile("^\\$ignore[0-9]+\\$$");
     private final static Pattern NUMBER_PATTERN = Pattern.compile("^[^\\d]+(\\d+)\\$$");
     private final static Pattern ACCEPTED_NAMES = Pattern.compile("[_a-zA-Z][_a-zA-Z0-9]*");
     private final static String ELLIPSIS = "...";
 
-    /**********************************
+    /* ********************************
      * members with chainable setters
-     **********************************/
-    @Accessors(chain = true, fluent = true) @Getter @Setter(AccessLevel.PROTECTED)
+     * ********************************/
+
+    /**
+     * Source for the main processing loop.
+     * <p>
+     * It consists of lines, parsed and split appropriately into fields.
+     * @param source parsed and split lines
+     * @return the parsed and split lines
+     */
+    @Accessors(chain = true, fluent = true) @Getter @Setter
     private Iterable<String[]> source;
+    /**
+     * Number of lines (of input the input source) to skip.
+     *
+     * @param skipLines number of lines to skip
+     * @return number of lines to skip
+     */
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private int skipLines = DEFAULT_SKIP_LINES;
+    /**
+     * Escape character in parsed csvs.
+     *
+     * @param escape character
+     * @return escape character
+     */
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private char escapeChar = DEFAULT_ESCAPE_CHAR;
+    /**
+     * Quoting or enclosing character.
+     *
+     * @param quoting character
+     * @return quoting character
+     */
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private char quoteChar = DEFAULT_QUOTE_CHAR;
+    /**
+     * Character separating fields in a csv.
+     *
+     * @param separating character
+     * @return separating character
+     */
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private char separator = DEFAULT_SEPARATOR;
+    /**
+     * The charset used for reading from an input stream.
+     *
+     * @param the charset for reading from an input stream
+     * @return the charset for reading from an input stream
+     */
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private Charset charset = DEFAULT_CHAR_SET;
+    /**
+     * Interpretation of quoting characters in a csv.
+     * <p>
+     * Permittable modes are:
+     * <ul>
+     *     <li>strict quotes: only accept quoted fields</li>
+     *     <li>non-strict quotes: quoting is optional</li>
+     *     <li>ignore quotes: don't interpret quotes as enclosing fields</li>
+     * </ul>
+     */
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private QuotingMode quotingMode = DEFAULT_QUOTING_MODE;
 
-    /*************************************
+    /* ***********************************
      * boolean members and custom setters
-     *************************************/
+     * ***********************************/
+    /**
+     * Ignore leading white space.
+     *
+     * @return whether to ignore leading white space
+     */
     @Getter
     private boolean ignoreLeadingWhiteSpace = DEFAULT_IGNORE_LEADING_WHITESPACE;
+    /**
+     * Skip to next line, if an error is caught during parsing or processing of a line.
+     *
+     * @return if to skip to next line on error
+     */
     @Getter
     private boolean onErrorSkipLine;
 
-    /*****************************
+    /* ***************************
      * variables for bookkeeping
-     *****************************/
+     * ***************************/
+
+    /**
+     * The strategy used for mapping csv fields to bean properties.
+     *
+     * @return mapping strategy
+     */
     @Getter
     private HeaderDirectMappingStrategy<T> strategy;
+    /**
+     * Mark if a reader instance has been setup.
+     * <p>
+     * This is used for bookkeeping: the respective reader has to be closed finally.
+     *
+     * @return if a reader has been setup
+     */
     @Getter
     private final AtomicBoolean readerSetup;
+    /**
+     * Manages decoders, post-processors and -validators and delegates requests to them.
+     *
+     * @param the decoder manager instance used for bookkeeping
+     */
     @Getter
     private final DecoderManager decoderManager;
+    /**
+     * A reader instance used as source.
+     *
+     * @return reader instance used as source
+     */
     @Getter
     private Reader reader;
+    /**
+     * An iterator of yet to parse lines.
+     *
+     * @return lineIterator unparsed lines
+     */
     @Getter
     private Iterator<String> lineIterator;
-    private boolean sourceWasChosen;
-    /***************************
-     * constructor and builder
-     ***************************/
 
+    private InputStream inputStream;
+    private boolean sourceWasChosen;
+
+    /* *************************
+     * constructor and builder
+     * *************************/
+
+    /**
+     * Construct a new Builder instance.
+     * <p>
+     * All bookkeeping is done automatically.
+     *
+     * @param type class object of bean to map the csv fields onto
+     */
     public Builder(final Class<? extends T> type) {
         this.decoderManager = DecoderManager.init();
         this.readerSetup = new AtomicBoolean(false);
@@ -106,6 +232,12 @@ public class Builder<T> {
         this.strategy = HeaderDirectMappingStrategy.of(type);
     }
 
+    /**
+     * Construct a new {@code CsvToBeanMapper} from the builder.
+     *
+     * @return new {@code CsvToBeanMapper} instance
+     * @throws IllegalStateException if builder is in any illegal state
+     */
     public CsvToBeanMapper<T> build() throws IllegalStateException {
         log.debug("building CsvToBeanMapperImpl instance");
         if (!sourceWasChosen) {
@@ -116,13 +248,25 @@ public class Builder<T> {
         if (this.onErrorSkipLine) {
             log.warn("set onErrorSkipLine - only use it if you really need it");
         }
+        // necessary to setup InputStreamReader at the end,
+        // so the character set will have been set before
+        if (this.inputStream != null) {
+            this.reader = new InputStreamReader(this.inputStream, this.charset);
+        }
         return new CsvToBeanMapperImpl<>(this);
     }
 
-    /**************
+    /* ************
      * set source
-     **************/
+     * ************/
 
+    /**
+     * Use csv mapper with a source of yet to be parsed lines.
+     *
+     * @param lines yet to be parsed lines
+     * @return the {@code Builder} instance
+     * @throws IllegalStateException if either of {@code lines} or {@code lines.iterator()} is null, or the iterator is empty
+     */
     public Builder<T> withLines(@NonNull final Iterable<String> lines) throws IllegalStateException {
         onSourceChosenThrow();
         sourceWasChosen = true;
@@ -133,10 +277,22 @@ public class Builder<T> {
             log.error(msg);
             throw new IllegalStateException(msg);
         }
+        if (!iterator.hasNext()) {
+            final String msg = "passed-into iterable's iterator is depleted";
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
         this.lineIterator = iterator;
         return this;
     }
 
+    /**
+     * Use bean mapper with a source of already parsed lines.
+     *
+     * @param lines already parsed lines
+     * @return the {@code Builder} instance
+     * @throws IllegalStateException if either of {@code lines} or {@code lines.iterator()} is null, or the iterator is empty
+     */
     public Builder<T> withParsedLines(@NonNull final Iterable<String[]> lines) throws IllegalStateException {
         onSourceChosenThrow();
         sourceWasChosen = true;
@@ -163,7 +319,13 @@ public class Builder<T> {
         return this;
     }
 
-    public Builder<T> withReader(final Reader reader) throws IOException {
+    /**
+     * Setup csv mapper with a reader of unparsed lines as source.
+     *
+     * @param reader reader to be used as source
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> withReader(final Reader reader) {
         onSourceChosenThrow();
         sourceWasChosen = true;
         log.debug(String.format("using reader of type %s as source", reader.getClass().getCanonicalName()));
@@ -171,17 +333,23 @@ public class Builder<T> {
         return this;
     }
 
-    public Builder<T> withInputStream(final InputStream stream) throws IOException {
+    /**
+     * Setup csv mapper with an inputstream of unparsed data as source.
+     *
+     * @param inputStream inputstream to be used as source
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> withInputStream(final InputStream inputStream) {
         onSourceChosenThrow();
         sourceWasChosen = true;
-        log.debug(String.format("using inputstream of type %s as source", stream.getClass().getCanonicalName()));
-        this.reader = new InputStreamReader(stream, this.charset);
+        this.inputStream = inputStream;
+        log.debug(String.format("using inputstream of type %s as source", inputStream.getClass().getCanonicalName()));
         return this;
     }
 
-    /*****************************************************
+    /* ***************************************************
      * register decoders, postprocessors and -validators
-     *****************************************************/
+     * ***************************************************/
 
     public Builder<T> registerDecoder(String column, Class<? extends Decoder<?, ? extends Throwable>> decoderClass)
             throws InstantiationException {
@@ -223,9 +391,9 @@ public class Builder<T> {
         return this;
     }
 
-    /****************************************************
+    /* **************************************************
      * custom setters with as few arguments as possible
-     ****************************************************/
+     * **************************************************/
 
     public Builder<T> dontIgnoreLeadingWhiteSpace() {
         log.debug("do not ignore leading white space");
@@ -316,9 +484,9 @@ public class Builder<T> {
         strategy.captureHeader(completeHeader);
     }
 
-    /**********************
+    /* ********************
      * non-public methods
-     **********************/
+     * ********************/
 
     protected Builder<T> setReaderSetup(final boolean value) {
         readerSetup.set(value);
