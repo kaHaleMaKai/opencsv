@@ -30,8 +30,11 @@ public class ConfigParserTest {
     @Test
     public void testParseFromUnparsdedLines() throws Exception {
         picard.setAge(picard.getAge()+10);
-        drObvious.setAge(43);
-        final URL resource = ConfigParserTest.class.getClassLoader().getResource("xml-config/config.xml");
+        drObvious.setAge(null);
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-null.xml");
         assert resource != null;
         final File xmlFile = new File(resource.getFile());
         final ConfigParser configParser = ConfigParser.ofUnparsedLines(xmlFile, () -> unparsedIteratorWithIgnore);
@@ -79,7 +82,7 @@ public class ConfigParserTest {
         linesWithUmlauts = "X,X,32,X,Fränkie,Fœrchterlich,Österreich,X,X,X,X";
         linesWithIgnore = new String[] {
                 "X,X,50,X,Jean-Luc,Picard,'Captain\\'s room, Enterprise',X,X,X,X",
-                "X,X,33,X,Dr.,Obvious,Somewhere,X,X,X,X"
+                "X,X,null,X,Dr.,Obvious,Somewhere,X,X,X,X"
         };
         picard = new Person();
         picard.setAge(50);

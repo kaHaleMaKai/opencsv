@@ -56,9 +56,9 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
         this.escapeChar = builder.escapeChar();
         this.quoteChar = builder.quoteChar();
         this.separator = builder.separator();
-        this.ignoreQuotes = builder.isIgnoreQuotes();
+        this.ignoreQuotes = builder.quotingMode().isIgnoreQuotes();
         this.ignoreLeadingWhiteSpace = builder.isIgnoreLeadingWhiteSpace();
-        this.strictQuotes = builder.isStrictQuotes();
+        this.strictQuotes = builder.quotingMode().isStrictQuotes();
         this.source = defineSource(builder.source(), builder.getReader(), builder.getLineIterator());
         log.debug(String.format("new CsvToBeanMapper instance built:\n%s", this.toString()));
     }

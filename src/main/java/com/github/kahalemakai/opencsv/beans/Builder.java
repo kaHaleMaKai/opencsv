@@ -35,8 +35,7 @@ public class Builder<T> {
     public static final char DEFAULT_QUOTE_CHAR = '"';
     public static final char DEFAULT_SEPARATOR = ',';
     public static final boolean DEFAULT_IGNORE_LEADING_WHITESPACE = true;
-    public static final boolean DEFAULT_STRICT_QUOTES = false;
-    public static final boolean DEFAULT_IGNORE_QUOTES = false;
+    public static final QuotingMode DEFAULT_QUOTING_MODE = QuotingMode.NON_STRICT_QUOTES;
     public static final int DEFAULT_SKIP_LINES = 0;
     public static final Charset DEFAULT_CHAR_SET;
 
@@ -71,16 +70,14 @@ public class Builder<T> {
     private char separator = DEFAULT_SEPARATOR;
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private Charset charset = DEFAULT_CHAR_SET;
+    @Accessors(chain = true, fluent = true) @Getter @Setter
+    private QuotingMode quotingMode = DEFAULT_QUOTING_MODE;
 
     /*************************************
      * boolean members and custom setters
      *************************************/
     @Getter
     private boolean ignoreLeadingWhiteSpace = DEFAULT_IGNORE_LEADING_WHITESPACE;
-    @Getter
-    private boolean strictQuotes = DEFAULT_STRICT_QUOTES;
-    @Getter
-    private boolean ignoreQuotes = DEFAULT_IGNORE_QUOTES;
     @Getter
     private boolean onErrorSkipLine;
 
@@ -244,22 +241,19 @@ public class Builder<T> {
 
     public Builder<T> strictQuotes() {
         log.debug("set strict quotes");
-        this.strictQuotes = true;
-        this.ignoreQuotes = false;
+        this.quotingMode = QuotingMode.STRICT_QUOTES;
         return this;
     }
 
     public Builder<T> nonStrictQuotes() {
         log.debug("set non-strict quotes");
-        this.strictQuotes = false;
-        this.ignoreQuotes = false;
+        this.quotingMode = QuotingMode.NON_STRICT_QUOTES;
         return this;
     }
 
     public Builder<T> ignoreQuotes() {
         log.debug("ignore quotes");
-        this.strictQuotes = false;
-        this.ignoreQuotes = true;
+        this.quotingMode = QuotingMode.IGNORE_QUOTES;
         return this;
     }
 

@@ -98,7 +98,6 @@ public class DecoderManager {
                                   Collections.unmodifiableMap(postValidatorClassMap));
     }
 
-
     public DecoderManager setNullFallthroughForPostProcessors(String column, boolean value) {
         getPropertyEditor(column).setNullFallthroughForPostProcessors(value);
         return this;

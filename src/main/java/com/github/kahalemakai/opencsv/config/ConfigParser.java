@@ -1,6 +1,8 @@
 package com.github.kahalemakai.opencsv.config;
 
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
+import com.github.kahalemakai.opencsv.beans.NullFallsThroughType;
+import com.github.kahalemakai.opencsv.beans.QuotingMode;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
@@ -30,8 +32,6 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 @RequiredArgsConstructor
 public class ConfigParser {
     public static final String STRICT_QUOTES = "strict";
-    public static final String NONSTRICT_QUOTES = "non-strict";
-    public static final String IGNORE_QUOTES = "ignore";
     public static final String CSV_COLUMN = "csv:column";
     public static final String CSV_IGNORE = "csv:ignore";
     public static final String BEAN_DECODER = "bean:decoder";
@@ -87,7 +87,7 @@ public class ConfigParser {
          * get the sub-elements
          ***********************/
 
-        Class<? extends T> type = null;
+        Class<? extends T> type;
         try {
             type = (Class<? extends T>) Class.forName(className.get());
         } catch (ClassNotFoundException e) {
@@ -107,16 +107,8 @@ public class ConfigParser {
             if (b) builder.onErrorSkipLine();
         }
         if (quotingBehaviour.isPresent()) {
-            switch (quotingBehaviour.get()) {
-                case STRICT_QUOTES:
-                    builder.strictQuotes();
-                    break;
-                case IGNORE_QUOTES:
-                    builder.ignoreQuotes();
-                    break;
-                default:
-                    builder.nonStrictQuotes();
-            }
+            final QuotingMode correspondingMode = QuotingMode.forText(quotingBehaviour.get());
+            builder.quotingMode(correspondingMode);
         }
         if (skipLines.isPresent()) {
             final int i = Integer.parseInt(skipLines.get());
@@ -149,7 +141,7 @@ public class ConfigParser {
         configureFields(config, builder);
         return builder.build();
     }
-    
+
     private <T, R> void configureFields(final Node config, com.github.kahalemakai.opencsv.beans.Builder<T> builder) throws ClassNotFoundException, InstantiationException {
         final NodeList fields = config.getChildNodes();
         final Class<? extends T> builderType = builder.getStrategy().getType();
@@ -158,6 +150,21 @@ public class ConfigParser {
             if (field.getNodeType() != ELEMENT_NODE)
                 continue;
             final String name = getValue(field, "name").get();
+            final Optional<String> nullFallsThrough = getValue(field, "nullFallsThrough");
+            if (nullFallsThrough.isPresent()) {
+                switch (NullFallsThroughType.forText(nullFallsThrough.get())) {
+                    case BOTH:
+                        builder.setNullFallthroughForPostProcessors(name);
+                        builder.setNullFallthroughForPostValidators(name);
+                        break;
+                    case POST_PROCESSOR:
+                        builder.setNullFallthroughForPostProcessors(name);
+                        break;
+                    case POST_VALIDATOR:
+                        builder.setNullFallthroughForPostValidators(name);
+                        break;
+                }
+            }
             final NodeList processors = field.getChildNodes();
             for (int j = 0; j < processors.getLength(); ++j) {
                 final Node processor = processors.item(j);

@@ -22,6 +22,14 @@
         <xs:attributeGroup ref="bean:FieldAttributes" />
     </xs:complexType>
 
+    <xs:simpleType name="NullFallsThrough">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="postprocessor" />
+            <xs:enumeration value="postvalidator" />
+            <xs:enumeration value="both" />
+            <xs:enumeration value="none" />
+        </xs:restriction>
+    </xs:simpleType>
     <!--attribute definitions-->
 
     <xs:attributeGroup name="BeanAttributes">
@@ -33,6 +41,7 @@
         <xs:attribute name="data" type="xs:string" use="optional" />
         <xs:attribute name="value" type="xs:string" use="optional" />
         <xs:attribute name="type" type="xs:string" use="optional" />
+        <xs:attribute name="nullFallsThrough" type="bean:NullFallsThrough" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="ProcessorAttributes">
