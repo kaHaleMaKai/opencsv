@@ -1,27 +1,25 @@
 group 'com.github.kahalemakai'
 version '0.2.1-SNAPSHOT'
 
-import pmd.gradle.plugins.IdeaWithResourcesPlugin
-
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
-        maven { url "http://nexus.pmd.local:8081/nexus/content/groups/PIA_Private/" }
-        maven { url "http://nexus.pmd.local:8081/nexus/content/groups/public/" }
         maven { url "file://${System.getProperty("user.home")}/.m2/repository" }
         jcenter()
     }
     dependencies {
-        classpath "pia.gradle.plugins:idea-with-resources:0.1.0-SNAPSHOT"
         classpath "io.spring.gradle:dependency-management-plugin:0.6.0.RELEASE"
     }
 }
 
 apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'jacoco'
 apply plugin: 'maven'
-apply plugin: 'application'
-apply plugin: IdeaWithResourcesPlugin
+apply plugin: 'maven-publish'
 apply plugin: "io.spring.dependency-management"
+
+def delombokDir = "${buildDir}/src-delomboked"
 
 idea {
     project {
@@ -79,7 +77,7 @@ dependencyManagement {
 }
 
 dependencies {
-    compile "org.projectlombok:lombok:1.16.8"
+    compile "org.projectlombok:lombok:1.16.10"
     compile "log4j:log4j"
     compile "log4j:apache-log4j-extras"
     compile 'com.opencsv:opencsv:3.8'
@@ -95,30 +93,46 @@ dependencies {
 
 configurations.compile.transitive = true
 
+task delombok {
+    description 'Delomboks the source code'
+    ant.taskdef(classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compile.asPath, name: 'delombok')
+    ant.mkdir(dir: delombokDir)
+    ant.delombok(verbose: 'true', encoding: 'UTF-8', to: 'build/src-delomboked', from: 'src/main/java')
+}
+
+task javadocDelux(type: Javadoc, group: "documentation") {
+    dependsOn delombok
+    source delombokDir
+}
+
+jacocoTestReport {
+    additionalSourceDirs = files(delombokDir)
+    setDependsOn(['delombok'])
+    reports {
+        xml.enabled true
+    }
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadocDelux
+    dependsOn javadocDelux
+}
+
+task sourcesJar(type: Jar) {
+    dependsOn classes
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
 gradle.projectsEvaluated {
     tasks.withType(JavaCompile) {
         options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" << "-Xdiags:verbose"
     }
 }
 
-/*
- pass cli args from gradle to java's main() method
- usage:
-   ./gradlew run -P_args='--my first --arg and --other args'
-*/
-run {
-    doFirst {
-        if (project.hasProperty("maxHeapSize"))
-            maxHeapSize = project.maxHeapSize
-
-        if (project.hasProperty("args"))
-            project.args.split().each { args it }
-    }
-}
-
 task cleanTests(group: "verification") {
     dependsOn cleanTest
 }
-mainClassName = "com.github.kahalemakai.opencsv.Main"
 
-defaultTasks 'clean', 'test', 'build'
+defaultTasks 'clean', 'test', 'build', 'jacocoTestReport'
