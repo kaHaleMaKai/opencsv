@@ -38,7 +38,8 @@ public class DecoderManager {
 
     /**
      * Add a decoder to the decoding chain.
-     *
+     * <p>
+     * If possible, use instead {@link #add(String, Class)} for performance reasons.
      * @param column name of csv column
      * @param decoder {@code Decoder} instance to be added
      * @return the {@code DecoderManager} instance
@@ -81,6 +82,8 @@ public class DecoderManager {
 
     /**
      * Add a postprocessor to the postprocessing chain.
+     * <p>
+     * If possible, use instead {@link #addPostProcessor(String, Class)} for performance reasons.
      * @param column name of csv column
      * @param postProcessor {@code PostProcessor} instance to be added
      * @return the {@code DecoderManager} instance
@@ -122,6 +125,8 @@ public class DecoderManager {
 
     /**
      * Add a postvalidator to the postvalidating chain.
+     * <p>
+     * If possible, use instead {@link #addPostValidator(String, Class)} for performance reasons.
      * @param column name of csv column
      * @param postValidator {@code PostValidator} instance to be added
      * @return the {@code DecoderManager} instance
