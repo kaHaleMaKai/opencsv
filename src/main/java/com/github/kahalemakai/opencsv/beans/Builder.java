@@ -351,6 +351,15 @@ public class Builder<T> {
      * register decoders, postprocessors and -validators
      * ***************************************************/
 
+    /**
+     * Register a decoder for a specific column.
+     * <p>
+     * @see DecoderManager#add(java.lang.String, java.lang.Class) DecoderManager.add()
+     * @param column name of column
+     * @param decoderClass class of decoder
+     * @return the {@code Builder} instance
+     * @throws InstantiationException if creating an instance of {@code DecoderClass} fails
+     */
     public Builder<T> registerDecoder(String column, Class<? extends Decoder<?, ? extends Throwable>> decoderClass)
             throws InstantiationException {
         log.debug(String.format("registering decoder of class <%s> for column '%s'", decoderClass.getCanonicalName(), column));
@@ -358,6 +367,14 @@ public class Builder<T> {
         return this;
     }
 
+    /**
+     * Register a decoder for a specific column.
+     * <p>
+     * @see DecoderManager#add(java.lang.String, Decoder) DecoderManager.add()
+     * @param column name of column
+     * @param decoder {@code Decoder} instance
+     * @return the {@code Builder} instance
+     */
     public Builder<T> registerDecoder(final String column,
                                       final Decoder<?, ? extends Throwable> decoder) {
         log.debug(String.format("registering decoder for column '%s'", column));

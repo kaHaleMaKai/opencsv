@@ -9,6 +9,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Indirection layer around the {@code DecoderPropertyEditor} class.
+ * <p>
+ * This class manages does the bookkeeping of {@code DecoderPropertyEditor} for
+ * all csv columns. In addition, it improves performance by re-using a single instance
+ * of decoders, postprocessors or postvalidators to be used in the {@code DecoderPropertyEditor},
+ * if possible. I.e. if the same decoder (or postprocessor/postvalidator, respectively) is applied
+ * to different columns, only a single instance of it will be created and passed around.
+ *
+ * @see DecoderPropertyEditor
+ */
 @Log4j
 @ToString
 public class DecoderManager {
@@ -17,10 +28,21 @@ public class DecoderManager {
     private final Map<Class<? extends PostProcessor<?>>, PostProcessor<?>> postProcessorClassMap;
     private final Map<Class<? extends PostValidator<?>>, PostValidator<?>> postValidatorClassMap;
 
+    /**
+     * Initialize a new and empty {@code DecoderManager}.
+     * @return new instance of {@code DecoderManager}
+     */
     public static DecoderManager init() {
         return new DecoderManager();
     }
 
+    /**
+     * Add a decoder to the decoding chain.
+     *
+     * @param column name of csv column
+     * @param decoder {@code Decoder} instance to be added
+     * @return the {@code DecoderManager} instance
+     */
     public <T> DecoderManager add(final String column, Decoder<? extends T, ? extends Throwable> decoder) {
         @SuppressWarnings("unchecked")
         final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
@@ -28,6 +50,19 @@ public class DecoderManager {
         return this;
     }
 
+    /**
+     * Add a decoder to the decoding chain.
+     * <p>
+     * The decoderClass is assumed to have a no-args constructor.
+     * Upon adding a decoder, the constructor is called and the instance
+     * is added to the decoding chain. The same instance is used when adding
+     * the decoder class object for any column.
+     *
+     * @param column name of csv column
+     * @param decoderClass class of decoder to add to the chain
+     * @return the {@code DecoderManager} instance
+     * @throws InstantiationException if trying to call a no-args constructor for {@code decoderClass} fails
+     */
     public DecoderManager add(final String column,
                               Class<? extends Decoder<?, ? extends Throwable>> decoderClass)
                               throws InstantiationException {
@@ -44,6 +79,12 @@ public class DecoderManager {
         return add(column, decoderClassMap.get(decoderClass));
     }
 
+    /**
+     * Add a postprocessor to the postprocessing chain.
+     * @param column name of csv column
+     * @param postProcessor {@code PostProcessor} instance to be added
+     * @return the {@code DecoderManager} instance
+     */
     public <T> DecoderManager addPostProcessor(final String column, PostProcessor<T> postProcessor) {
         @SuppressWarnings("unchecked")
         final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
@@ -51,6 +92,19 @@ public class DecoderManager {
         return this;
     }
 
+    /**
+     * Add a postprocessor to the postprocessing chain.
+     * <p>
+     * The postprocessorClass is assumed to have a no-args constructor.
+     * Upon adding a postprocessor, the constructor is called and the instance
+     * is added to the postprocessing chain. The same instance is used when adding
+     * the postprocessor class object for any column.
+     *
+     * @param column name of csv column
+     * @param postProcessorClass class of postprocessor to add to the chain
+     * @return the {@code DecoderManager} instance
+     * @throws InstantiationException if trying to call a no-args constructor for {@code postProcessorClass} fails
+     */
     public <T> DecoderManager addPostProcessor(final String column, Class<? extends PostProcessor<T>> postProcessorClass)
             throws InstantiationException {
         if (!postProcessorClassMap.containsKey(postProcessorClass)) {
@@ -66,12 +120,31 @@ public class DecoderManager {
         return addPostProcessor(column, postProcessorClassMap.get(postProcessorClass));
     }
 
+    /**
+     * Add a postvalidator to the postvalidating chain.
+     * @param column name of csv column
+     * @param postValidator {@code PostValidator} instance to be added
+     * @return the {@code DecoderManager} instance
+     */
     public <T> DecoderManager addPostValidator(final String column, PostValidator<T> postValidator) {
         final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
         propertyEditor.addPostValidator(postValidator);
         return this;
     }
 
+    /**
+     * Add a postvalidator to the postvalidating chain.
+     * <p>
+     * The postvalidatorClass is assumed to have a no-args constructor.
+     * Upon adding a postvalidator, the constructor is called and the instance
+     * is added to the postvalidating chain. The same instance is used when adding
+     * the postvalidator class object for any column.
+     *
+     * @param column name of csv column
+     * @param postValidatorClass class of postvalidator to add to the chain
+     * @return the {@code DecoderManager} instance
+     * @throws InstantiationException if trying to call a no-args constructor for {@code postValidatorClass} fails
+     */
     public DecoderManager addPostValidator(final String column, Class<? extends PostValidator<?>> postValidatorClass)
             throws InstantiationException {
         if (!postValidatorClassMap.containsKey(postValidatorClass)) {
@@ -87,10 +160,22 @@ public class DecoderManager {
         return addPostValidator(column, postValidatorClassMap.get(postValidatorClass));
     }
 
+    /**
+     * Return the defined {@code DecoderPropertyEditor} instance as {@code Optional}.
+     * @see DecoderPropertyEditor DecoderPropertyEditor
+     * @param column name of column to be looked up
+     * @return {@code Optional} of {@code DecoderPropertyEditor}
+     */
     public Optional<PropertyEditor> get(final String column) {
         return Optional.ofNullable(decoderMap.get(column));
     }
 
+    /**
+     * Provide an immutable copy of the {@code DecoderManager} instance.
+     * <p>
+     * This method relies on the {@code unmodifiable} modifiers of the {@code java.lang.Collections} framework.
+     * @return immutable copy of the {@code DecoderManager} instance
+     */
     public DecoderManager immutableCopy() {
         return new DecoderManager(Collections.unmodifiableMap(decoderMap),
                                   Collections.unmodifiableMap(decoderClassMap),
@@ -98,11 +183,25 @@ public class DecoderManager {
                                   Collections.unmodifiableMap(postValidatorClassMap));
     }
 
+    /**
+     * Define behaviour when encountering nulls in postprocessing.
+     *
+     * @param column name of column
+     * @param value true: return null immediately, false: process null entries
+     * @return the {@code DecoderManager} instance
+     */
     public DecoderManager setNullFallthroughForPostProcessors(String column, boolean value) {
         getPropertyEditor(column).setNullFallthroughForPostProcessors(value);
         return this;
     }
 
+    /**
+     * Define behaviour when encountering nulls in postprocessing.
+     *
+     * @param column name of column
+     * @param value true: return successfull validation for nulls, false: validate null entries
+     * @return the {@code DecoderManager} instance
+     */
     public DecoderManager setNullFallthroughForPostValidators(String column, boolean value) {
         getPropertyEditor(column).setNullFallthroughForPostValidators(value);
         return this;
