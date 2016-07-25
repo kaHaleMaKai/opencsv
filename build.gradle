@@ -1,16 +1,31 @@
+/*
+ * Copyright 2016, Lars Winderling
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+plugins {
+    id "com.jfrog.bintray" version "1.6"
+    id "io.spring.dependency-management" version "0.6.0.RELEASE"
+}
+
 group 'com.github.kahalemakai'
 version '0.2.1-SNAPSHOT'
 
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-        maven { url "file://${System.getProperty("user.home")}/.m2/repository" }
-        jcenter()
-    }
-    dependencies {
-        classpath "io.spring.gradle:dependency-management-plugin:0.6.0.RELEASE"
-    }
-}
+def license = "APACHE"
+def github = "https://github.com"
+def githubUsername = "kaHaleMaKai"
+def delombokedDir = "${buildDir}/src-delomboked"
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -95,18 +110,18 @@ task wrapper(type: Wrapper) {
 task delombok << {
     description 'Delomboks the source code'
     ant.taskdef(classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compile.asPath, name: 'delombok')
-    ant.mkdir(dir: delombokDir)
-    ant.delombok(verbose: 'true', encoding: 'UTF-8', to: delombokDir, from: 'src/main/java')
+    ant.mkdir(dir: delombokedDir)
+    ant.delombok(verbose: 'true', encoding: 'UTF-8', to: delombokedDir, from: 'src/main/java')
 }
 
 task javadocDelux(type: Javadoc, group: "documentation") {
     dependsOn delombok
-    source delombokDir
+    source delombokedDir
 }
 
 jacocoTestReport {
     dependsOn delombok
-    additionalSourceDirs = files(delombokDir)
+    additionalSourceDirs = files(delombokedDir)
     reports {
         xml.enabled true
     }
@@ -134,4 +149,46 @@ task cleanTests(group: "verification") {
     dependsOn cleanTest
 }
 
-defaultTasks 'clean', 'test', 'build' //, 'jacocoTestReport'
+defaultTasks 'clean', 'test', 'build'
+
+publishing {
+    publications {
+        tuples(MavenPublication) {
+            from components.java
+            artifact javadocJar
+            artifact sourcesJar
+            groupId rootProject.group
+            artifactId rootProject.name
+            version rootProject.version
+        }
+    }
+}
+
+bintray {
+    user = rootProject.hasProperty("bintrayUser") ? bintrayUser : ""
+    key = rootProject.hasProperty("bintrayApiKey") ? bintrayApiKey : ""
+    publications = [rootProject.name]
+    pkg {
+        repo = 'maven'
+        name = rootProject.name
+        licenses = [license]
+        vcsUrl = "${github}/${githubUsername}/${rootProject.name}"
+
+        githubRepo = "${githubUsername}/${rootProject.name}"
+        githubReleaseNotesFile = 'README.md'
+
+        publicDownloadNumbers = true
+
+        version {
+            name = rootProject.version
+            desc = "add javadocs"
+            released = new Date()
+            vcsTag = rootProject.version
+
+            gpg {
+                sign = true
+                passphrase = hasProperty("gpgPassPhrase") ? gpgPassPhrase : ""
+            }
+        }
+    }
+}
