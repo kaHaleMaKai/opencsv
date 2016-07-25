@@ -180,7 +180,7 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
      * If {@link #isTrimField()} evaluates to true, the text will get trimmed before setting it.
      *
      * @param text the text to set for further processing
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException only declared for matching the interface
      */
     @Override
     public void setAsText(String text) throws IllegalArgumentException {

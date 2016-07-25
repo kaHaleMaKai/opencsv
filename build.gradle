@@ -19,8 +19,6 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: "io.spring.dependency-management"
 
-def delombokDir = "${buildDir}/src-delomboked"
-
 idea {
     project {
         languageLevel = '1.8'
@@ -77,7 +75,7 @@ dependencyManagement {
 }
 
 dependencies {
-    compileOnly "org.projectlombok:lombok:1.16.10"
+    compile "org.projectlombok:lombok:1.16.10"
     compile "log4j:log4j"
     compile "log4j:apache-log4j-extras"
     compile 'com.opencsv:opencsv:3.8'
@@ -107,8 +105,8 @@ task javadocDelux(type: Javadoc, group: "documentation") {
 }
 
 jacocoTestReport {
+    dependsOn delombok
     additionalSourceDirs = files(delombokDir)
-    setDependsOn(['delombok'])
     reports {
         xml.enabled true
     }

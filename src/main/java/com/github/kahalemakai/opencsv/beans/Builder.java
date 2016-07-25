@@ -149,7 +149,7 @@ public class Builder<T> {
      * </ul>
      *
      * @param quotingMode the desired {@code QuotingMode}
-     * @return the actuakl {@code QuotingMode}
+     * @return the actual {@code QuotingMode}
      */
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private QuotingMode quotingMode = DEFAULT_QUOTING_MODE;
@@ -195,7 +195,8 @@ public class Builder<T> {
     /**
      * Manages decoders, post-processors and -validators and delegates requests to them.
      *
-     * @param the decoder manager instance used for bookkeeping
+     *
+     * @return the decoder manager instance used for bookkeeping
      */
     @Getter
     private final DecoderManager decoderManager;
