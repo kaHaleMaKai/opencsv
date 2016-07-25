@@ -109,7 +109,7 @@ public class Builder<T> {
     /**
      * Escape character in parsed csvs.
      *
-     * @param escape character
+     * @param escapeChar character
      * @return escape character
      */
     @Accessors(chain = true, fluent = true) @Getter @Setter
@@ -117,7 +117,7 @@ public class Builder<T> {
     /**
      * Quoting or enclosing character.
      *
-     * @param quoting character
+     * @param quoteChar quoting character
      * @return quoting character
      */
     @Accessors(chain = true, fluent = true) @Getter @Setter
@@ -125,7 +125,7 @@ public class Builder<T> {
     /**
      * Character separating fields in a csv.
      *
-     * @param separating character
+     * @param separator separating character
      * @return separating character
      */
     @Accessors(chain = true, fluent = true) @Getter @Setter
@@ -133,7 +133,7 @@ public class Builder<T> {
     /**
      * The charset used for reading from an input stream.
      *
-     * @param the charset for reading from an input stream
+     * @param charset the charset for reading from an input stream
      * @return the charset for reading from an input stream
      */
     @Accessors(chain = true, fluent = true) @Getter @Setter
@@ -141,12 +141,15 @@ public class Builder<T> {
     /**
      * Interpretation of quoting characters in a csv.
      * <p>
-     * Permittable modes are:
+     * Permissable modes are:
      * <ul>
      *     <li>strict quotes: only accept quoted fields</li>
      *     <li>non-strict quotes: quoting is optional</li>
      *     <li>ignore quotes: don't interpret quotes as enclosing fields</li>
      * </ul>
+     *
+     * @param quotingMode the desired {@code QuotingMode}
+     * @return the actuakl {@code QuotingMode}
      */
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private QuotingMode quotingMode = DEFAULT_QUOTING_MODE;
