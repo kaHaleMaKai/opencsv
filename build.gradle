@@ -82,22 +82,19 @@ dependencies {
     compile "log4j:apache-log4j-extras"
     compile 'com.opencsv:opencsv:3.8'
 
-    // For static code analyis in IntelliJ
     compile(group: 'com.intellij', name: 'annotations', version: '12.0') {
         exclude group: "com.intellij"
     }
-//    compile 'org.mapdb:mapdb:3.0.0'
-//    compile 'pia.utils:config:0.3.5-SNAPSHOT'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 configurations.compile.transitive = true
 
-task delombok {
+task delombok << {
     description 'Delomboks the source code'
     ant.taskdef(classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compile.asPath, name: 'delombok')
     ant.mkdir(dir: delombokDir)
-    ant.delombok(verbose: 'true', encoding: 'UTF-8', to: 'build/src-delomboked', from: 'src/main/java')
+    ant.delombok(verbose: 'true', encoding: 'UTF-8', to: delombokDir, from: 'src/main/java')
 }
 
 task javadocDelux(type: Javadoc, group: "documentation") {
@@ -135,4 +132,4 @@ task cleanTests(group: "verification") {
     dependsOn cleanTest
 }
 
-defaultTasks 'clean', 'test', 'build', 'jacocoTestReport'
+defaultTasks 'clean', 'test', 'build' //, 'jacocoTestReport'

@@ -42,6 +42,7 @@ public class DecoderManager {
      * If possible, use instead {@link #add(String, Class)} for performance reasons.
      * @param column name of csv column
      * @param decoder {@code Decoder} instance to be added
+     * @param <T> target type of decoder conversion
      * @return the {@code DecoderManager} instance
      */
     public <T> DecoderManager add(final String column, Decoder<? extends T, ? extends Throwable> decoder) {
@@ -86,6 +87,7 @@ public class DecoderManager {
      * If possible, use instead {@link #addPostProcessor(String, Class)} for performance reasons.
      * @param column name of csv column
      * @param postProcessor {@code PostProcessor} instance to be added
+     * @param <T> type of {@code PostProcessor} input
      * @return the {@code DecoderManager} instance
      */
     public <T> DecoderManager addPostProcessor(final String column, PostProcessor<T> postProcessor) {
@@ -105,6 +107,7 @@ public class DecoderManager {
      *
      * @param column name of csv column
      * @param postProcessorClass class of postprocessor to add to the chain
+     * @param <T> type of {@code PostProcessor} input
      * @return the {@code DecoderManager} instance
      * @throws InstantiationException if trying to call a no-args constructor for {@code postProcessorClass} fails
      */
@@ -129,6 +132,7 @@ public class DecoderManager {
      * If possible, use instead {@link #addPostValidator(String, Class)} for performance reasons.
      * @param column name of csv column
      * @param postValidator {@code PostValidator} instance to be added
+     * @param <T> type of {@code PostValidator} input
      * @return the {@code DecoderManager} instance
      */
     public <T> DecoderManager addPostValidator(final String column, PostValidator<T> postValidator) {
