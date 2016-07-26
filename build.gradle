@@ -16,7 +16,6 @@
 
 plugins {
     id "com.jfrog.bintray" version "1.6"
-    id "io.spring.dependency-management" version "0.6.0.RELEASE"
 }
 
 group 'com.github.kahalemakai'
@@ -26,13 +25,13 @@ def license = "Apache-2.0"
 def github = "https://github.com"
 def githubUsername = "kaHaleMaKai"
 def delombokedDir = "${buildDir}/src-delomboked"
+def log4jVersion = "1.2.17"
 
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'jacoco'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
-apply plugin: "io.spring.dependency-management"
 
 idea {
     project {
@@ -78,21 +77,10 @@ repositories {
     maven { url "https://repository.jboss.org/nexus/content/groups/public" }
 }
 
-dependencyManagement {
-    compile {
-        dependencies {
-            dependencySet(group: "log4j", version: "1.2.17") {
-                entry "log4j"
-                entry "apache-log4j-extras"
-            }
-        }
-    }
-}
-
 dependencies {
     compile "org.projectlombok:lombok:1.16.10"
-    compile "log4j:log4j"
-    compile "log4j:apache-log4j-extras"
+    compile "log4j:log4j:${log4jVersion}"
+    compile "log4j:apache-log4j-extras:${log4jVersion}"
     compile 'com.opencsv:opencsv:3.8'
 
     compile(group: 'com.intellij', name: 'annotations', version: '12.0') {
