@@ -23,20 +23,22 @@ import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import java.io.*;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,7 +47,6 @@ import java.util.Optional;
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
 @Log4j
-@RequiredArgsConstructor
 public class ConfigParser {
     public static final String STRICT_QUOTES = "strict";
     public static final String CSV_COLUMN = "csv:column";
@@ -55,11 +56,23 @@ public class ConfigParser {
     public static final String BEAN_POSTVALIDATOR = "bean:postValidator";
     public static final String DEFAULT_NAME_SPACE = "com.github.kahalemakai.opencsv.beans.processing";
 
-    private final File xmlFile;
+    private final InputStream xmlInputStream;
     private final Reader reader;
     private final Iterable<String> unparsedLines;
     private final Iterable<String[]> parsedLines;
     private final InputStream inputStream;
+
+    public ConfigParser(InputStream xmlInputStream, Reader reader, Iterable<String> unparsedLines, Iterable<String[]> parsedLines, InputStream inputStream) {
+        this.xmlInputStream = xmlInputStream;
+        this.reader = reader;
+        this.unparsedLines = unparsedLines;
+        this.parsedLines = parsedLines;
+        this.inputStream = inputStream;
+    }
+
+    public ConfigParser(File xmlFile, Reader reader, Iterable<String> unparsedLines, Iterable<String[]> parsedLines, InputStream inputStream) throws FileNotFoundException {
+        this(new FileInputStream(xmlFile), reader, unparsedLines, parsedLines, inputStream);
+    }
 
     private Optional<String> getValue(final Node node, final String attribute) {
         final Node item = node.getAttributes().getNamedItem(attribute);
@@ -73,11 +86,28 @@ public class ConfigParser {
             return Optional.of(value);
     }
 
+    private Schema getOpencsvSchema() throws SAXException {
+        final URL schemaFile = getClass()
+                .getClassLoader()
+                .getResource("schemas/opencsv.xsd");
+        assert schemaFile != null;
+        Source xmlSource = new StreamSource(schemaFile.getFile());
+        SchemaFactory schemaFactory = SchemaFactory
+                .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        try {
+            return schemaFactory.newSchema(xmlSource);
+        } catch (SAXException e) {
+            throw new SAXException(e);
+        }
+    }
+
     public <T> CsvToBeanMapper<T> parse()
             throws ParserConfigurationException, IOException, SAXException, InstantiationException, ClassNotFoundException {
         final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        // don't set validating behaviour to true -> or else a DTD is expected
+        documentBuilderFactory.setSchema(getOpencsvSchema());
         final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-        final Document doc = documentBuilder.parse(this.xmlFile);
+        final Document doc = documentBuilder.parse(this.xmlInputStream);
         doc.getDocumentElement().normalize();
         final Node reader = doc.getElementsByTagName("csv:reader").item(0);
         final Optional<String> separator = getValue(reader, "separator");
@@ -256,34 +286,52 @@ public class ConfigParser {
         return fieldList.toArray(new String[fieldList.size()]);
     }
 
+    public static ConfigParser ofUnparsedLines(@NonNull final InputStream xmlInputStream,
+                                               @NonNull final Iterable<String> unparsedLines)
+            throws IOException, SAXException {
+        return new ConfigParser(xmlInputStream, null, unparsedLines, null, null);
+    }
+
+    public static ConfigParser ofParsedLines(@NonNull final InputStream xmlInputStream,
+                                             @NonNull final Iterable<String[]> parsedLines)
+            throws IOException, SAXException {
+        return new ConfigParser(xmlInputStream, null, null, parsedLines, null);
+    }
+
+    public static ConfigParser ofReader(@NonNull final InputStream xmlInputStream,
+                                        @NonNull final Reader reader)
+            throws IOException, SAXException {
+        return new ConfigParser(xmlInputStream, reader, null, null, null);
+    }
+
+    public static ConfigParser ofInputStream(@NonNull final InputStream xmlInputStream,
+                                             @NonNull final InputStream inputStream)
+            throws IOException, SAXException {
+        return new ConfigParser(xmlInputStream, null, null, null, inputStream);
+    }
+
     public static ConfigParser ofUnparsedLines(@NonNull final File xmlFile,
                                                @NonNull final Iterable<String> unparsedLines)
             throws IOException, SAXException {
-        ValidationService.validate(xmlFile);
         return new ConfigParser(xmlFile, null, unparsedLines, null, null);
     }
 
     public static ConfigParser ofParsedLines(@NonNull final File xmlFile,
                                              @NonNull final Iterable<String[]> parsedLines)
             throws IOException, SAXException {
-        ValidationService.validate(xmlFile);
         return new ConfigParser(xmlFile, null, null, parsedLines, null);
     }
 
     public static ConfigParser ofReader(@NonNull final File xmlFile,
                                         @NonNull final Reader reader)
             throws IOException, SAXException {
-        ValidationService.validate(xmlFile);
         return new ConfigParser(xmlFile, reader, null, null, null);
     }
 
-    public static ConfigParser ofInputStream(@NonNull final File xmlFile,
+    public static ConfigParser ofFile(@NonNull final File xmlFile,
                                              @NonNull final InputStream inputStream)
             throws IOException, SAXException {
-        ValidationService.validate(xmlFile);
         return new ConfigParser(xmlFile, null, null, null, inputStream);
     }
-
-
 
 }

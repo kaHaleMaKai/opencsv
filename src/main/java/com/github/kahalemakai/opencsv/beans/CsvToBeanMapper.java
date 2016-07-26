@@ -26,12 +26,14 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<T> {
 
     /**
      * Get the type the csv shall be converted to.
+     *
      * @return
      */
     Class<? extends T> getType();
 
     /**
      * Get a new {@code Builder} instance for creating a {@code CsvToBeanMapper}.
+     *
      * @param type the class object that the csv rows shall be converted to
      * @param <S> the type that the csv rows shall be converted to
      * @return the {@code Builder} instance
@@ -40,4 +42,5 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<T> {
     static <S> Builder<S> builder(final Class<? extends S> type) {
         return new Builder<>(type);
     }
+
 }
