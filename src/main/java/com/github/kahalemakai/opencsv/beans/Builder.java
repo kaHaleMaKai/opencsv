@@ -373,7 +373,7 @@ public class Builder<T> {
 
     /**
      * Register a decoder for a specific column.
-     * <p>
+     *
      * @see DecoderManager#add(java.lang.String, java.lang.Class) DecoderManager.add()
      * @param column name of column
      * @param decoderClass class of decoder
@@ -389,7 +389,7 @@ public class Builder<T> {
 
     /**
      * Register a decoder for a specific column.
-     * <p>
+     *
      * @see DecoderManager#add(java.lang.String, Decoder) DecoderManager.add()
      * @param column name of column
      * @param decoder {@code Decoder} instance
@@ -402,12 +402,31 @@ public class Builder<T> {
         return this;
     }
 
+    /**
+     * Register a postprocessor for a given column.
+     *
+     * @see DecoderManager#addPostProcessor(String, PostProcessor) DecoderManager.addPostProcessor()
+     * @param column name of column
+     * @param postProcessor {@code PostProcessor} instance
+     * @param <R> type of {@code PostProcessor} input and output value
+     * @return the {@code Builder} instance
+     */
     public <R> Builder<T> registerPostProcessor(String column, PostProcessor<R> postProcessor) {
         log.debug(String.format("registering postprocessor for column '%s'", column));
         decoderManager.addPostProcessor(column, postProcessor);
         return this;
     }
 
+    /**
+     * Register a postprocessor for a given column.
+     *
+     * @see DecoderManager#addPostProcessor(String, Class) DecoderManager.addPostProcessor()
+     * @param column name of column
+     * @param postProcessorClass type of {@code PostProcessor} instance
+     * @param <R> type of {@code PostProcessor} input and output value
+     * @return the {@code Builder} instance
+     * @throws InstantiationException if creating an instance of {@code PostProcessor} fails
+     */
     public <R> Builder<T> registerPostProcessor(String column, Class<? extends PostProcessor<R>> postProcessorClass)
             throws InstantiationException {
         log.debug(String.format("registering postprocessor of class <%s> for column '%s'", postProcessorClass, column));
@@ -415,12 +434,30 @@ public class Builder<T> {
         return this;
     }
 
+    /**
+     * Register a post-validator for a given column.
+     *
+     * @see DecoderManager#addPostValidator(String, PostValidator) DecoderManager.addPostValidator()
+     * @param column name of column
+     * @param postValidator {@code PostValidator} instance
+     * @param <R> type of {@code PostValidator} input value
+     * @return the {@code Builder} instance
+     */
     public <R> Builder<T> registerPostValidator(String column, PostValidator<R> postValidator) {
         log.debug(String.format("registering postvalidator for column '%s'", column));
         decoderManager.addPostValidator(column, postValidator);
         return this;
     }
 
+    /**
+     * Register a post-validator for a given column.
+     *
+     * @see DecoderManager#addPostValidator(String, Class) DecoderManager.addPostValidator()
+     * @param column name of column
+     * @param postValidatorClass type of {@code PostValidator} instance
+     * @return the {@code Builder} instance
+     * @throws InstantiationException if creating an instance of {@code PostValidator} fails
+     */
     public Builder<T> registerPostValidator(String column, Class<? extends PostValidator<?>> postValidatorClass)
             throws InstantiationException {
         log.debug(String.format("registering postvalidator of class <%s> for column '%s'", postValidatorClass, column));
@@ -432,53 +469,98 @@ public class Builder<T> {
      * custom setters with as few arguments as possible
      * **************************************************/
 
+    /**
+     * Don't ignore leading white space
+     * @return the {@code Builder} instance
+     */
     public Builder<T> dontIgnoreLeadingWhiteSpace() {
         log.debug("do not ignore leading white space");
         this.ignoreLeadingWhiteSpace = false;
         return this;
     }
 
+    /**
+     * Skip to next line, if an error is encountered.
+     * @return the {@code Builder} instance
+     */
     public Builder<T> onErrorSkipLine() {
         log.debug("on error skip line");
         this.onErrorSkipLine = true;
         return this;
     }
 
+    /**
+     * Set quoting behaviour to 'strict'.
+     * @return the {@code Builder} instance
+     */
     public Builder<T> strictQuotes() {
         log.debug("set strict quotes");
         this.quotingMode = QuotingMode.STRICT_QUOTES;
         return this;
     }
 
+    /**
+     * Set quoting behaviour to 'non-strict'.
+     * @return the {@code Builder} instance
+     */
     public Builder<T> nonStrictQuotes() {
         log.debug("set non-strict quotes");
         this.quotingMode = QuotingMode.NON_STRICT_QUOTES;
         return this;
     }
 
+    /**
+     * Set quoting behaviour to 'ignore quotes'.
+     * @return the {@code Builder} instance
+     */
     public Builder<T> ignoreQuotes() {
         log.debug("ignore quotes");
         this.quotingMode = QuotingMode.IGNORE_QUOTES;
         return this;
     }
 
+    /**
+     * Don't postprocess null returns from decoder chains.
+     * @param column name of column
+     * @return the {@code Builder} instance
+     * @see com.github.kahalemakai.opencsv.beans.processing.DecoderPropertyEditor#setNullFallthroughForPostValidators(boolean) DecoderPropertyEditor.setNullFallthroughForPostProcessors
+     */
     public Builder<T> setNullFallthroughForPostProcessors(String column) {
         log.debug("set fallthrough behaviour of nulls for postprocessing");
         decoderManager.setNullFallthroughForPostProcessors(column, true);
         return this;
     }
 
+    /**
+     * Don't post-validate null returns from decoder chains.
+     * @param column name of column
+     * @return the {@code Builder} instance
+     * @see com.github.kahalemakai.opencsv.beans.processing.DecoderPropertyEditor#setNullFallthroughForPostValidators(boolean) DecoderPropertyEditor.setNullFallthroughForPostValidators
+     */
     public Builder<T> setNullFallthroughForPostValidators(String column) {
         log.debug("set fallthrough behaviour of nulls for postvalidation");
         decoderManager.setNullFallthroughForPostValidators(column, true);
         return this;
     }
 
+    /**
+     * Set the csv header.
+     * @param header header fields
+     * @return the {@code Builder} instance
+     * @throws IllegalArgumentException if the header is malformed
+     */
     public Builder<T> setHeader(String[] header) throws IllegalArgumentException {
         setHeader(getStrategy(), header);
         return this;
     }
 
+    /**
+     * Helper method for setting the header of a mapping strategy.
+     * @param strategy strategy for which to set the header
+     * @param header the header fields
+     * @param <S> type of bean, the csv will be converted to
+     * @throws IllegalArgumentException if the header is malformed
+     */
     public static <S> void setHeader(HeaderDirectMappingStrategy<S> strategy, String[] header) throws IllegalArgumentException {
         if (header.length == 0) {
             final String msg = "expected: header.length > 0, got: header.length = 0";
@@ -525,7 +607,7 @@ public class Builder<T> {
      * non-public methods
      * ********************/
 
-    protected Builder<T> setReaderSetup(final boolean value) {
+    private Builder<T> setReaderSetup(final boolean value) {
         readerSetup.set(value);
         return this;
     }
