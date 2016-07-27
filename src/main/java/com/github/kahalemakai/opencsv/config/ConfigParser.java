@@ -22,6 +22,7 @@ import com.github.kahalemakai.opencsv.beans.QuotingMode;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
+import com.github.kahalemakai.opencsv.beans.processing.decoders.EnumDecoder;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j;
 import org.w3c.dom.Document;
@@ -52,6 +53,8 @@ public class ConfigParser {
     public static final String CSV_COLUMN = "csv:column";
     public static final String CSV_IGNORE = "csv:ignore";
     public static final String BEAN_DECODER = "bean:decoder";
+    public static final String BEAN_ENUM = "bean:enum";
+    public static final String BEAN_ENUM_MAP = "bean:map";
     public static final String BEAN_POSTPROCESSOR = "bean:postProcessor";
     public static final String BEAN_POSTVALIDATOR = "bean:postValidator";
     public static final String DEFAULT_NAME_SPACE = "com.github.kahalemakai.opencsv.beans.processing";
@@ -230,10 +233,31 @@ public class ConfigParser {
                             final Class<? extends PostValidator<R>> postValidatorClass = getProcessorClass(type, BEAN_POSTVALIDATOR);
                             builder.registerPostValidator(name, postValidatorClass);
                             break;
+                        case BEAN_ENUM:
+                            final EnumDecoder<?> enumDecoder = getEnumDecoder(processor);
+                            builder.registerDecoder(name, enumDecoder);
+                            break;
                     }
                 }
             }
         }
+    }
+
+    private <E extends Enum<E>> EnumDecoder<E> getEnumDecoder(final Node processor) throws ClassNotFoundException {
+        final NodeList maps = processor.getChildNodes();
+        final String typeName = getValue(processor, "type").get();
+        final Class<? extends E> enumClass = (Class<? extends E>) Class.forName(typeName);
+        final EnumDecoder<E> decoder = new EnumDecoder<>();
+        decoder.setType(enumClass);
+        for (int i = 0; i < maps.getLength(); ++i) {
+            final Node node = maps.item(i);
+            if (node.getNodeType() == ELEMENT_NODE && BEAN_ENUM_MAP.equals(node.getNodeName())) {
+                final String key = getValue(node, "key").get();
+                final String value = getValue(node, "value").get();
+                decoder.put(key, value);
+            }
+        }
+        return decoder;
     }
 
     private <T> Class<T> getProcessorClass(final String type, final String branch) throws ClassNotFoundException {

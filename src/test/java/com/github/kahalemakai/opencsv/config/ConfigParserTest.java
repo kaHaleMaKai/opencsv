@@ -16,7 +16,10 @@
 
 package com.github.kahalemakai.opencsv.config;
 
+import com.github.kahalemakai.opencsv.beans.CsvToBeanException;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
+import com.github.kahalemakai.opencsv.beans.QuotingMode;
+import com.github.kahalemakai.opencsv.examples.EnumWrapper;
 import com.github.kahalemakai.opencsv.examples.Person;
 import com.opencsv.CSVParser;
 import org.junit.Assert;
@@ -34,14 +37,45 @@ public class ConfigParserTest {
     String linesWithUmlauts;
     String[] linesWithIgnore;
     String[] lines;
+    String[] linesWithEnum;
     Person picard;
     Person drObvious;
     Person fraenkie;
+    EnumWrapper enumWrapper;
     Iterator<String[]> iterator;
     Iterator<String[]> iteratorWithIgnore;
     Iterator<String> unparsedIterator;
     Iterator<String> unparsedIteratorWithIgnore;
+    Iterator<String> unparsedLinesWithEnum;
     Reader reader;
+
+    @Test(expected = CsvToBeanException.class)
+    public void testParseEnumThrows() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-for-enum.xml");
+        assert resource != null;
+        final CsvToBeanMapper<EnumWrapper> beanMapper = ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedLinesWithEnum)
+                .parse();
+        final Iterator<EnumWrapper> iterator = beanMapper.iterator();
+        iterator.next();
+        iterator.next();
+    }
+
+    @Test
+    public void testParseEnum() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-for-enum.xml");
+        assert resource != null;
+        final CsvToBeanMapper<EnumWrapper> beanMapper = ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedLinesWithEnum)
+                .parse();
+        Assert.assertEquals(enumWrapper, beanMapper.iterator().next());
+    }
 
     @Test
     public void testParseFromUnparsdedLinesFromXmlFile() throws Exception {
@@ -54,9 +88,9 @@ public class ConfigParserTest {
                 .class
                 .getClassLoader()
                 .getResource("xml-config/config-with-null.xml");
-            assert resource != null;
-            configParser = ConfigParser.ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
-            mapper = configParser.parse();
+        assert resource != null;
+        configParser = ConfigParser.ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
+        mapper = configParser.parse();
         it = mapper.iterator();
         Assert.assertEquals(picard, it.next());
         Assert.assertEquals(drObvious, it.next());
@@ -74,7 +108,7 @@ public class ConfigParserTest {
                 .getResourceAsStream("xml-config/config-with-null.xml")) {
             assert resource != null;
             configParser = ConfigParser.ofUnparsedLines(resource, () -> unparsedIteratorWithIgnore);
-        mapper = configParser.parse();
+            mapper = configParser.parse();
         }
         it = mapper.iterator();
         Assert.assertEquals(picard, it.next());
@@ -119,6 +153,7 @@ public class ConfigParserTest {
                 "X,X,50,X,Jean-Luc,Picard,'Captain\\'s room, Enterprise',X,X,X,X",
                 "X,X,null,X,Dr.,Obvious,Somewhere,X,X,X,X"
         };
+        linesWithEnum = new String[] {"n", "x"};
         picard = new Person();
         picard.setAge(50);
         picard.setGivenName("Jean-Luc");
@@ -136,10 +171,15 @@ public class ConfigParserTest {
         fraenkie.setGivenName("Fränkie");
         fraenkie.setSurName("Fœrchterlich");
         fraenkie.setAddress("Österreich");
+
+        enumWrapper = new EnumWrapper();
+        enumWrapper.setQuotingMode(QuotingMode.NON_STRICT_QUOTES);
+
         iterator = toParsedIterator(lines);
         iteratorWithIgnore = toParsedIterator(linesWithIgnore);
         unparsedIterator = toUnparsedIterator(lines);
         unparsedIteratorWithIgnore = toUnparsedIterator(linesWithIgnore);
+        unparsedLinesWithEnum = toUnparsedIterator(linesWithEnum);
         final StringBuilder sb = new StringBuilder();
         for (String line : lines) {
             sb.append(line).append("\n");

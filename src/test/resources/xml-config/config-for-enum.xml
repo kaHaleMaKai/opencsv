@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2016, Lars Winderling
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.2.3/opencsv.xsd"
+                   xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
+                   xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
+                   xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
+
+    <csv:reader quoteChar="&apos;">
+        <csv:column name="quotingMode" />
+    </csv:reader>
+
+    <bean:config class="com.github.kahalemakai.opencsv.examples.EnumWrapper">
+        <bean:field name="quotingMode">
+            <bean:enum type="com.github.kahalemakai.opencsv.beans.QuotingMode">
+                <bean:map key="s" value="STRICT_QUOTES" />
+                <bean:map key="n" value="NON_STRICT_QUOTES" />
+                <bean:map key="i" value="IGNORE_QUOTES" />
+            </bean:enum>
+        </bean:field>
+    </bean:config>
+
+</opencsv:resources>

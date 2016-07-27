@@ -26,13 +26,27 @@
     <xs:complexType name="Processor">
         <xs:attributeGroup ref="bean:ProcessorAttributes" />
     </xs:complexType>
+    
+    <xs:complexType name="EnumDecoder">
+        <xs:complexContent>
+            <xs:extension base="bean:Processor">
+                <xs:sequence maxOccurs="unbounded">
+                    <xs:element name="map" type="bean:EnumMapType" />
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
 
+    <xs:complexType name="EnumMapType">
+        <xs:attributeGroup ref="bean:EnumMapAttributes" />
+    </xs:complexType>
 
     <xs:complexType name="Field">
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="decoder" type="bean:Processor" minOccurs="0" maxOccurs="unbounded" />
-            <xs:element name="postProcessor" type="bean:Processor" minOccurs="0" maxOccurs="unbounded" />
-            <xs:element name="postValidator" type="bean:Processor" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="decoder"        type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="enum"           type="bean:EnumDecoder" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="postProcessor"  type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="postValidator"  type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
         </xs:choice>
 
         <xs:attributeGroup ref="bean:FieldAttributes" />
@@ -46,7 +60,13 @@
             <xs:enumeration value="none" />
         </xs:restriction>
     </xs:simpleType>
+
     <!--attribute definitions-->
+
+    <xs:attributeGroup name="EnumMapAttributes">
+        <xs:attribute name="key" type="xs:string" use="required" />
+        <xs:attribute name="value" type="xs:string" use="required" />
+    </xs:attributeGroup>
 
     <xs:attributeGroup name="BeanAttributes">
         <xs:attribute name="class" use="required" />
