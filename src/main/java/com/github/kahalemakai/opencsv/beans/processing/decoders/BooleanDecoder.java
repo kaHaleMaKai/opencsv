@@ -16,34 +16,27 @@
 
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
-import com.github.kahalemakai.opencsv.beans.processing.DataDecodingException;
-import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import lombok.AccessLevel;
 import lombok.Setter;
 
-import java.util.HashSet;
-import java.util.Set;
-
-public class BooleanDecoder implements Decoder<Boolean, DataDecodingException> {
+public class BooleanDecoder extends AbstractBooleanDecoder {
     @Setter(AccessLevel.PROTECTED)
-    private Set<String> truthyValues = new HashSet<>();
+    private String trueValue;
     @Setter(AccessLevel.PROTECTED)
-    private Set<String> falsyValues = new HashSet<>();
+    private String falseValue;
 
     public BooleanDecoder() {
-        truthyValues.add("true");
-        truthyValues.add("false");
+        trueValue = "true";
+        falseValue = "false";
     }
 
     @Override
-    public Boolean decode(String value) throws NumberFormatException {
-        if (truthyValues.contains(value)) {
-            return true;
-        }
-        if (falsyValues.contains(value)) {
-            return false;
-        }
-        throw new DataDecodingException(String.format("cannot decode value '%s' as Boolean", value));
+    protected boolean isFalse(String value) {
+        return falseValue.equals(value);
     }
 
+    @Override
+    protected boolean isTrue(String value) {
+        return trueValue.equals(value);
+    }
 }
