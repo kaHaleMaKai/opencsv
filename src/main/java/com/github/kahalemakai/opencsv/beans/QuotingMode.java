@@ -24,9 +24,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public enum QuotingMode {
 
-    STRICT_QUOTES("strict quotes", true, false),
-    NON_STRICT_QUOTES("non-strict quotes", false, false),
-    IGNORE_QUOTES("ignore quotes", false, true);
+    STRICT_QUOTES("strict", true, false),
+    NON_STRICT_QUOTES("non-strict", false, false),
+    IGNORE_QUOTES("ignore", false, true);
 
     @Getter
     private final String textValue;
