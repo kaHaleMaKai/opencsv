@@ -34,8 +34,6 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.*;
@@ -90,15 +88,13 @@ public class ConfigParser {
     }
 
     private Schema getOpencsvSchema() throws SAXException {
-        final URL schemaFile = getClass()
-                .getClassLoader()
-                .getResource("schemas/opencsv.xsd");
-        assert schemaFile != null;
-        Source xmlSource = new StreamSource(schemaFile.getFile());
+        final URL schemaUrl = getClass()
+                .getResource("/schemas/opencsv.xsd");
+        assert schemaUrl != null;
         SchemaFactory schemaFactory = SchemaFactory
                 .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         try {
-            return schemaFactory.newSchema(xmlSource);
+            return schemaFactory.newSchema(schemaUrl);
         } catch (SAXException e) {
             throw new SAXException(e);
         }
