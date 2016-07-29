@@ -16,6 +16,7 @@
 
 package com.github.kahalemakai.opencsv.beans.processing;
 
+import lombok.NonNull;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j;
 
@@ -191,8 +192,8 @@ public class DecoderManager {
      * @param column name of column to be looked up
      * @return {@code Optional} of {@code DecoderPropertyEditor}
      */
-    public Optional<PropertyEditor> get(final String column) {
-        return Optional.ofNullable(decoderMap.get(column));
+    public Optional<PropertyEditor> get(@NonNull final String column) {
+        return Optional.ofNullable(decoderMap.get(column.toLowerCase()));
     }
 
     /**
@@ -233,10 +234,11 @@ public class DecoderManager {
     }
 
     private <R> DecoderPropertyEditor<R> getPropertyEditor(final String column) {
-        if (!decoderMap.containsKey(column)) {
-            decoderMap.put(column, DecoderPropertyEditor.init());
+        final String columnToLower = column.toLowerCase();
+        if (!decoderMap.containsKey(columnToLower)) {
+            decoderMap.put(columnToLower, DecoderPropertyEditor.init());
         }
-        final DecoderPropertyEditor<R> propertyEditor = (DecoderPropertyEditor<R>) decoderMap.get(column);
+        final DecoderPropertyEditor<R> propertyEditor = (DecoderPropertyEditor<R>) decoderMap.get(columnToLower);
         return propertyEditor;
     }
 

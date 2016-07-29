@@ -17,6 +17,7 @@
 package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
+import com.github.kahalemakai.opencsv.examples.BigPerson;
 import com.github.kahalemakai.opencsv.examples.Person;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -35,7 +36,9 @@ public class CsvToBeanMapperImplTest {
     String[] linesWithIgnore;
     String[] lines;
     Person picard;
+    BigPerson PICARD;
     Person drObvious;
+    BigPerson DROBVIOUS;
     Iterator<String[]> iterator;
     Iterator<String[]> iteratorWithIgnore;
     Iterator<String> unparsedIterator;
@@ -53,6 +56,34 @@ public class CsvToBeanMapperImplTest {
     public void testIgnoreColumnThrowsOnBadName() throws Exception {
         final String[] header = {"$ignore2$","1age","$ignore$","givenName","surName","address","$ignore4$"};
         builder.setHeader(header);
+    }
+
+    @Test
+    public void testIgnoreColumnBigPerson() throws Exception {
+        final String[] header = {"Age","GivenName","SurName","Address"};
+        final CsvToBeanMapper<BigPerson> beanMapper = CsvToBeanMapper
+                .builder(BigPerson.class)
+                .nonStrictQuotes()
+                .quoteChar('\'')
+                .setHeader(header)
+                .registerDecoder("age", NullDecoder.class)
+                .registerDecoder("age", Integer::parseInt)
+                .registerPostProcessor("age", (Integer i) -> i + 10)
+                .withParsedLines(() -> iterator)
+                .setNullFallthroughForPostProcessors("AGE")
+                .skipLines(1)
+                .build();
+        final Iterator<BigPerson> it = beanMapper.iterator();
+        if (it.hasNext()) {
+            final BigPerson person1 = it.next();
+            PICARD.setAge(60);
+            assertEquals(PICARD, person1);
+        }
+        if (it.hasNext()) {
+            final BigPerson person2 = it.next();
+            assertEquals(DROBVIOUS, person2);
+        }
+
     }
 
     @Test
@@ -261,11 +292,23 @@ public class CsvToBeanMapperImplTest {
         picard.setSurName("Picard");
         picard.setAddress("Captain's room, Enterprise");
 
+        PICARD = new BigPerson();
+        PICARD.setAge(50);
+        PICARD.setGivenName("Jean-Luc");
+        PICARD.setSurName("Picard");
+        PICARD.setAddress("Captain's room, Enterprise");
+
         drObvious = new Person();
         drObvious.setAge(null);
         drObvious.setGivenName("Dr.");
         drObvious.setSurName("Obvious");
         drObvious.setAddress("Somewhere");
+
+        DROBVIOUS = new BigPerson();
+        DROBVIOUS.setAge(null);
+        DROBVIOUS.setGivenName("Dr.");
+        DROBVIOUS.setSurName("Obvious");
+        DROBVIOUS.setAddress("Somewhere");
 
         iterator = toParsedIterator(lines);
         iteratorWithIgnore = toParsedIterator(linesWithIgnore);

@@ -150,7 +150,8 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
             throw new IllegalStateException(msg);
         }
         final int linesToSkip = getReaderSetup().get() ? 0 : getSkipLines();
-        return isOnErrorSkipLine() ? new SkippingIterator(linesToSkip) : new NonSkippingIterator(linesToSkip);
+        final Iterator<String[]> iterator = source.iterator();
+        return isOnErrorSkipLine() ? new SkippingIterator(linesToSkip, iterator) : new NonSkippingIterator(linesToSkip, iterator);
     }
 
     @Override
@@ -196,19 +197,20 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
         return strategy.isHeaderDefined();
     }
 
-    private abstract class CsvIterator implements Iterator<T> {
-        abstract protected Iterator<String[]> getIterator();
+    abstract class CsvIterator implements Iterator<T> {
+        @Getter(AccessLevel.PROTECTED)
+        private Iterator<String[]> iterator;
 
-        public CsvIterator(final int skipLines) {
-            final Iterator<String[]> iterator = getIterator();
+        public CsvIterator(final int skipLines, final Iterator<String[]> iterator) {
+            this.iterator = iterator;
             try {
                 for (int i = 0; i < skipLines; ++i) {
-                    if (iterator.hasNext())
-                        iterator.next();
+                    if (this.iterator.hasNext())
+                        this.iterator.next();
                 }
                 if (!isHeaderDefined()) {
-                    if (iterator.hasNext()) {
-                        final String[] nextLine = iterator.next();
+                    if (this.iterator.hasNext()) {
+                        final String[] nextLine = this.iterator.next();
                         Builder.setHeader(getStrategy(), nextLine);
                     }
                 }
@@ -220,26 +222,24 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
 
     }
 
-    private class NonSkippingIterator extends CsvIterator {
-        @Getter(AccessLevel.PROTECTED)
-        private Iterator<String[]> iterator = source.iterator();
+    class NonSkippingIterator extends CsvIterator {
         private long counter;
 
-        public NonSkippingIterator(final int skipLines) {
-            super(skipLines);
+        public NonSkippingIterator(final int skipLines, final Iterator<String[]> iterator) {
+            super(skipLines, iterator);
         }
 
         @Override
         public boolean hasNext() {
-            return iterator.hasNext();
+            return getIterator().hasNext();
         }
 
         @Override
         public T next() {
-            if (!iterator.hasNext()) {
+            if (!getIterator().hasNext()) {
                 throw new NoSuchElementException();
             }
-            final String[] nextLine = iterator.next();
+            final String[] nextLine = getIterator().next();
             counter++;
             try {
                 if (log.isDebugEnabled()) {
@@ -259,23 +259,21 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
 
     }
 
-    private class SkippingIterator extends CsvIterator {
-        @Getter(AccessLevel.PROTECTED)
-        private Iterator<String[]> iterator = source.iterator();
+    class SkippingIterator extends CsvIterator {
         private long counter;
         private T nextElement;
         private boolean nextElementIsEmpty = true;
         private boolean calledByHasNext;
 
-        public SkippingIterator(final int skipLines) {
-            super(skipLines);
+        public SkippingIterator(final int skipLines, final Iterator<String[]> iterator) {
+            super(skipLines, iterator);
         }
 
         @Override
         public boolean hasNext() {
             if (!nextElementIsEmpty)
                 return true;
-            else if (iterator.hasNext()) {
+            else if (getIterator().hasNext()) {
                 calledByHasNext = true;
                 nextElement = this.next();
                 calledByHasNext = false;
@@ -296,7 +294,7 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
                 nextElementIsEmpty = true;
                 return tmp;
             }
-            if (!iterator.hasNext()) {
+            if (!getIterator().hasNext()) {
                 if (calledByHasNext) {
                     nextElementIsEmpty = true;
                     return null;
@@ -305,7 +303,7 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
                     throw new NoSuchElementException();
                 }
             }
-            final String[] nextLine = iterator.next();
+            final String[] nextLine = getIterator().next();
             counter++;
             try {
                 if (log.isDebugEnabled()) {
