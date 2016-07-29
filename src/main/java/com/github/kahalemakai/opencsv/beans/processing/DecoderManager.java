@@ -236,7 +236,7 @@ public class DecoderManager {
     private <R> DecoderPropertyEditor<R> getPropertyEditor(final String column) {
         final String columnToLower = column.toLowerCase();
         if (!decoderMap.containsKey(columnToLower)) {
-            decoderMap.put(columnToLower, DecoderPropertyEditor.init());
+            decoderMap.put(columnToLower, DecoderPropertyEditor.forColumn(column));
         }
         final DecoderPropertyEditor<R> propertyEditor = (DecoderPropertyEditor<R>) decoderMap.get(columnToLower);
         return propertyEditor;

@@ -17,7 +17,7 @@
 package com.github.kahalemakai.opencsv.beans.processing;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 
@@ -37,13 +37,15 @@ import java.util.List;
  *
  * @param <T> class, the csv column should be converted to
  */
-@NoArgsConstructor(staticName = "init")
+@RequiredArgsConstructor(staticName = "forColumn")
 @Log4j
 public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     private final List<Decoder<? extends T, ? extends Throwable>> decoders = new LinkedList<>();
     private PostProcessor<T> postProcessor = PostProcessor.identity();
     private final List<PostValidator<T>> postValidators = new LinkedList<>();
     private String data;
+    @Getter
+    private final String columnName;
 
     /**
      * Define trimming behaviour for csv String values before decoding them.
@@ -223,7 +225,7 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
                 return decodedValue;
             } catch (Throwable e) {
                 if (i == decoders.size() - 1) {
-                    final String msg = String.format("could not decode value '%s'", data);
+                    final String msg = String.format("[col: %s] could not decode value '%s'", getColumnName(), data);
                     log.error(msg);
                     throw new DataDecodingException(msg, e);
                 }
@@ -249,7 +251,7 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
                 }
                 return postProcessedValue;
             } catch (Exception e) {
-                final String msg = String.format("error while trying to postprocess value %s", value);
+                final String msg = String.format("[col: %s] error while trying to postprocess value %s", getColumnName(), value);
                 log.error(msg);
                 throw new PostProcessingException(msg, e);
             }
@@ -265,7 +267,7 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
             int counter = 1;
             for (PostValidator<T> postValidator : postValidators) {
                 if (!postValidator.validate(value)) {
-                    final String msg = String.format("could not validate data\ninput: %s\nvalidation step: %d", value, counter);
+                    final String msg = String.format("[col: %s] could not validate data\ninput: %s\nvalidation step: %d", getColumnName(), value, counter);
                     log.error(msg);
                     throw new PostValidationException(msg);
                 }
