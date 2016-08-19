@@ -24,7 +24,6 @@ import java.beans.PropertyEditor;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Indirection layer around the {@code DecoderPropertyEditor} class.
@@ -192,8 +191,9 @@ public class DecoderManager {
      * @param column name of column to be looked up
      * @return {@code Optional} of {@code DecoderPropertyEditor}
      */
-    public Optional<PropertyEditor> get(@NonNull final String column) {
-        return Optional.ofNullable(decoderMap.get(column.toLowerCase()));
+    public PropertyEditor get(@NonNull final String column) {
+        final DecoderPropertyEditor<?> editor = decoderMap.get(column.toLowerCase());
+        return editor != null ? editor : DecoderPropertyEditor.IDENTITY;
     }
 
     /**

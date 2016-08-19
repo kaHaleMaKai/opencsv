@@ -21,15 +21,17 @@ import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.AbstractCSVToBean;
 import lombok.*;
 import lombok.extern.log4j.Log4j;
 
+import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyEditor;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -40,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 @Log4j
 @ToString
-class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> {
+class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMapper<T> {
     @Getter(AccessLevel.PACKAGE)
     private final HeaderDirectMappingStrategy<T> strategy;
     @Getter(AccessLevel.PRIVATE)
@@ -137,9 +139,10 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
     }
 
     @Override
-    protected PropertyEditor getPropertyEditor(PropertyDescriptor desc) throws InstantiationException, IllegalAccessException {
+    protected PropertyEditor getPropertyEditor(PropertyDescriptor desc)
+            throws InstantiationException, IllegalAccessException, IllegalStateException {
         final String column = desc.getName();
-        return decoderManager.get(column).orElse(super.getPropertyEditor(desc));
+        return decoderManager.get(column);
     }
 
     @Override
@@ -257,6 +260,58 @@ class CsvToBeanMapperImpl<T> extends CsvToBean<T> implements CsvToBeanMapper<T> 
             }
         }
 
+    }
+
+    protected T processLine(HeaderDirectMappingStrategy<T> mapper, String[] line) throws InstantiationException {
+        T bean = null;
+        try {
+            bean = mapper.createBean();
+        } catch (InstantiationException | IllegalAccessException e) {
+            final String msg = "could not create new bean";
+            log.error(msg);
+            throw new CsvToBeanException(msg, e);
+        }
+        for (int col = 0; col < line.length; col++) {
+            PropertyDescriptor prop = null;
+            try {
+                prop = mapper.findDescriptor(col);
+            } catch (IntrospectionException e) {
+                final String msg =
+                        processingErrorMsg(mapper, col, "could not find descriptor");
+                log.error(msg);
+                throw new CsvToBeanException(msg, e);
+            }
+            if (null != prop) {
+                Object obj = null;
+                final String value = line[col];
+                try {
+                    obj = convertValue(value, prop);
+                } catch (IllegalAccessException | CsvToBeanException e) {
+                    final String msg =
+                            processingErrorMsg(mapper, col, "could not convert value %s",
+                                    value == null ? "null" : value);
+                    log.error(msg);
+                    throw new CsvToBeanException(msg, e);
+                }
+                try {
+                    prop.getWriteMethod().invoke(bean, obj);
+                } catch (IllegalArgumentException | InvocationTargetException | IllegalAccessException e) {
+                    final String msg = processingErrorMsg(mapper, col, "could not assign object %s of type %s",
+                            obj, obj.getClass().getCanonicalName());
+                    log.error(msg);
+                    throw new CsvToBeanException(msg, e);
+                }
+            }
+        }
+        return bean;
+    }
+
+    private String processingErrorMsg(final HeaderDirectMappingStrategy<?> mapper,
+                                      final int col,
+                                      final String formatString,
+                                      Object...values) {
+        return String.format(formatString, values)
+                + String.format(" (in column %s at csv position %d)", mapper.getColumnName(col), col);
     }
 
     class SkippingIterator extends CsvIterator {

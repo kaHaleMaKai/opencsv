@@ -16,6 +16,8 @@
 
 package com.github.kahalemakai.opencsv.beans;
 
+import com.github.kahalemakai.opencsv.beans.processing.decoders.IntDecoder;
+import com.github.kahalemakai.opencsv.beans.processing.decoders.IntToBooleanDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import com.github.kahalemakai.opencsv.examples.BigPerson;
 import com.github.kahalemakai.opencsv.examples.Person;
@@ -92,6 +94,7 @@ public class CsvToBeanMapperImplTest {
         builder.setHeader(header);
         final CsvToBeanMapper<Person> beanMapper = builder
                 .withLines(() -> unparsedIteratorWithIgnore)
+                .registerDecoder("age", IntDecoder.class)
                 .build();
         final Iterator<Person> it = beanMapper.iterator();
         assertEquals(picard, it.next());
@@ -99,14 +102,22 @@ public class CsvToBeanMapperImplTest {
 
     @Test
     public void testInputStream() throws Exception {
-        final Iterator<Person> it = builder.withInputStream(is).build().iterator();
+        final Iterator<Person> it = builder
+                .withInputStream(is)
+                .registerDecoder("age", IntDecoder.class)
+                .build()
+                .iterator();
         final Person person = it.next();
         assertEquals(picard, person);
     }
 
     @Test
     public void testReader() throws Exception {
-        final Iterator<Person> it = builder.withReader(reader).build().iterator();
+        final Iterator<Person> it = builder
+                .withReader(reader)
+                .registerDecoder("age", IntDecoder.class)
+                .build()
+                .iterator();
         final Person person = it.next();
         assertEquals(picard, person);
     }
@@ -114,7 +125,11 @@ public class CsvToBeanMapperImplTest {
     @Test
     public void testDecoding() throws Exception {
         builder.registerDecoder("surName", (data) -> "Mr. "+data);
-        final Iterator<Person> it = builder.withParsedLines(() -> iterator).build().iterator();
+        final Iterator<Person> it = builder
+                .withParsedLines(() -> iterator)
+                .registerDecoder("age", IntDecoder.class)
+                .build()
+                .iterator();
         final Person person = it.next();
         picard.setSurName("Mr. Picard");
         assertEquals(picard, person);
@@ -244,7 +259,10 @@ public class CsvToBeanMapperImplTest {
 
     @Test
     public void testWithLines() throws Exception {
-        final CsvToBeanMapper<Person> beanMapper = builder.withParsedLines(() -> iterator).build();
+        final CsvToBeanMapper<Person> beanMapper = builder
+                .withParsedLines(() -> iterator)
+                .registerDecoder("age", IntDecoder.class)
+                .build();
         final Iterator<Person> it = beanMapper.iterator();
         assertEquals(picard, it.next());
     }
@@ -253,7 +271,10 @@ public class CsvToBeanMapperImplTest {
     public void testWithLinesWithManuallyInsertedHeader() throws Exception {
         final String[] header = iterator.next();
         builder.setHeader(header);
-        final CsvToBeanMapper<Person> beanMapper = builder.withParsedLines(() -> iterator).build();
+        final CsvToBeanMapper<Person> beanMapper = builder
+                .withParsedLines(() -> iterator)
+                .registerDecoder("age", IntDecoder.class)
+                .build();
         final Iterator<Person> it = beanMapper.iterator();
         assertEquals(picard, it.next());
     }

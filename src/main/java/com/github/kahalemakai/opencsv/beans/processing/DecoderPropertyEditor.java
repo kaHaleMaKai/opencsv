@@ -40,6 +40,7 @@ import java.util.List;
 @RequiredArgsConstructor(staticName = "forColumn")
 @Log4j
 public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
+    private static final String ANY_COLUMN = "*";
     private final List<Decoder<? extends T>> decoders = new LinkedList<>();
     private PostProcessor<T> postProcessor = PostProcessor.identity();
     private final List<PostValidator<T>> postValidators = new LinkedList<>();
@@ -281,5 +282,10 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
             log.debug("null falls through on validation");
         }
     }
+
+    static DecoderPropertyEditor<String> IDENTITY =
+            DecoderPropertyEditor
+                    .<String>forColumn(ANY_COLUMN)
+                    .add(Decoder.IDENTITY);
 
 }
