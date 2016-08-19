@@ -312,28 +312,16 @@ public class ConfigParser {
         return new ConfigParser(xmlInputStream, null, unparsedLines, null, null);
     }
 
-    public static ConfigParser ofParsedLines(@NonNull final InputStream xmlInputStream,
-                                             @NonNull final Iterable<String[]> parsedLines)
-            throws IOException, SAXException {
-        return new ConfigParser(xmlInputStream, null, null, parsedLines, null);
-    }
-
-    public static ConfigParser ofReader(@NonNull final InputStream xmlInputStream,
-                                        @NonNull final Reader reader)
-            throws IOException, SAXException {
-        return new ConfigParser(xmlInputStream, reader, null, null, null);
-    }
-
-    public static ConfigParser ofInputStream(@NonNull final InputStream xmlInputStream,
-                                             @NonNull final InputStream inputStream)
-            throws IOException, SAXException {
-        return new ConfigParser(xmlInputStream, null, null, null, inputStream);
-    }
-
     public static ConfigParser ofUnparsedLines(@NonNull final File xmlFile,
                                                @NonNull final Iterable<String> unparsedLines)
             throws IOException, SAXException {
         return new ConfigParser(xmlFile, null, unparsedLines, null, null);
+    }
+
+    public static ConfigParser ofParsedLines(@NonNull final InputStream xmlInputStream,
+                                             @NonNull final Iterable<String[]> parsedLines)
+            throws IOException, SAXException {
+        return new ConfigParser(xmlInputStream, null, null, parsedLines, null);
     }
 
     public static ConfigParser ofParsedLines(@NonNull final File xmlFile,
@@ -342,16 +330,40 @@ public class ConfigParser {
         return new ConfigParser(xmlFile, null, null, parsedLines, null);
     }
 
+    public static ConfigParser ofReader(@NonNull final InputStream xmlInputStream,
+                                        @NonNull final Reader reader)
+            throws IOException, SAXException {
+        return new ConfigParser(xmlInputStream, reader, null, null, null);
+    }
+
     public static ConfigParser ofReader(@NonNull final File xmlFile,
                                         @NonNull final Reader reader)
             throws IOException, SAXException {
         return new ConfigParser(xmlFile, reader, null, null, null);
     }
 
-    public static ConfigParser ofFile(@NonNull final File xmlFile,
+    public static ConfigParser ofInputStream(@NonNull final InputStream xmlInputStream,
+                                             @NonNull final InputStream inputStream)
+            throws IOException, SAXException {
+        return new ConfigParser(xmlInputStream, null, null, null, inputStream);
+    }
+
+    public static ConfigParser ofInputStream(@NonNull final File xmlFile,
                                              @NonNull final InputStream inputStream)
             throws IOException, SAXException {
         return new ConfigParser(xmlFile, null, null, null, inputStream);
+    }
+
+    public static ConfigParser ofFile(@NonNull final InputStream xmlInputStream,
+                                      @NonNull final File inputFile)
+            throws IOException, SAXException {
+        return new ConfigParser(xmlInputStream, null, null, null, new FileInputStream(inputFile));
+    }
+
+    public static ConfigParser ofFile(@NonNull final File xmlFile,
+                                      @NonNull final File inputFile)
+            throws IOException, SAXException {
+        return new ConfigParser(xmlFile, null, null, null, new FileInputStream(inputFile));
     }
 
 }
