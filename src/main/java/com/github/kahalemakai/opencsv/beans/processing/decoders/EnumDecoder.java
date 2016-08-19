@@ -1,11 +1,12 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
-import com.github.kahalemakai.opencsv.beans.processing.DataDecodingException;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import lombok.AccessLevel;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Log4j
 public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
@@ -38,12 +39,14 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
         return mapping.get(key);
     }
 
-    public final void setType(final Class<? extends E> type) {
-        if (type == null) {
-            throw new UnsupportedOperationException("type has already been set");
+    // FIXME: turn this into a static constructor
+    public final void setType(final Class<? extends E> newType) {
+        synchronized (this) {
+            if (this.type != null) {
+                throw new UnsupportedOperationException("type has already been set");
+            }
         }
-        this.type = type;
-        for (E e : type.getEnumConstants()) {
+        for (E e : newType.getEnumConstants()) {
             enumMapping.put(e.name(), e);
         }
     }
