@@ -152,6 +152,18 @@ publishing {
     }
 }
 
+test {
+    useJUnit {
+        excludeCategories "com.github.kahalemakai.opencsv.suites.PerformanceTests"
+    }
+}
+
+task performanceTest(type: Test, group: "verification") {
+    useJUnit {
+        includeCategories "com.github.kahalemakai.opencsv.suites.PerformanceTests"
+    }
+}
+
 bintray {
     user = rootProject.hasProperty("bintrayUser") ? bintrayUser : ""
     key = rootProject.hasProperty("bintrayApiKey") ? bintrayApiKey : ""
