@@ -1,0 +1,1013 @@
+<opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.2.1/opencsv.xsd"
+                   xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
+                   xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
+                   xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
+
+    <csv:reader quoteChar="&apos;">
+        <csv:column name="field1" />
+        <csv:column name="field2" />
+        <csv:column name="field3" />
+        <csv:column name="field4" />
+        <csv:column name="field5" />
+        <csv:column name="field6" />
+        <csv:column name="field7" />
+        <csv:column name="field8" />
+        <csv:column name="field9" />
+        <csv:column name="field10" />
+        <csv:column name="field11" />
+        <csv:column name="field12" />
+        <csv:column name="field13" />
+        <csv:column name="field14" />
+        <csv:column name="field15" />
+        <csv:column name="field16" />
+        <csv:column name="field17" />
+        <csv:column name="field18" />
+        <csv:column name="field19" />
+        <csv:column name="field20" />
+        <csv:column name="field21" />
+        <csv:column name="field22" />
+        <csv:column name="field23" />
+        <csv:column name="field24" />
+        <csv:column name="field25" />
+        <csv:column name="field26" />
+        <csv:column name="field27" />
+        <csv:column name="field28" />
+        <csv:column name="field29" />
+        <csv:column name="field30" />
+        <csv:column name="field31" />
+        <csv:column name="field32" />
+        <csv:column name="field33" />
+        <csv:column name="field34" />
+        <csv:column name="field35" />
+        <csv:column name="field36" />
+        <csv:column name="field37" />
+        <csv:column name="field38" />
+        <csv:column name="field39" />
+        <csv:column name="field40" />
+        <csv:column name="field41" />
+        <csv:column name="field42" />
+        <csv:column name="field43" />
+        <csv:column name="field44" />
+        <csv:column name="field45" />
+        <csv:column name="field46" />
+        <csv:column name="field47" />
+        <csv:column name="field48" />
+        <csv:column name="field49" />
+        <csv:column name="field50" />
+        <csv:column name="field51" />
+        <csv:column name="field52" />
+        <csv:column name="field53" />
+        <csv:column name="field54" />
+        <csv:column name="field55" />
+        <csv:column name="field56" />
+        <csv:column name="field57" />
+        <csv:column name="field58" />
+        <csv:column name="field59" />
+        <csv:column name="field60" />
+        <csv:column name="field61" />
+        <csv:column name="field62" />
+        <csv:column name="field63" />
+        <csv:column name="field64" />
+        <csv:column name="field65" />
+        <csv:column name="field66" />
+        <csv:column name="field67" />
+        <csv:column name="field68" />
+        <csv:column name="field69" />
+        <csv:column name="field70" />
+        <csv:column name="field71" />
+        <csv:column name="field72" />
+        <csv:column name="field73" />
+        <csv:column name="field74" />
+        <csv:column name="field75" />
+        <csv:column name="field76" />
+        <csv:column name="field77" />
+        <csv:column name="field78" />
+        <csv:column name="field79" />
+        <csv:column name="field80" />
+        <csv:column name="field81" />
+        <csv:column name="field82" />
+        <csv:column name="field83" />
+        <csv:column name="field84" />
+        <csv:column name="field85" />
+        <csv:column name="field86" />
+        <csv:column name="field87" />
+        <csv:column name="field88" />
+        <csv:column name="field89" />
+        <csv:column name="field90" />
+        <csv:column name="field91" />
+        <csv:column name="field92" />
+        <csv:column name="field93" />
+        <csv:column name="field94" />
+        <csv:column name="field95" />
+        <csv:column name="field96" />
+        <csv:column name="field97" />
+        <csv:column name="field98" />
+        <csv:column name="field99" />
+        <csv:column name="field100" />
+        <csv:column name="field101" />
+        <csv:column name="field102" />
+        <csv:column name="field103" />
+        <csv:column name="field104" />
+        <csv:column name="field105" />
+        <csv:column name="field106" />
+        <csv:column name="field107" />
+        <csv:column name="field108" />
+        <csv:column name="field109" />
+        <csv:column name="field110" />
+        <csv:column name="field111" />
+        <csv:column name="field112" />
+        <csv:column name="field113" />
+        <csv:column name="field114" />
+        <csv:column name="field115" />
+        <csv:column name="field116" />
+        <csv:column name="field117" />
+        <csv:column name="field118" />
+        <csv:column name="field119" />
+        <csv:column name="field120" />
+        <csv:column name="field121" />
+        <csv:column name="field122" />
+        <csv:column name="field123" />
+        <csv:column name="field124" />
+        <csv:column name="field125" />
+        <csv:column name="field126" />
+        <csv:column name="field127" />
+        <csv:column name="field128" />
+        <csv:column name="field129" />
+        <csv:column name="field130" />
+        <csv:column name="field131" />
+        <csv:column name="field132" />
+        <csv:column name="field133" />
+        <csv:column name="field134" />
+        <csv:column name="field135" />
+        <csv:column name="field136" />
+        <csv:column name="field137" />
+        <csv:column name="field138" />
+        <csv:column name="field139" />
+        <csv:column name="field140" />
+        <csv:column name="field141" />
+        <csv:column name="field142" />
+        <csv:column name="field143" />
+        <csv:column name="field144" />
+        <csv:column name="field145" />
+        <csv:column name="field146" />
+        <csv:column name="field147" />
+        <csv:column name="field148" />
+        <csv:column name="field149" />
+        <csv:column name="field150" />
+        <csv:column name="field151" />
+        <csv:column name="field152" />
+        <csv:column name="field153" />
+        <csv:column name="field154" />
+        <csv:column name="field155" />
+        <csv:column name="field156" />
+        <csv:column name="field157" />
+        <csv:column name="field158" />
+        <csv:column name="field159" />
+        <csv:column name="field160" />
+        <csv:column name="field161" />
+        <csv:column name="field162" />
+        <csv:column name="field163" />
+        <csv:column name="field164" />
+        <csv:column name="field165" />
+        <csv:column name="field166" />
+        <csv:column name="field167" />
+        <csv:column name="field168" />
+        <csv:column name="field169" />
+        <csv:column name="field170" />
+        <csv:column name="field171" />
+        <csv:column name="field172" />
+        <csv:column name="field173" />
+        <csv:column name="field174" />
+        <csv:column name="field175" />
+        <csv:column name="field176" />
+        <csv:column name="field177" />
+        <csv:column name="field178" />
+        <csv:column name="field179" />
+        <csv:column name="field180" />
+        <csv:column name="field181" />
+        <csv:column name="field182" />
+        <csv:column name="field183" />
+        <csv:column name="field184" />
+        <csv:column name="field185" />
+        <csv:column name="field186" />
+        <csv:column name="field187" />
+        <csv:column name="field188" />
+        <csv:column name="field189" />
+        <csv:column name="field190" />
+        <csv:column name="field191" />
+        <csv:column name="field192" />
+        <csv:column name="field193" />
+        <csv:column name="field194" />
+        <csv:column name="field195" />
+        <csv:column name="field196" />
+        <csv:column name="field197" />
+        <csv:column name="field198" />
+        <csv:column name="field199" />
+        <csv:column name="field200" />
+    </csv:reader>
+
+    <bean:config class="com.github.kahalemakai.opencsv.examples.WideCsv">
+        <bean:field name="field1">
+        <bean:decoder type="NullDecoder" />
+            <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field2">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field3">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field4">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field5">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field6">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field7">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field8">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field9">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field10">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field11">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field12">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field13">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field14">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field15">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field16">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field17">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field18">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field19">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field20">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field21">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field22">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field23">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field24">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field25">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field26">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field27">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field28">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field29">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field30">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field31">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field32">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field33">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field34">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field35">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field36">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field37">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field38">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field39">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field40">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field41">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field42">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field43">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field44">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field45">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field46">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field47">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field48">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field49">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field50">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field51">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field52">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field53">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field54">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field55">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field56">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field57">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field58">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field59">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field60">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field61">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field62">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field63">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field64">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field65">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field66">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field67">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field68">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field69">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field70">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field71">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field72">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field73">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field74">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field75">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field76">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field77">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field78">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field79">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field80">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field81">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field82">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field83">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field84">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field85">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field86">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field87">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field88">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field89">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field90">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field91">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field92">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field93">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field94">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field95">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field96">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field97">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field98">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field99">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field100">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field101">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field102">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field103">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field104">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field105">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field106">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field107">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field108">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field109">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field110">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field111">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field112">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field113">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field114">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field115">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field116">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field117">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field118">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field119">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field120">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field121">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field122">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field123">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field124">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field125">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field126">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field127">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field128">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field129">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field130">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field131">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field132">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field133">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field134">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field135">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field136">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field137">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field138">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field139">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field140">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field141">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field142">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field143">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field144">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field145">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field146">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field147">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field148">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field149">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field150">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field151">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field152">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field153">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field154">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field155">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field156">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field157">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field158">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field159">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field160">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field161">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field162">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field163">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field164">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field165">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field166">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field167">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field168">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field169">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field170">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field171">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field172">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field173">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field174">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field175">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field176">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field177">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field178">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field179">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field180">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field181">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field182">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field183">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field184">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field185">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field186">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field187">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field188">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field189">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field190">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="ShortDecoder" />
+        </bean:field>
+        <bean:field name="field191">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field192">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field193">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field194">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field195">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field196">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="NullOrStringDecoder" />
+        </bean:field>
+        <bean:field name="field197">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="BooleanDecoder" />
+        </bean:field>
+        <bean:field name="field198">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+        <bean:field name="field199">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="LongDecoder" />
+        </bean:field>
+        <bean:field name="field200">
+        <bean:decoder type="NullDecoder" />
+        <bean:decoder type="IntDecoder" />
+        </bean:field>
+    </bean:config>
+
+</opencsv:resources>

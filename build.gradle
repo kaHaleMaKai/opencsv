@@ -154,13 +154,13 @@ publishing {
 
 test {
     useJUnit {
-        excludeCategories "com.github.kahalemakai.opencsv.suites.PerformanceTests"
+        excludeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
     }
 }
 
 task performanceTest(type: Test, group: "verification") {
     useJUnit {
-        includeCategories "com.github.kahalemakai.opencsv.suites.PerformanceTests"
+        includeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
     }
 }
 
