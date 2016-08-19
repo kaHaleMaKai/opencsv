@@ -21,6 +21,7 @@ import com.github.kahalemakai.opencsv.beans.processing.decoders.IntToBooleanDeco
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import com.github.kahalemakai.opencsv.examples.BigPerson;
 import com.github.kahalemakai.opencsv.examples.Person;
+import com.github.kahalemakai.opencsv.examples.WithBoolean;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import org.junit.Before;
@@ -47,6 +48,25 @@ public class CsvToBeanMapperImplTest {
     Iterator<String> unparsedIteratorWithIgnore;
     InputStream is;
     Reader reader;
+
+    @Test
+    public void testBooleanField() throws Exception {
+        final WithBoolean wb = new WithBoolean();
+        wb.setFlag(true);
+        final String[] bLines = new String[]{
+                "1",
+                "0"
+        };
+        final Iterator<WithBoolean> iterator = CsvToBeanMapper.builder(WithBoolean.class)
+                .registerDecoder("flag", IntToBooleanDecoder.class)
+                .setHeader(new String[]{"flag"})
+                .withParsedLines(() -> toParsedIterator(bLines))
+                .build()
+                .iterator();
+        assertEquals(wb, iterator.next());
+        wb.setFlag(false);
+        assertEquals(wb, iterator.next());
+    }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIgnoreColumnThrowsOnIgnore0() throws Exception {
