@@ -7,18 +7,22 @@ import lombok.Setter;
 
 import java.util.*;
 
-public class EnumDecoder<E extends Enum<E>> implements Decoder<E, DataDecodingException> {
+@Log4j
+public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
     @Setter(AccessLevel.PROTECTED)
     private Map<String, E> mapping = new HashMap<>();
     private Class<? extends E> type;
     private Map<String, E> enumMapping = new HashMap<>();
 
     @Override
-    public E decode(String value) throws DataDecodingException {
+    public E decode(String value) {
         final E e = getEnumConstant(value);
         if (e == null) {
-            final String msg = String.format("could not decode value '%s' as enum of type %s", value, getClass().getCanonicalName());
-            throw new DataDecodingException(msg);
+            if (log.isDebugEnabled()) {
+                final String msg = String.format("could not decode value '%s' as enum of type %s", value, getClass().getCanonicalName());
+                log.debug(msg);
+            }
+            return Decoder.decodingFailed();
         }
         return e;
     }

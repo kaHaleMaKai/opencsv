@@ -20,9 +20,13 @@ import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
-public class LongDecoder implements Decoder<Long, NumberFormatException> {
+public class LongDecoder implements Decoder<Long> {
     @Override
-    public Long decode(String value) throws NumberFormatException {
-        return Long.parseLong(value);
+    public Long decode(String value) {
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return Decoder.decodingFailed();
+        }
     }
 }

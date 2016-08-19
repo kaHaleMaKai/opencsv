@@ -41,7 +41,7 @@ import java.util.Optional;
 @ToString
 public class DecoderManager {
     private final Map<String, DecoderPropertyEditor<?>> decoderMap;
-    private final Map<Class<? extends Decoder<?, ? extends Throwable>>, Decoder<?, ? extends Throwable>> decoderClassMap;
+    private final Map<Class<? extends Decoder<?>>, Decoder<?>> decoderClassMap;
     private final Map<Class<? extends PostProcessor<?>>, PostProcessor<?>> postProcessorClassMap;
     private final Map<Class<? extends PostValidator<?>>, PostValidator<?>> postValidatorClassMap;
 
@@ -62,7 +62,7 @@ public class DecoderManager {
      * @param <T> target type of decoder conversion
      * @return the {@code DecoderManager} instance
      */
-    public <T> DecoderManager add(final String column, Decoder<? extends T, ? extends Throwable> decoder) {
+    public <T> DecoderManager add(final String column, Decoder<? extends T> decoder) {
         @SuppressWarnings("unchecked")
         final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
         propertyEditor.add(decoder);
@@ -83,11 +83,11 @@ public class DecoderManager {
      * @throws InstantiationException if trying to call a no-args constructor for {@code decoderClass} fails
      */
     public DecoderManager add(final String column,
-                              Class<? extends Decoder<?, ? extends Throwable>> decoderClass)
+                              Class<? extends Decoder<?>> decoderClass)
                               throws InstantiationException {
         if (!decoderClassMap.containsKey(decoderClass)) {
             try {
-                final Decoder<?, ? extends Throwable> decoder = decoderClass.newInstance();
+                final Decoder<?> decoder = decoderClass.newInstance();
                 decoderClassMap.put(decoderClass, decoder);
             } catch (InstantiationException | IllegalAccessException e) {
                 final String msg = e.getMessage();
@@ -243,8 +243,7 @@ public class DecoderManager {
     }
 
     private DecoderManager(Map<String, DecoderPropertyEditor<?>> decoderMap,
-                           Map<Class<? extends Decoder<?, ? extends Throwable>>,
-                               Decoder<?, ? extends Throwable>> decoderClassMap,
+                           Map<Class<? extends Decoder<?>>, Decoder<?>> decoderClassMap,
                            Map<Class<? extends PostProcessor<?>>, PostProcessor<?>> postProcessorClassMap,
                            Map<Class<? extends PostValidator<?>>, PostValidator<?>> postValidatorClassMap) {
         this.decoderMap = decoderMap;

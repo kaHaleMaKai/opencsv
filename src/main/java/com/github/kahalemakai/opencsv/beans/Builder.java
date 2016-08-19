@@ -380,7 +380,7 @@ public class Builder<T> {
      * @return the {@code Builder} instance
      * @throws InstantiationException if creating an instance of {@code DecoderClass} fails
      */
-    public Builder<T> registerDecoder(String column, Class<? extends Decoder<?, ? extends Throwable>> decoderClass)
+    public Builder<T> registerDecoder(String column, Class<? extends Decoder<?>> decoderClass)
             throws InstantiationException {
         log.debug(String.format("registering decoder of class <%s> for column '%s'", decoderClass.getCanonicalName(), column));
         decoderManager.add(column, decoderClass);
@@ -396,7 +396,7 @@ public class Builder<T> {
      * @return the {@code Builder} instance
      */
     public Builder<T> registerDecoder(final String column,
-                                      final Decoder<?, ? extends Throwable> decoder) {
+                                      final Decoder<?> decoder) {
         log.debug(String.format("registering decoder for column '%s'", column));
         decoderManager.add(column, decoder);
         return this;

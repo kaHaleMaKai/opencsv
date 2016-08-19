@@ -218,7 +218,7 @@ public class ConfigParser {
                     final String type = getValue(processor, "type").get();
                     switch (processorNodeName) {
                         case BEAN_DECODER:
-                            final Class<? extends Decoder<R, ? extends Throwable>> decoderClass = getProcessorClass(type, BEAN_DECODER);
+                            final Class<? extends Decoder<R>> decoderClass = getProcessorClass(type, BEAN_DECODER);
                             builder.registerDecoder(name, decoderClass);
                             break;
                         case BEAN_POSTPROCESSOR:

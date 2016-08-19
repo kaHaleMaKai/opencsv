@@ -40,7 +40,7 @@ import java.util.List;
 @RequiredArgsConstructor(staticName = "forColumn")
 @Log4j
 public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
-    private final List<Decoder<? extends T, ? extends Throwable>> decoders = new LinkedList<>();
+    private final List<Decoder<? extends T>> decoders = new LinkedList<>();
     private PostProcessor<T> postProcessor = PostProcessor.identity();
     private final List<PostValidator<T>> postValidators = new LinkedList<>();
     private String data;
@@ -101,7 +101,7 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
      * @param decoder decoder instance to be added to the decoding chain
      * @return the {@code DecoderPropertyEditor} instance
      */
-    public DecoderPropertyEditor<T> add(Decoder<? extends T, ? extends Throwable> decoder) {
+    public DecoderPropertyEditor<T> add(Decoder<? extends T> decoder) {
         decoders.add(decoder);
         return this;
     }
@@ -213,9 +213,12 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
             if (log.isDebugEnabled()) {
                 log.debug(String.format("trying decoder nr. %d", i + 1));
             }
-            final Decoder<? extends T, ? extends Throwable> decoder = decoders.get(i);
+            final Decoder<? extends T> decoder = decoders.get(i);
             try {
                 final T decodedValue = decoder.decode(data);
+                if (Decoder.DECODING_FAILED == decodedValue) {
+                    continue;
+                }
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("successfully decoded value %s -> %s : <%s>",
                             data,
@@ -224,14 +227,14 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
                 }
                 return decodedValue;
             } catch (Throwable e) {
-                if (i == decoders.size() - 1) {
-                    final String msg = String.format("[col: %s] could not decode value '%s'", getColumnName(), data);
-                    log.error(msg);
-                    throw new DataDecodingException(msg, e);
-                }
+                final String msg = String.format("[col: %s] could not decode value '%s'", getColumnName(), data);
+                log.error(msg);
+                throw new DataDecodingException(msg, e);
             }
         }
-        return null;
+        final String msg = String.format("[col: %s] could not decode value '%s'", getColumnName(), data);
+        log.error(msg);
+        throw new DataDecodingException(msg);
     }
 
     private T postProcess(final T value) throws PostProcessingException {

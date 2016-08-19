@@ -1,7 +1,7 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
-import com.github.kahalemakai.opencsv.beans.processing.DataDecodingException;
+import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,9 +20,8 @@ public class EnumDecoderTest {
         decoder.put("i", "IGNORE_QUOTES");
     }
 
-    @Test(expected = DataDecodingException.class)
     public void testDecodeThrows() throws Exception {
-        decoder.decode("this breaks");
+        assertEquals(Decoder.decodingFailed(), decoder.decode("this breaks"));
     }
 
     @Test

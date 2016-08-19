@@ -1,7 +1,6 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 
-import com.github.kahalemakai.opencsv.beans.processing.DataDecodingException;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,7 +20,7 @@ import java.util.regex.Pattern;
  * Subclasses need to set {@code precision} and {@code scale} on instance creation.
  */
 @Log4j
-abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer, DataDecodingException> {
+abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
     @Getter(value = AccessLevel.PRIVATE, lazy = true)
     private final DecimalFormat format = determineFormat();
     private final static Pattern pattern = Pattern.compile("[-.]");
@@ -68,44 +67,39 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer, Data
     }
 
     @Override
-    public ByteBuffer decode(String data) throws DataDecodingException {
+    public ByteBuffer decode(String data) {
         // remove a superfluous positive prefix (simplifies parsing with DecimalFormat.parse()
         if (data.startsWith("+") && data.length() > 1)
             data = data.substring(1);
         final int numDigits = data.length() - getNumMatches(data);
         // throw on too many digits (aka precision)
         if (numDigits > precision) {
-            final String msg = String.format("too small precision for decimal input. expected: precision = %d, got input: '%s'", precision, data);
-            log.error(msg);
-            throw new DataDecodingException(msg);
+            if (log.isDebugEnabled()) {
+                final String msg = String.format("too small precision for decimal input. expected: precision = %d, got input: '%s'", precision, data);
+            }
+            return Decoder.decodingFailed();
         }
 
         try {
             final BigDecimal number = (BigDecimal) getFormat().parse(data);
             final BigDecimal scaledDecimal = number.setScale(scale, BigDecimal.ROUND_UNNECESSARY);
-            return toBytes(scaledDecimal);
+            final ByteBuffer bytes = toBytes(scaledDecimal);
+            return bytes;
         } catch (ParseException e) {
-            return this.handleParseException(data);
+            if (log.isDebugEnabled()) {
+                final String msg = String.format("cannot decode input '%s' as decimal", data);
+                log.debug(msg);
+            }
+            return Decoder.decodingFailed();
         } catch (ArithmeticException e) {
             // rounding mode set to NOT_NECESSARY
             // those DecimalFormat.parse() throws on too large scale for input (this is what we want)
-            final String msg = String.format("too small scale for decimal input. expected: scale = %d, got input: '%s'", scale, data);
-            log.error(msg);
-            throw new DataDecodingException(msg);
+            if (log.isDebugEnabled()) {
+                final String msg = String.format("too small scale for decimal input. expected: scale = %d, got input: '%s'", scale, data);
+                log.debug(msg);
+            }
+            return Decoder.decodingFailed();
         }
     }
 
-    /**
-     * Handle a parse exception.
-     *
-     * Override this method for e.g. parsing of null values.
-     * @param data data passed from input stream
-     * @return different parse result
-     * @throws DataDecodingException if exception couldn't be dealt with appropriately
-     */
-    public ByteBuffer handleParseException(final String data) throws DataDecodingException {
-        final String msg = String.format("cannot decode input '%s' as decimal", data);
-        log.error(msg);
-        throw new DataDecodingException(msg);
-    }
 }

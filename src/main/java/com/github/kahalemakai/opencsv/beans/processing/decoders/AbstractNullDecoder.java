@@ -16,19 +16,21 @@
 
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
-import com.github.kahalemakai.opencsv.beans.processing.DataDecodingException;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import lombok.extern.log4j.Log4j;
 
-abstract class AbstractNullDecoder implements Decoder<Object, DataDecodingException> {
+@Log4j
+abstract class AbstractNullDecoder implements Decoder<Object> {
     abstract boolean isNullValued(String value);
 
     @Override
-    public Object decode(String value) throws DataDecodingException {
+    public Object decode(String value) {
         if (isNullValued(value)) {
             return null;
         }
         else {
-            throw new DataDecodingException(String.format("cannot decode value '%s' to null", value));
+            log.debug(String.format("cannot decode value '%s' to null", value));
+            return Decoder.decodingFailed();
         }
     }
 }
