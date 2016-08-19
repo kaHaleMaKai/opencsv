@@ -1,0 +1,8 @@
+language: java
+sudo: false
+os: linux
+script: ./gradlew
+jdk:
+  - oraclejdk8
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
