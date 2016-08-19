@@ -93,7 +93,7 @@ public class ThreadingTest {
         final ConsoleAppender appender = (ConsoleAppender) logger.getAppender("console");
         appender.setThreshold(Level.INFO);
         maxNumberOfLines =
-                Long.parseLong(System.getProperty("opencsv.tests.performance.count", "10000000000"));
+                Long.parseLong(System.getProperty("opencsv.tests.performance.count", "1000"));
         if (maxNumberOfLines < 0) {
             throw new IllegalStateException("maxNumberOfLines must be >= 0");
         }
