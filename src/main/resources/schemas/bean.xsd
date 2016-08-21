@@ -70,6 +70,7 @@
 
     <xs:attributeGroup name="BeanAttributes">
         <xs:attribute name="class" use="required" />
+        <xs:attribute name="nullString" use="optional" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="FieldAttributes">
@@ -78,6 +79,8 @@
         <xs:attribute name="value" type="xs:string" use="optional" />
         <xs:attribute name="type" type="xs:string" use="optional" />
         <xs:attribute name="nullFallsThrough" type="bean:NullFallsThrough" />
+        <xs:attribute name="nullString" type="xs:string" use="optional" />
+        <xs:attribute name="nullable" type="xs:boolean" use="optional" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="ProcessorAttributes">

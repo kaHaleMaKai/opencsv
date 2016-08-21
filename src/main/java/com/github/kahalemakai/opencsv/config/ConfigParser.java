@@ -16,6 +16,7 @@
 
 package com.github.kahalemakai.opencsv.config;
 
+import com.github.kahalemakai.opencsv.beans.Builder;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
 import com.github.kahalemakai.opencsv.beans.NullFallsThroughType;
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
@@ -23,6 +24,7 @@ import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.EnumDecoder;
+import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j;
 import org.w3c.dom.Document;
@@ -47,6 +49,7 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 
 @Log4j
 public class ConfigParser {
+    public static final String DEFAULT_NULL_STRING = "null";
     public static final String STRICT_QUOTES = "strict";
     public static final String CSV_COLUMN = "csv:column";
     public static final String CSV_IGNORE = "csv:ignore";
@@ -62,6 +65,8 @@ public class ConfigParser {
     private final Iterable<String> unparsedLines;
     private final Iterable<String[]> parsedLines;
     private final InputStream inputStream;
+
+    private String globalNullString = DEFAULT_NULL_STRING;
 
     public ConfigParser(InputStream xmlInputStream, Reader reader, Iterable<String> unparsedLines, Iterable<String[]> parsedLines, InputStream inputStream) {
         this.xmlInputStream = xmlInputStream;
@@ -112,9 +117,9 @@ public class ConfigParser {
         final Optional<String> separator = getValue(reader, "separator");
         final Optional<String> skipLines = getValue(reader, "skipLines");
 
-        /*********************
+        /* ********************
          * get the attributes
-         *********************/
+         * ********************/
 
         final Optional<String> quoteChar = getValue(reader, "quoteChar");
         final Optional<String> ignoreLeadingWhiteSpace = getValue(reader, "ignoreLeadingWhiteSpace");
@@ -124,13 +129,12 @@ public class ConfigParser {
 
         final Node config = doc.getElementsByTagName("bean:config").item(0);
         final Optional<String> className = getValue(config, "class");
-//        final Optional<String> data = getValue(config, "data");
-//        final Optional<String> value = getValue(config, "value");
-//        final Optional<String> valueType = getValue(config, "valueType");
+        final Optional<String> nullString = getValue(config, "nullString");
+        this.globalNullString = nullString.orElse(DEFAULT_NULL_STRING);
 
-        /***********************
+        /* **********************
          * get the sub-elements
-         ***********************/
+         ************************/
 
         Class<? extends T> type;
         try {
@@ -139,7 +143,7 @@ public class ConfigParser {
             log.error(e);
             throw new IllegalStateException(e);
         }
-        final com.github.kahalemakai.opencsv.beans.Builder<T> builder = CsvToBeanMapper.builder(type);
+        final Builder<T> builder = CsvToBeanMapper.builder(type);
 
         if (quoteChar.isPresent()) builder.quoteChar(quoteChar.get().charAt(0));
         if (separator.isPresent()) builder.separator(separator.get().charAt(0));
@@ -187,60 +191,86 @@ public class ConfigParser {
         return builder.build();
     }
 
-    private <T, R> void configureFields(final Node config, com.github.kahalemakai.opencsv.beans.Builder<T> builder) throws ClassNotFoundException, InstantiationException {
+    private <T> void configureFields(final Node config, Builder<T> builder) throws ClassNotFoundException, InstantiationException {
         final NodeList fields = config.getChildNodes();
-        final Class<? extends T> builderType = builder.getStrategy().getType();
+//        final Class<? extends T> builderType = builder.getStrategy().getType();
         for (int i = 0; i < fields.getLength(); ++i) {
             final Node field = fields.item(i);
             if (field.getNodeType() != ELEMENT_NODE)
                 continue;
-            final String name = getValue(field, "name").get();
+            // presence of "name" attribute is enforced by xsd
+            final String column = getValue(field, "name").get();
             final Optional<String> nullFallsThrough = getValue(field, "nullFallsThrough");
             if (nullFallsThrough.isPresent()) {
                 switch (NullFallsThroughType.forText(nullFallsThrough.get())) {
                     case BOTH:
-                        builder.setNullFallthroughForPostProcessors(name);
-                        builder.setNullFallthroughForPostValidators(name);
+                        builder.setNullFallthroughForPostProcessors(column);
+                        builder.setNullFallthroughForPostValidators(column);
                         break;
                     case POST_PROCESSOR:
-                        builder.setNullFallthroughForPostProcessors(name);
+                        builder.setNullFallthroughForPostProcessors(column);
                         break;
                     case POST_VALIDATOR:
-                        builder.setNullFallthroughForPostValidators(name);
+                        builder.setNullFallthroughForPostValidators(column);
                         break;
                 }
             }
+            final Optional<String> nullable = getValue(field, "nullable");
+            final Optional<String> maybeNullString = getValue(field, "nullString");
+            final boolean isNullable = Boolean.valueOf(nullable.orElse("false"))
+                    || maybeNullString.isPresent();
+            if (isNullable) {
+                final String nullString = maybeNullString.orElse(this.globalNullString);
+                final NullDecoder nullDecoder = new NullDecoder();
+                nullDecoder.setNullString(nullString);
+                builder.registerDecoder(column, nullDecoder);
+            }
+
+            boolean anyProcessor = false;
             final NodeList processors = field.getChildNodes();
             for (int j = 0; j < processors.getLength(); ++j) {
                 final Node processor = processors.item(j);
                 if (processor.getNodeType() == ELEMENT_NODE) {
-                    final String processorNodeName = processor.getNodeName();
-                    final String type = getValue(processor, "type").get();
-                    switch (processorNodeName) {
-                        case BEAN_DECODER:
-                            final Class<? extends Decoder<R>> decoderClass = getProcessorClass(type, BEAN_DECODER);
-                            builder.registerDecoder(name, decoderClass);
-                            break;
-                        case BEAN_POSTPROCESSOR:
-                            final Class<? extends PostProcessor<R>> postProcessorClass = getProcessorClass(type, BEAN_POSTPROCESSOR);
-                            builder.registerPostProcessor(name, postProcessorClass);
-                            break;
-                        case BEAN_POSTVALIDATOR:
-                            final Class<? extends PostValidator<R>> postValidatorClass = getProcessorClass(type, BEAN_POSTVALIDATOR);
-                            builder.registerPostValidator(name, postValidatorClass);
-                            break;
-                        case BEAN_ENUM:
-                            final EnumDecoder<?> enumDecoder = getEnumDecoder(processor);
-                            builder.registerDecoder(name, enumDecoder);
-                            break;
-                    }
+                    registerProcessor(column, builder, processor);
+                    anyProcessor = true;
                 }
+            }
+            if (isNullable && !anyProcessor) {
+                builder.registerDecoder(column, Decoder.IDENTITY);
             }
         }
     }
 
+    private <T, R> void registerProcessor(final String column,
+                                       final Builder<T> builder,
+                                       final Node processor) throws InstantiationException, ClassNotFoundException {
+        final String processorNodeName = processor.getNodeName();
+        // present of attribute "type" is enforced by xsd
+        final String type = getValue(processor, "type").get();
+        switch (processorNodeName) {
+            case BEAN_DECODER:
+                final Class<? extends Decoder<R>> decoderClass = getProcessorClass(type, BEAN_DECODER);
+                builder.registerDecoder(column, decoderClass);
+                break;
+            case BEAN_POSTPROCESSOR:
+                final Class<? extends PostProcessor<R>> postProcessorClass = getProcessorClass(type, BEAN_POSTPROCESSOR);
+                builder.registerPostProcessor(column, postProcessorClass);
+                break;
+            case BEAN_POSTVALIDATOR:
+                final Class<? extends PostValidator<R>> postValidatorClass = getProcessorClass(type, BEAN_POSTVALIDATOR);
+                builder.registerPostValidator(column, postValidatorClass);
+                break;
+            case BEAN_ENUM:
+                final EnumDecoder<?> enumDecoder = getEnumDecoder(processor);
+                builder.registerDecoder(column, enumDecoder);
+                break;
+        }
+
+    }
+
     private <E extends Enum<E>> EnumDecoder<E> getEnumDecoder(final Node processor) throws ClassNotFoundException {
         final NodeList maps = processor.getChildNodes();
+        // presence of attribute "type" is enforced by xsd
         final String typeName = getValue(processor, "type").get();
         final Class<? extends E> enumClass = (Class<? extends E>) Class.forName(typeName);
         final EnumDecoder<E> decoder = new EnumDecoder<>();
@@ -248,6 +278,7 @@ public class ConfigParser {
         for (int i = 0; i < maps.getLength(); ++i) {
             final Node node = maps.item(i);
             if (node.getNodeType() == ELEMENT_NODE && BEAN_ENUM_MAP.equals(node.getNodeName())) {
+                // presence of attributes "key", "value" is enforced by xsd
                 final String key = getValue(node, "key").get();
                 final String value = getValue(node, "value").get();
                 decoder.put(key, value);
@@ -256,9 +287,10 @@ public class ConfigParser {
         return decoder;
     }
 
-    private <T> Class<T> getProcessorClass(final String type, final String branch) throws ClassNotFoundException {
+    private <T> Class<T> getProcessorClass(final String className, final String processorType)
+            throws ClassNotFoundException {
         String subPackage = null;
-        switch (branch) {
+        switch (processorType) {
             case BEAN_DECODER:
                 subPackage = "decoders";
                 break;
@@ -269,15 +301,15 @@ public class ConfigParser {
                 subPackage = "postvalidators";
                 break;
         }
-        Class<T> processorClass = null;
+        Class<T> processorClass;
         try {
-            processorClass = (Class<T>) Class.forName(type);
+            processorClass = (Class<T>) Class.forName(className);
         } catch (ClassNotFoundException e) {
-            final String qName = String.format("%s.%s.%s", DEFAULT_NAME_SPACE, subPackage, type);
+            final String qName = String.format("%s.%s.%s", DEFAULT_NAME_SPACE, subPackage, className);
             try {
                 processorClass = (Class<T>) Class.forName(qName);
             } catch (ClassNotFoundException e1) {
-                final String msg = String.format("neither found class '%s', nor '%s'", type, qName);
+                final String msg = String.format("neither found class '%s', nor '%s'", className, qName);
                 log.error(msg, e);
                 throw new ClassNotFoundException(msg, e);
             }

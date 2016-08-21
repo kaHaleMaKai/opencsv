@@ -32,6 +32,8 @@ import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import static org.junit.Assert.assertEquals;
+
 public class ConfigParserTest {
     CSVParser parser;
     String linesWithUmlauts;
@@ -65,6 +67,35 @@ public class ConfigParserTest {
     }
 
     @Test
+    public void testLocalNullString() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-local-nullstring.xml");
+        assert resource != null;
+        final CsvToBeanMapper<Person> beanMapper = ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> toUnparsedIterator(new String[]{
+                        "null,Mr.,Bean,null",
+                        "60,Mrs.,Doubtfire,NULL"
+                }))
+                .parse();
+        final Iterator<Person> iterator = beanMapper.iterator();
+        final Person mrBean = new Person();
+        final Person mrsDoubtfire = new Person();
+        mrBean.setAge(null)
+                .setGivenName("Mr.")
+                .setSurName("Bean")
+                .setAddress("null");
+        mrsDoubtfire.setAge(60)
+                .setGivenName("Mrs.")
+                .setSurName("Doubtfire")
+                .setAddress(null);
+        assertEquals(mrBean, iterator.next());
+        assertEquals(mrsDoubtfire, iterator.next());
+
+    }
+
+    @Test
     public void testParseEnum() throws Exception {
         final URL resource = ConfigParserTest
                 .class
@@ -74,7 +105,7 @@ public class ConfigParserTest {
         final CsvToBeanMapper<EnumWrapper> beanMapper = ConfigParser
                 .ofUnparsedLines(new File(resource.getFile()), () -> unparsedLinesWithEnum)
                 .parse();
-        Assert.assertEquals(enumWrapper, beanMapper.iterator().next());
+        assertEquals(enumWrapper, beanMapper.iterator().next());
     }
 
     @Test
@@ -92,8 +123,8 @@ public class ConfigParserTest {
         configParser = ConfigParser.ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
         mapper = configParser.parse();
         it = mapper.iterator();
-        Assert.assertEquals(picard, it.next());
-        Assert.assertEquals(drObvious, it.next());
+        assertEquals(picard, it.next());
+        assertEquals(drObvious, it.next());
     }
     @Test
     public void testParseFromUnparsdedLines() throws Exception {
@@ -111,8 +142,8 @@ public class ConfigParserTest {
             mapper = configParser.parse();
         }
         it = mapper.iterator();
-        Assert.assertEquals(picard, it.next());
-        Assert.assertEquals(drObvious, it.next());
+        assertEquals(picard, it.next());
+        assertEquals(drObvious, it.next());
     }
 
     @Test
@@ -124,7 +155,7 @@ public class ConfigParserTest {
         final ConfigParser configParser = ConfigParser.ofInputStream(resource, inputStream);
         final CsvToBeanMapper<Person> mapper = configParser.parse();
         final Iterator<Person> it = mapper.iterator();
-        Assert.assertEquals(fraenkie, it.next());
+        assertEquals(fraenkie, it.next());
     }
 
     @Test
@@ -137,7 +168,7 @@ public class ConfigParserTest {
         final CsvToBeanMapper<Person> mapper = configParser.parse();
         final Iterator<Person> it = mapper.iterator();
         final Person person = it.next();
-        Assert.assertEquals(fraenkie.getAge(), person.getAge());
+        assertEquals(fraenkie.getAge(), person.getAge());
         Assert.assertNotEquals(fraenkie, person);
     }
 

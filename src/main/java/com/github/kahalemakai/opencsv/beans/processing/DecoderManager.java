@@ -40,9 +40,9 @@ import java.util.Map;
 @ToString
 public class DecoderManager {
     private final Map<String, DecoderPropertyEditor<?>> decoderMap;
-    private final Map<Class<? extends Decoder<?>>, Decoder<?>> decoderClassMap;
-    private final Map<Class<? extends PostProcessor<?>>, PostProcessor<?>> postProcessorClassMap;
-    private final Map<Class<? extends PostValidator<?>>, PostValidator<?>> postValidatorClassMap;
+    private final Map<String, Decoder<?>> decoderClassMap;
+    private final Map<String, PostProcessor<?>> postProcessorClassMap;
+    private final Map<String, PostValidator<?>> postValidatorClassMap;
 
     /**
      * Initialize a new and empty {@code DecoderManager}.
@@ -71,6 +71,23 @@ public class DecoderManager {
     /**
      * Add a decoder to the decoding chain.
      * <p>
+     * If possible, use instead {@link #add(String, Class)} for performance reasons.
+     * @param column name of csv column
+     * @param decoder {@code Decoder} instance to be added
+     * @param label label identifying the {@code Decoder} instance for caching
+     * @param <T> target type of decoder conversion
+     * @return the {@code DecoderManager} instance
+     */
+    public <T> DecoderManager add(final String column, Decoder<? extends T> decoder, @NonNull final String label) {
+        if (!decoderClassMap.containsKey(label)) {
+            decoderClassMap.put(label, decoder);
+        }
+        return add(column, decoderClassMap.get(label));
+    }
+
+    /**
+     * Add a decoder to the decoding chain.
+     * <p>
      * The decoderClass is assumed to have a no-args constructor.
      * Upon adding a decoder, the constructor is called and the instance
      * is added to the decoding chain. The same instance is used when adding
@@ -84,17 +101,18 @@ public class DecoderManager {
     public DecoderManager add(final String column,
                               Class<? extends Decoder<?>> decoderClass)
                               throws InstantiationException {
-        if (!decoderClassMap.containsKey(decoderClass)) {
+        final String className = decoderClass.getCanonicalName();
+        if (!decoderClassMap.containsKey(className)) {
             try {
                 final Decoder<?> decoder = decoderClass.newInstance();
-                decoderClassMap.put(decoderClass, decoder);
+                decoderClassMap.put(className, decoder);
             } catch (InstantiationException | IllegalAccessException e) {
                 final String msg = e.getMessage();
                 log.error(msg);
                 throw new InstantiationException(msg);
             }
         }
-        return add(column, decoderClassMap.get(decoderClass));
+        return add(column, decoderClassMap.get(className));
     }
 
     /**
@@ -116,6 +134,25 @@ public class DecoderManager {
     /**
      * Add a postprocessor to the postprocessing chain.
      * <p>
+     * The {@code PostProcessor} instance is cached, {@code label} is used as key for further lookups.
+     * @param column name of csv column
+     * @param postProcessor {@code PostProcessor} instance to be added
+     * @param label label identifying the {@code PostProcessor} object for caching
+     * @param <T> type of {@code PostProcessor} input
+     * @return the {@code DecoderManager} instance
+     */
+    public <T> DecoderManager addPostProcessor(final String column,
+                                               final PostProcessor<T> postProcessor,
+                                               @NonNull final String label) {
+        if (!postProcessorClassMap.containsKey(label)) {
+            postProcessorClassMap.put(label, postProcessor);
+        }
+        return addPostProcessor(column, postProcessorClassMap.get(label));
+    }
+
+    /**
+     * Add a postprocessor to the postprocessing chain.
+     * <p>
      * The postprocessorClass is assumed to have a no-args constructor.
      * Upon adding a postprocessor, the constructor is called and the instance
      * is added to the postprocessing chain. The same instance is used when adding
@@ -129,17 +166,37 @@ public class DecoderManager {
      */
     public <T> DecoderManager addPostProcessor(final String column, Class<? extends PostProcessor<T>> postProcessorClass)
             throws InstantiationException {
-        if (!postProcessorClassMap.containsKey(postProcessorClass)) {
+        final String className = postProcessorClass.getCanonicalName();
+        if (!postProcessorClassMap.containsKey(className)) {
             try {
                 final PostProcessor postProcessor = postProcessorClass.newInstance();
-                postProcessorClassMap.put(postProcessorClass, postProcessor);
+                postProcessorClassMap.put(className, postProcessor);
             } catch (InstantiationException | IllegalAccessException e) {
                 final String msg = e.getMessage();
                 log.error(msg);
                 throw new InstantiationException(msg);
             }
         }
-        return addPostProcessor(column, postProcessorClassMap.get(postProcessorClass));
+        return addPostProcessor(column, postProcessorClassMap.get(className));
+    }
+
+    /**
+     * Add a postvalidator to the postvalidating chain.
+     * <p>
+     *
+     * @param column name of csv column
+     * @param postValidator {@code PostValidator} instance to be added
+     * @param <T> type of {@code PostValidator} input
+     * @return the {@code DecoderManager} instance
+     */
+    public <T> DecoderManager addPostValidator(final String column,
+                                               final PostValidator<T> postValidator,
+                                               @NonNull final String label) {
+        final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
+        if (!postValidatorClassMap.containsKey(label)) {
+            postValidatorClassMap.put(label, postValidator);
+        }
+        return addPostValidator(column, postValidatorClassMap.get(label));
     }
 
     /**
@@ -172,17 +229,18 @@ public class DecoderManager {
      */
     public DecoderManager addPostValidator(final String column, Class<? extends PostValidator<?>> postValidatorClass)
             throws InstantiationException {
-        if (!postValidatorClassMap.containsKey(postValidatorClass)) {
+        final String className = postValidatorClass.getCanonicalName();
+        if (!postValidatorClassMap.containsKey(className)) {
             try {
                 final PostValidator postValidator = postValidatorClass.newInstance();
-                postValidatorClassMap.put(postValidatorClass, postValidator);
+                postValidatorClassMap.put(className, postValidator);
             } catch (InstantiationException | IllegalAccessException e) {
                 final String msg = e.getMessage();
                 log.error(msg);
                 throw new InstantiationException(msg);
             }
         }
-        return addPostValidator(column, postValidatorClassMap.get(postValidatorClass));
+        return addPostValidator(column, postValidatorClassMap.get(className));
     }
 
     /**
@@ -243,9 +301,9 @@ public class DecoderManager {
     }
 
     private DecoderManager(Map<String, DecoderPropertyEditor<?>> decoderMap,
-                           Map<Class<? extends Decoder<?>>, Decoder<?>> decoderClassMap,
-                           Map<Class<? extends PostProcessor<?>>, PostProcessor<?>> postProcessorClassMap,
-                           Map<Class<? extends PostValidator<?>>, PostValidator<?>> postValidatorClassMap) {
+                           Map<String, Decoder<?>> decoderClassMap,
+                           Map<String, PostProcessor<?>> postProcessorClassMap,
+                           Map<String, PostValidator<?>> postValidatorClassMap) {
         this.decoderMap = decoderMap;
         this.decoderClassMap = decoderClassMap;
         this.postProcessorClassMap = postProcessorClassMap;

@@ -16,14 +16,26 @@
 
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
-import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.extern.log4j.Log4j;
 
 @NoArgsConstructor
+@Log4j
 public class NullDecoder extends AbstractNullDecoder {
-    @Setter(AccessLevel.PROTECTED)
     private String NULL = "null";
+    private boolean nullWasSet;
+
+    public synchronized void setNullString(final String nullString) {
+        if (!nullWasSet) {
+            NULL = nullString;
+            nullWasSet = true;
+        }
+        else {
+            final String msg = "value of null string may only be set once";
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
+    }
 
     @Override
     boolean isNullValued(String value) {

@@ -17,7 +17,9 @@
 package com.github.kahalemakai.opencsv.examples;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
+@Accessors(chain = true)
 @Data
 public class Person {
     private Integer age;
@@ -25,3 +27,4 @@ public class Person {
     private String surName;
     private String address;
 }
+

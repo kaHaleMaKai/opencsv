@@ -32,10 +32,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -49,6 +47,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final AtomicBoolean readerSetup;
     private final DecoderManager decoderManager;
     private final Iterable<String[]> source;
+    private final Map<Integer, Method> setterMethods;
 
     @Getter(AccessLevel.PRIVATE) @Setter
     private boolean errorOnClosingReader;
@@ -78,6 +77,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         this.ignoreLeadingWhiteSpace = builder.isIgnoreLeadingWhiteSpace();
         this.strictQuotes = builder.quotingMode().isStrictQuotes();
         this.source = defineSource(builder.source(), builder.getReader(), builder.getLineIterator());
+        this.setterMethods = new HashMap<>();
         log.debug(String.format("new CsvToBeanMapper instance built:\n%s", this.toString()));
     }
 
@@ -294,16 +294,65 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                     throw new CsvToBeanException(msg, e);
                 }
                 try {
-                    prop.getWriteMethod().invoke(bean, obj);
-                } catch (IllegalArgumentException | InvocationTargetException | IllegalAccessException e) {
+                    Method setter = prop.getWriteMethod();
+                    // only keep this in order to deal with chained setters
+                    // (prop editor doesn't retrieve them)
+                    if (setter == null) {
+                        setter = getSetter(mapper, bean, col);
+                    }
+                    assert setter != null;
+                    setter.invoke(bean, obj);
+                } catch (NoSuchMethodException | InvocationTargetException | NoSuchFieldException | IllegalArgumentException | IllegalAccessException e) {
                     final String msg = processingErrorMsg(mapper, col, "could not assign object %s of type %s",
-                            obj, obj.getClass().getCanonicalName());
+                            obj, obj != null ? obj.getClass().getCanonicalName() : "null");
                     log.error(msg);
                     throw new CsvToBeanException(msg, e);
                 }
             }
         }
         return bean;
+    }
+
+    private Method getSetter(final HeaderDirectMappingStrategy<T> mapper,
+                             final T bean,
+                             final int col)
+            throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
+        if (!this.setterMethods.containsKey(col)) {
+            final String column = mapper.getColumnName(col);
+            final String setterName = getSetterName(column);
+            final Class<? extends T> beanClass = (Class<? extends T>) bean.getClass();
+            final List<Method> methods = new ArrayList<>();
+            for (Method method : beanClass.getMethods()) {
+                if (setterName.equals(method.getName())) {
+                    methods.add(method);
+                }
+            }
+            Method setter = null;
+            switch (methods.size()) {
+                case 0:
+                    final String msg = String.format("could not find setter for column %s", column);
+                    log.error(msg);
+                    throw new NoSuchMethodError(msg);
+                case 1:
+                    setter = methods.get(0);
+
+                default:
+                    final Class<?> columnType = beanClass.getDeclaredField(column).getType();
+                    setter = beanClass.getMethod(setterName, columnType);
+            }
+            this.setterMethods.put(col, setter);
+        }
+        return this.setterMethods.get(col);
+    }
+
+    private String getSetterName(final String column) throws IllegalAccessException {
+        if (column == null || column.length() == 0) {
+            final String msg = String.format("cannot find setter method for column %s", column);
+            log.error(msg);
+            throw new IllegalAccessException(msg);
+        }
+        return String.format("set%s%s",
+                column.substring(0, 1).toUpperCase(), column.substring(1));
     }
 
     private String processingErrorMsg(final HeaderDirectMappingStrategy<?> mapper,
