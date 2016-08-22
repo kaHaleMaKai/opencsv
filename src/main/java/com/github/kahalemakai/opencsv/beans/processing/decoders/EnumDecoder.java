@@ -10,6 +10,7 @@ import java.util.Map;
 
 @Log4j
 public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
+
     @Setter(AccessLevel.PROTECTED)
     private Map<String, E> mapping = new HashMap<>();
     private Class<? extends E> type;
@@ -23,7 +24,7 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
                 final String msg = String.format("could not decode value '%s' as enum of type %s", value, getClass().getCanonicalName());
                 log.debug(msg);
             }
-            return Decoder.decodingFailed();
+            return decodingFailed();
         }
         return e;
     }
@@ -35,7 +36,20 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
         mapping.put(key, enumMapping.get(value));
     }
 
-    public final E getEnumConstant(final String key) {
+    /**
+     * Indicate a failure in decoding a String message.
+     * <p>
+     * An {@code Enum} instance is used, because it allows for
+     * downcasting {@code Enum}s, whereas {@code Object} doesn't.
+     */
+    @Override
+    public E decodingFailed() {
+        @SuppressWarnings("unchecked")
+        final E decodingFailed = (E) DecodingFailed.VALUE;
+        return decodingFailed;
+    }
+
+    private E getEnumConstant(final String key) {
         return mapping.get(key);
     }
 
@@ -49,6 +63,10 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
         for (E e : newType.getEnumConstants()) {
             enumMapping.put(e.name(), e);
         }
+    }
+
+    private enum DecodingFailed {
+        VALUE
     }
 
 }

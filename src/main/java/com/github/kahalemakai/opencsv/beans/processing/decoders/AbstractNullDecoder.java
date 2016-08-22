@@ -30,7 +30,7 @@ abstract class AbstractNullDecoder implements Decoder<Object> {
         }
         else {
             log.debug(String.format("cannot decode value '%s' to null", value));
-            return Decoder.decodingFailed();
+            return decodingFailed();
         }
     }
 }

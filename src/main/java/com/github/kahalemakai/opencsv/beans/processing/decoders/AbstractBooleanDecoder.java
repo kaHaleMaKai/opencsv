@@ -16,6 +16,6 @@ public abstract class AbstractBooleanDecoder implements Decoder<Boolean> {
         if (isFalse(value)) {
             return false;
         }
-        return Decoder.decodingFailed();
+        return decodingFailed();
     }
 }

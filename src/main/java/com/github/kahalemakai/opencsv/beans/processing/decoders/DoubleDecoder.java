@@ -29,7 +29,7 @@ public class DoubleDecoder implements Decoder<Double> {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
             log.debug(String.format("could not decode '%s' as double", value), e);
-            return Decoder.decodingFailed();
+            return decodingFailed();
         }
     }
 }

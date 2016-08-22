@@ -23,14 +23,8 @@ package com.github.kahalemakai.opencsv.beans.processing;
  */
 @FunctionalInterface
 public interface Decoder<T> {
-    /**
-     * Indicate a failure in decoding a String message.
-     * <p>
-     * En {@code Enum} instance is used, because it allows for
-     * downcasting at runtime both descendants of {@code Object}
-     * and {@code Enum} (which is important for the enum decoder).
-     */
-    Enum DECODING_FAILED = DecodingFailed.DECODING_FAILED;
+
+    Object DECODING_FAILED = new Object();
     /**
      * The identity decoder {@code String -> String}.
      */
@@ -61,18 +55,13 @@ public interface Decoder<T> {
      * This method is only for internal processing. It is#
      * unsafe to use it for other purposes.
      *
-     * @param <S> return type of decoder
      * @return state indicating unsuccessful decoding
      */
-    static <S> S decodingFailed() {
-        // supression is safe, as the returned
+    default T decodingFailed() {
+        // suppression is safe, as the returned
         // object will only be handled internally
         @SuppressWarnings("unchecked")
-        final S decodingFailed = (S) DECODING_FAILED;
+        final T decodingFailed = (T) DECODING_FAILED;
         return decodingFailed;
-    }
-
-    enum DecodingFailed {
-        DECODING_FAILED
     }
 }

@@ -39,7 +39,7 @@ public class TimestampDecoder implements Decoder<Long> {
             return convert(dateTime);
         } catch (DateTimeParseException e) {
             log.debug(String.format("cannot parse date '%s'", data));
-            return Decoder.decodingFailed();
+            return decodingFailed();
         }
     }
 }

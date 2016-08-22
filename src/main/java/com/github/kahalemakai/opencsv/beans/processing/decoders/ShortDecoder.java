@@ -26,7 +26,7 @@ public class ShortDecoder implements Decoder<Short> {
         try {
             return Short.parseShort(value);
         } catch (NumberFormatException e) {
-            return Decoder.decodingFailed();
+            return decodingFailed();
         }
     }
 }

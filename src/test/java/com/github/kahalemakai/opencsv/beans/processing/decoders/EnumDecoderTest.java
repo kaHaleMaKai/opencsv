@@ -1,7 +1,6 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
-import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,7 +20,7 @@ public class EnumDecoderTest {
     }
 
     public void testDecodeThrows() throws Exception {
-        assertEquals(Decoder.decodingFailed(), decoder.decode("this breaks"));
+        assertEquals(decoder.decodingFailed(), decoder.decode("this breaks"));
     }
 
     @Test

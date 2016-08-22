@@ -26,7 +26,7 @@ public class IntDecoder implements Decoder<Integer> {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            return Decoder.decodingFailed();
+            return decodingFailed();
         }
     }
 }

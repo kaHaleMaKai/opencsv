@@ -25,6 +25,8 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
     private final DecimalFormat format = determineFormat();
     private final static Pattern pattern = Pattern.compile("[-.]");
 
+    private final static ByteBuffer DECODING_FAILED = ByteBuffer.allocate(0);
+
     // subclasses have to set these values by defining the respective methods
     @Setter(AccessLevel.PROTECTED)
     private int precision;
@@ -67,6 +69,11 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
     }
 
     @Override
+    public ByteBuffer decodingFailed() {
+        return DECODING_FAILED;
+    }
+
+    @Override
     public ByteBuffer decode(String data) {
         // remove a superfluous positive prefix (simplifies parsing with DecimalFormat.parse()
         if (data.startsWith("+") && data.length() > 1)
@@ -77,7 +84,7 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
             if (log.isDebugEnabled()) {
                 final String msg = String.format("too small precision for decimal input. expected: precision = %d, got input: '%s'", precision, data);
             }
-            return Decoder.decodingFailed();
+            return decodingFailed();
         }
 
         try {
@@ -90,7 +97,7 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
                 final String msg = String.format("cannot decode input '%s' as decimal", data);
                 log.debug(msg);
             }
-            return Decoder.decodingFailed();
+            return decodingFailed();
         } catch (ArithmeticException e) {
             // rounding mode set to NOT_NECESSARY
             // those DecimalFormat.parse() throws on too large scale for input (this is what we want)
@@ -98,7 +105,7 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
                 final String msg = String.format("too small scale for decimal input. expected: scale = %d, got input: '%s'", scale, data);
                 log.debug(msg);
             }
-            return Decoder.decodingFailed();
+            return decodingFailed();
         }
     }
 

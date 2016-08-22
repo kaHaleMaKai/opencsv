@@ -217,7 +217,7 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
             final Decoder<? extends T> decoder = decoders.get(i);
             try {
                 final T decodedValue = decoder.decode(data);
-                if (Decoder.DECODING_FAILED == decodedValue) {
+                if (decoder.decodingFailed() == decodedValue) {
                     continue;
                 }
                 if (log.isDebugEnabled()) {

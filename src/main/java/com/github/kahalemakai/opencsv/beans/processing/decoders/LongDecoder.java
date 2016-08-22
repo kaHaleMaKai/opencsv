@@ -26,7 +26,7 @@ public class LongDecoder implements Decoder<Long> {
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
-            return Decoder.decodingFailed();
+            return decodingFailed();
         }
     }
 }
