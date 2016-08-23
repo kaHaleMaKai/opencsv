@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -215,7 +216,6 @@ public class Builder<T> {
      *
      * @return the decoder manager instance used for bookkeeping
      */
-    @Getter
     private final DecoderManager decoderManager;
     /**
      * A reader instance used as source.
@@ -246,7 +246,7 @@ public class Builder<T> {
      *
      * @param type class object of bean to map the csv fields onto
      */
-    public Builder(final Class<? extends T> type) {
+    Builder(final Class<? extends T> type) {
         this.decoderManager = DecoderManager.init();
         this.readerSetup = new AtomicBoolean(false);
         log.debug(String.format("setup CsvToBeanMapper for type <%s>", type.getCanonicalName()));
@@ -373,6 +373,24 @@ public class Builder<T> {
      * ***************************************************/
 
     /**
+     * Register and cache decoder for a specific column.
+     * <p>
+     * The given {@code label} will be used as key for caching.
+     *
+     * @see DecoderManager#add(java.lang.String, Supplier, String) DecoderManager.add()
+     * @param column name of column
+     * @param decoder decoder supplier
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> registerDecoder(final String column,
+                                      final Supplier<? extends Decoder<?>> decoder,
+                                      @NonNull final String label) {
+        log.debug(String.format("registering decoder '%s' for column '%s'", label, column));
+        decoderManager.add(column, decoder, label);
+        return this;
+    }
+
+    /**
      * Register a decoder for a specific column.
      *
      * @see DecoderManager#add(java.lang.String, java.lang.Class) DecoderManager.add()
@@ -419,9 +437,28 @@ public class Builder<T> {
     }
 
     /**
-     * Register a postprocessor for a given column.
+     * Register and cache a postprocessor for a given column.
+     * <p>
+     * The given {@code label} will be used as key for caching.
      *
      * @see DecoderManager#addPostProcessor(String, Class) DecoderManager.addPostProcessor()
+     * @param column name of column
+     * @param postProcessor postprocessor supplier
+     * @param <R> type of {@code PostProcessor} input and output value
+     * @return the {@code Builder} instance
+     */
+    public <R> Builder<T> registerPostProcessor(final String column,
+                                                final Supplier<? extends PostProcessor<R>> postProcessor,
+                                                @NonNull final String label) {
+        log.debug(String.format("registering postprocessor '%s' for column '%s'", label, column));
+        decoderManager.addPostProcessor(column, postProcessor, label);
+        return this;
+    }
+
+    /**
+     * Register a postprocessor for a given column.
+     *
+     * @see DecoderManager#addPostProcessor(String, Supplier, String) DecoderManager.addPostProcessor()
      * @param column name of column
      * @param postProcessorClass type of {@code PostProcessor} instance
      * @param <R> type of {@code PostProcessor} input and output value
@@ -447,6 +484,22 @@ public class Builder<T> {
     public <R> Builder<T> registerPostValidator(String column, PostValidator<R> postValidator) {
         log.debug(String.format("registering postvalidator for column '%s'", column));
         decoderManager.addPostValidator(column, postValidator);
+        return this;
+    }
+
+    /**
+     * Register a post-validator for a given column.
+     *
+     * @see DecoderManager#addPostValidator(String, Class) DecoderManager.addPostValidator()
+     * @param column name of column
+     * @param postValidator type of {@code PostValidator} instance
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> registerPostValidator(final String column,
+                                            final Supplier<? extends PostValidator<?>> postValidator,
+                                            @NonNull final String label) {
+        log.debug(String.format("registering postvalidator '%s' for column '%s'", label, column));
+        decoderManager.addPostValidator(column, postValidator, label);
         return this;
     }
 
@@ -602,6 +655,10 @@ public class Builder<T> {
         }
         final String[] completeHeader = headerList.toArray(new String[headerList.size()]);
         strategy.captureHeader(completeHeader);
+    }
+
+    public DecoderManager getDecoderManager() {
+        return decoderManager.immutableCopy();
     }
 
     /* ********************

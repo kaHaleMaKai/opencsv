@@ -221,9 +221,13 @@ public class ConfigParser {
                     || maybeNullString.isPresent();
             if (isNullable) {
                 final String nullString = maybeNullString.orElse(this.globalNullString);
-                final NullDecoder nullDecoder = new NullDecoder();
-                nullDecoder.setNullString(nullString);
-                builder.registerDecoder(column, nullDecoder);
+                builder.registerDecoder(
+                       column,
+                        () -> {
+                            final NullDecoder nullDecoder = new NullDecoder();
+                            nullDecoder.setNullString(nullString);
+                            return nullDecoder; },
+                        String.format("%s#%s", NullDecoder.class.getCanonicalName(), nullString));
             }
 
             boolean anyProcessor = false;

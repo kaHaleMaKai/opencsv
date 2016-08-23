@@ -24,6 +24,7 @@ import java.beans.PropertyEditor;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Indirection layer around the {@code DecoderPropertyEditor} class.
@@ -78,9 +79,9 @@ public class DecoderManager {
      * @param <T> target type of decoder conversion
      * @return the {@code DecoderManager} instance
      */
-    public <T> DecoderManager add(final String column, Decoder<? extends T> decoder, @NonNull final String label) {
+    public <T> DecoderManager add(final String column, Supplier<? extends Decoder<? extends T>> decoder, @NonNull final String label) {
         if (!decoderClassMap.containsKey(label)) {
-            decoderClassMap.put(label, decoder);
+            decoderClassMap.put(label, decoder.get());
         }
         return add(column, decoderClassMap.get(label));
     }
@@ -142,10 +143,10 @@ public class DecoderManager {
      * @return the {@code DecoderManager} instance
      */
     public <T> DecoderManager addPostProcessor(final String column,
-                                               final PostProcessor<T> postProcessor,
+                                               final Supplier<? extends PostProcessor<? extends T>> postProcessor,
                                                @NonNull final String label) {
         if (!postProcessorClassMap.containsKey(label)) {
-            postProcessorClassMap.put(label, postProcessor);
+            postProcessorClassMap.put(label, postProcessor.get());
         }
         return addPostProcessor(column, postProcessorClassMap.get(label));
     }
@@ -191,11 +192,10 @@ public class DecoderManager {
      * @return the {@code DecoderManager} instance
      */
     public <T> DecoderManager addPostValidator(final String column,
-                                               final PostValidator<T> postValidator,
+                                               final Supplier<? extends PostValidator<? extends T>> postValidator,
                                                @NonNull final String label) {
-        final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
         if (!postValidatorClassMap.containsKey(label)) {
-            postValidatorClassMap.put(label, postValidator);
+            postValidatorClassMap.put(label, postValidator.get());
         }
         return addPostValidator(column, postValidatorClassMap.get(label));
     }

@@ -16,6 +16,8 @@
 
 package com.github.kahalemakai.opencsv.beans;
 
+import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.IntDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.IntToBooleanDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
@@ -28,7 +30,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertEquals;
@@ -141,6 +145,24 @@ public class CsvToBeanMapperImplTest {
         final Person person = it.next();
         assertEquals(picard, person);
     }
+
+    @Test
+    public void testCachedDecoding() throws Exception {
+        builder.withParsedLines(() -> iterator)
+                .registerDecoder("age", IntDecoder.class) // will not enter cache map
+                .registerDecoder("surName", (data) -> "Mr. "+data)
+                .registerDecoder("age", () -> (v) -> v, "id")
+                .registerDecoder("surName", () -> (v) -> v, "id")
+                .registerDecoder("givenName", () -> (v) -> v, "id")
+                .registerDecoder("address", () -> (v) -> v, "id");
+        final DecoderManager decoderManager = builder.getDecoderManager();
+        final Field f = decoderManager.getClass().getDeclaredField("decoderClassMap");
+        f.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        final Map<String, Decoder<?>> decoderClassMap = (Map<String, Decoder<?>>) f.get(decoderManager);
+        assertEquals(decoderClassMap.size(), 2);
+    }
+
 
     @Test
     public void testDecoding() throws Exception {
