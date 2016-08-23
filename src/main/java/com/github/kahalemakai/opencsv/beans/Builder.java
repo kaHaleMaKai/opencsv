@@ -18,6 +18,7 @@ package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
+import com.github.kahalemakai.opencsv.beans.processing.DecoderPropertyEditor;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 import lombok.Getter;
@@ -523,7 +524,7 @@ public class Builder<T> {
      * Don't postprocess null returns from decoder chains.
      * @param column name of column
      * @return the {@code Builder} instance
-     * @see com.github.kahalemakai.opencsv.beans.processing.DecoderPropertyEditor#setNullFallthroughForPostValidators(boolean) DecoderPropertyEditor.setNullFallthroughForPostProcessors
+     * @see DecoderPropertyEditor#setNullFallthroughForPostValidators(boolean) DecoderPropertyEditor.setNullFallthroughForPostProcessors
      */
     public Builder<T> setNullFallthroughForPostProcessors(String column) {
         log.debug("set fallthrough behaviour of nulls for postprocessing");
@@ -535,7 +536,7 @@ public class Builder<T> {
      * Don't post-validate null returns from decoder chains.
      * @param column name of column
      * @return the {@code Builder} instance
-     * @see com.github.kahalemakai.opencsv.beans.processing.DecoderPropertyEditor#setNullFallthroughForPostValidators(boolean) DecoderPropertyEditor.setNullFallthroughForPostValidators
+     * @see DecoderPropertyEditor#setNullFallthroughForPostValidators(boolean) DecoderPropertyEditor.setNullFallthroughForPostValidators
      */
     public Builder<T> setNullFallthroughForPostValidators(String column) {
         log.debug("set fallthrough behaviour of nulls for postvalidation");

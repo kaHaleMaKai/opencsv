@@ -167,9 +167,9 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
      * returns {@code false}, a {@code PostValidationException} will get thrown.
      *
      * <h1>Treatment of {@code null}s</h1>
-     * If the decoding step procuces a {@code null} reference, the postprocessing
+     * If the decoding step produces a {@code null} reference, the postprocessing
      * or post-validation, respectively, may pass it on without processing or validating it.
-     * This behaviour can be activated manually by {@link #setNullFallthroughForPostProcessors(boolean)},
+     * This behaviour can be activated manually by {@link #setNullFallthroughForPostProcessors(boolean)}
      * or {@link #setNullFallthroughForPostValidators(boolean)}.
      * <p>
      * <b>Type parameters:</b><br>

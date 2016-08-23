@@ -20,14 +20,14 @@ import java.io.Closeable;
 
 /**
  * Interface type for easy-to-use mappers that convert csvs into beans.
- * @param <T>
+ * @param <T> type the bean shall be converted to
  */
 public interface CsvToBeanMapper<T> extends Closeable, Iterable<T> {
 
     /**
      * Get the type the csv shall be converted to.
      *
-     * @return
+     * @return type the csv shall be converted to
      */
     Class<? extends T> getType();
 

@@ -186,6 +186,7 @@ public class DecoderManager {
      *
      * @param column name of csv column
      * @param postValidator {@code PostValidator} instance to be added
+     * @param label label identifying the {@code Decoder} instance for caching
      * @param <T> type of {@code PostValidator} input
      * @return the {@code DecoderManager} instance
      */
