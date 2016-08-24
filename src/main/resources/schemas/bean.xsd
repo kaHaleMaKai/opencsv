@@ -61,6 +61,27 @@
         </xs:restriction>
     </xs:simpleType>
 
+    <xs:simpleType name="ColumnDataSource">
+        <xs:restriction base="xs:string">
+            <!--<xs:enumeration value="input" />-->
+            <!--<xs:enumeration value="output" />-->
+            <!--<xs:enumeration value="enum" />-->
+            <xs:enumeration value="column" />
+            <xs:enumeration value="value" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="ColumnType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="int" />
+            <xs:enumeration value="short" />
+            <xs:enumeration value="long" />
+            <xs:enumeration value="boolean" />
+            <xs:enumeration value="float" />
+            <xs:enumeration value="double" />
+        </xs:restriction>
+    </xs:simpleType>
+
     <!--attribute definitions-->
 
     <xs:attributeGroup name="EnumMapAttributes">
@@ -75,9 +96,9 @@
 
     <xs:attributeGroup name="FieldAttributes">
         <xs:attribute name="name" type="xs:string" use="required" />
-        <xs:attribute name="data" type="xs:string" use="optional" />
-        <xs:attribute name="value" type="xs:string" use="optional" />
-        <xs:attribute name="type" type="xs:string" use="optional" />
+        <xs:attribute name="ref" type="bean:ColumnDataSource" use="optional" />
+        <xs:attribute name="refData" type="xs:string" use="optional" />
+        <xs:attribute name="type" type="bean:ColumnType" use="optional" />
         <xs:attribute name="nullFallsThrough" type="bean:NullFallsThrough" />
         <xs:attribute name="nullString" type="xs:string" use="optional" />
         <xs:attribute name="nullable" type="xs:boolean" use="optional" />

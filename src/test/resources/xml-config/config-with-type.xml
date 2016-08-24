@@ -32,9 +32,7 @@
     </csv:reader>
 
     <bean:config class="com.github.kahalemakai.opencsv.examples.Person">
-        <bean:field name="age">
-            <bean:decoder type="NullDecoder" />
-            <bean:decoder type="IntDecoder" />
+        <bean:field name="age" nullable="true" type="int">
             <bean:postProcessor type="com.github.kahalemakai.opencsv.examples.IncrementBy10" />
             <bean:postValidator type="PositiveInt" />
         </bean:field>

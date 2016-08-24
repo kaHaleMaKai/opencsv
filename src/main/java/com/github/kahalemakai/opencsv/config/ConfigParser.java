@@ -41,9 +41,7 @@ import javax.xml.validation.SchemaFactory;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
@@ -106,7 +104,7 @@ public class ConfigParser {
     }
 
     public <T> CsvToBeanMapper<T> parse()
-            throws ParserConfigurationException, IOException, SAXException, InstantiationException, ClassNotFoundException {
+            throws ParserConfigurationException, IOException, SAXException, InstantiationException, ClassNotFoundException, IllegalAccessException {
         final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         // don't set validating behaviour to true -> or else a DTD is expected
         documentBuilderFactory.setSchema(getOpencsvSchema());
@@ -191,7 +189,7 @@ public class ConfigParser {
         return builder.build();
     }
 
-    private <T> void configureFields(final Node config, Builder<T> builder) throws ClassNotFoundException, InstantiationException {
+    private <T> void configureFields(final Node config, Builder<T> builder) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
         final NodeList fields = config.getChildNodes();
 //        final Class<? extends T> builderType = builder.getStrategy().getType();
         for (int i = 0; i < fields.getLength(); ++i) {
@@ -229,6 +227,35 @@ public class ConfigParser {
                             return nullDecoder; },
                         String.format("%s#%s", NullDecoder.class.getCanonicalName(), nullString));
             }
+            final Optional<String> type = getValue(field, "type");
+            if (type.isPresent()) {
+                defineType(builder, column, type.get());
+            }
+            final Optional<String> ref = getValue(field, "ref");
+            if (ref.isPresent()) {
+                final String refType = ref.get();
+                final Optional<String> refData = getValue(field, "refData");
+                if (refData.isPresent()) {
+                    final String data = refData.get();
+                    switch (refType) {
+                        case "column":
+                            builder.setColumnRef(data, column);
+                            break;
+                        case "value":
+                            Object decodedRefData = data;
+                            if (type.isPresent()) {
+                                final String decoderType = String.format("%s%sDecoder",
+                                        type.get().substring(0, 1).toUpperCase(), type.get().substring(1));
+                                final Class<? extends Decoder<?>> decoderClass = getProcessorClass(decoderType, BEAN_DECODER);
+                                final Decoder<?> decoder = decoderClass.newInstance();
+                                decodedRefData = decoder.decode(data);
+                            }
+                            builder.setColumnValue(column, decodedRefData);
+                            break;
+                    }
+                }
+
+            }
 
             boolean anyProcessor = false;
             final NodeList processors = field.getChildNodes();
@@ -243,6 +270,11 @@ public class ConfigParser {
                 builder.registerDecoder(column, Decoder.IDENTITY);
             }
         }
+    }
+
+    private <T> void defineType(final Builder<T> builder, final String columnName, final String type) throws ClassNotFoundException, InstantiationException {
+        final String decoderType = String.format("%s%sDecoder", type.substring(0, 1).toUpperCase(), type.substring(1));
+        builder.registerDecoder(columnName, getProcessorClass(decoderType, BEAN_DECODER));
     }
 
     private <T, R> void registerProcessor(final String column,

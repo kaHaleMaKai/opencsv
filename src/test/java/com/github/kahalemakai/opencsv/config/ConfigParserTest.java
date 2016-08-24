@@ -109,7 +109,7 @@ public class ConfigParserTest {
     }
 
     @Test
-    public void testParseFromUnparsdedLinesFromXmlFile() throws Exception {
+    public void testParseFromUnparsedLinesFromXmlFile() throws Exception {
         picard.setAge(picard.getAge()+10);
         drObvious.setAge(null);
         ConfigParser configParser;
@@ -126,8 +126,30 @@ public class ConfigParserTest {
         assertEquals(picard, it.next());
         assertEquals(drObvious, it.next());
     }
+
     @Test
-    public void testParseFromUnparsdedLines() throws Exception {
+    public void testColumnRef() throws Exception {
+        picard.setAge(8000);
+        drObvious.setAge(8000);
+        picard.setGivenName(picard.getSurName());
+        drObvious.setGivenName(drObvious.getSurName());
+        ConfigParser configParser;
+        CsvToBeanMapper<Person> mapper;
+        Iterator<Person> it;
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-ref.xml");
+        assert resource != null;
+        configParser = ConfigParser.ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
+        mapper = configParser.parse();
+        it = mapper.iterator();
+        assertEquals(picard, it.next());
+        assertEquals(drObvious, it.next());
+    }
+
+    @Test
+    public void testParseFromUnparsedLines() throws Exception {
         picard.setAge(picard.getAge()+10);
         drObvious.setAge(null);
         ConfigParser configParser;
@@ -160,6 +182,20 @@ public class ConfigParserTest {
 
     @Test
     public void testParseFromInputStreamThrows() throws Exception {
+        fraenkie.setAge(42);
+        final InputStream resource = ConfigParserTest.class.getClassLoader().getResourceAsStream("xml-config/config.xml");
+        assert resource != null;
+        InputStream inputStream = new ByteArrayInputStream(linesWithUmlauts.getBytes());
+        final ConfigParser configParser = ConfigParser.ofInputStream(resource, inputStream);
+        final CsvToBeanMapper<Person> mapper = configParser.parse();
+        final Iterator<Person> it = mapper.iterator();
+        final Person person = it.next();
+        assertEquals(fraenkie.getAge(), person.getAge());
+        Assert.assertNotEquals(fraenkie, person);
+    }
+
+    @Test
+    public void testTypeConfig() throws Exception {
         fraenkie.setAge(42);
         final InputStream resource = ConfigParserTest.class.getClassLoader().getResourceAsStream("xml-config/config.xml");
         assert resource != null;

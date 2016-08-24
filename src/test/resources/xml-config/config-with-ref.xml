@@ -16,29 +16,21 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.2.1/opencsv.xsd"
+                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.3.4/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-    <csv:reader quoteChar="&apos;" charset="WINDOWS-1252">
-        <csv:ignore count="2"/>
-        <csv:column name="age" />
-        <csv:ignore />
-        <csv:column name="givenName" />
+    <csv:reader quoteChar="&apos;">
+        <csv:ignore count="5"/>
         <csv:column name="surName" />
         <csv:column name="address" />
         <csv:ignore count="4"/>
     </csv:reader>
 
     <bean:config class="com.github.kahalemakai.opencsv.examples.Person">
-        <bean:field name="age">
-            <bean:decoder type="NullDecoder" />
-            <bean:decoder type="IntDecoder" />
-            <bean:postProcessor type="com.github.kahalemakai.opencsv.examples.IncrementBy10" />
-            <bean:postValidator type="PositiveInt" />
-        </bean:field>
-        <bean:field name="givenName" />
+        <bean:field name="age" nullable="true" type="int" ref="value" refData="8000" />
+        <bean:field name="givenName" ref="column" refData="surName" />
         <bean:field name="surName" />
         <bean:field name="address" />
     </bean:config>

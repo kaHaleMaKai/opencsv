@@ -40,7 +40,7 @@
         </bean:field>
         <bean:field name="givenName" />
         <bean:field name="surName" />
-        <bean:field name="address" data="address" />
+        <bean:field name="address" />
     </bean:config>
 
 </opencsv:resources>
