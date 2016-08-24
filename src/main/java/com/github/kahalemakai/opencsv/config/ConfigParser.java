@@ -41,7 +41,10 @@ import javax.xml.validation.SchemaFactory;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
@@ -63,6 +66,7 @@ public class ConfigParser {
     private final Iterable<String> unparsedLines;
     private final Iterable<String[]> parsedLines;
     private final InputStream inputStream;
+    private final ParameterMap parameters;
 
     private String globalNullString = DEFAULT_NULL_STRING;
 
@@ -72,10 +76,26 @@ public class ConfigParser {
         this.unparsedLines = unparsedLines;
         this.parsedLines = parsedLines;
         this.inputStream = inputStream;
+        this.parameters = ParameterMap.init();
     }
 
     public ConfigParser(File xmlFile, Reader reader, Iterable<String> unparsedLines, Iterable<String[]> parsedLines, InputStream inputStream) throws FileNotFoundException {
         this(new FileInputStream(xmlFile), reader, unparsedLines, parsedLines, inputStream);
+    }
+
+    public ConfigParser injectParamter(final String name, final String value) throws IllegalStateException {
+        parameters.put(name, value);
+        return this;
+    }
+    
+    private String resolveParameter(final String name) {
+        final Optional<String> value = parameters.get(name);
+        if (!value.isPresent()) {
+            final String msg = String.format("parameter '%s' has not been defined", name);
+            log.error(msg);
+            throw new NoSuchElementException(msg);
+        }
+        return value.get();
     }
 
     private Optional<String> getValue(final Node node, final String attribute) {
@@ -236,11 +256,13 @@ public class ConfigParser {
                 final String refType = ref.get();
                 final Optional<String> refData = getValue(field, "refData");
                 if (refData.isPresent()) {
-                    final String data = refData.get();
+                    String data = refData.get();
                     switch (refType) {
                         case "column":
                             builder.setColumnRef(data, column);
                             break;
+                        case "parameter":
+                            data = resolveParameter(data);
                         case "value":
                             Object decodedRefData = data;
                             if (type.isPresent()) {

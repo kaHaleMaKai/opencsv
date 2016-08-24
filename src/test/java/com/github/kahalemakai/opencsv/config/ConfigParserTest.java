@@ -127,6 +127,59 @@ public class ConfigParserTest {
         assertEquals(drObvious, it.next());
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testParameterInjectionInvalidName() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-injection.xml");
+        assert resource != null;
+        ConfigParser configParser = ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore)
+                .injectParamter("invalid", "123");
+    }
+
+
+    @Test
+    public void testParameterInjection() throws Exception {
+        picard.setAge(123);
+        drObvious.setAge(123);
+        picard.setGivenName(picard.getSurName());
+        drObvious.setGivenName(drObvious.getSurName());
+        ConfigParser configParser;
+        CsvToBeanMapper<Person> mapper;
+        Iterator<Person> it;
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-injection.xml");
+        assert resource != null;
+        configParser = ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore)
+                .injectParamter("test:age", "123");
+        mapper = configParser.parse();
+        it = mapper.iterator();
+        assertEquals(picard, it.next());
+        assertEquals(drObvious, it.next());
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void testParameterInjectionThrows() throws Exception {
+        ConfigParser configParser;
+        CsvToBeanMapper<Person> mapper;
+        Iterator<Person> it;
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-injection.xml");
+        assert resource != null;
+        configParser = ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
+        mapper = configParser.parse();
+    }
+
+
+
     @Test
     public void testColumnRef() throws Exception {
         picard.setAge(8000);
