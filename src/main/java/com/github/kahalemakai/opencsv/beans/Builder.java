@@ -611,7 +611,7 @@ public class Builder<T> {
      * Define a column value as input for another column.
      * <p>
      * The {@code to} column must not be mapped to a column of the input data.
-     * That, however, can only be checked at runtime <it>after</it> the header
+     * That, however, can only be checked at runtime <i>after</i> the header
      * has been set.
      * @param from column whose value should be used
      * @param to column the value should be used in
@@ -631,7 +631,7 @@ public class Builder<T> {
      * Assign a constant value to a column in a csv output bean.
      * <p>
      * The column must not be mapped to a column of the input data. That, however,
-     * can only be checked at runtime <it>after</it> the header has been set.
+     * can only be checked at runtime <i>after</i> the header has been set.
      * @param column name of column to be assigned data to
      * @param value data to be assigned
      * @param <S> type of data
