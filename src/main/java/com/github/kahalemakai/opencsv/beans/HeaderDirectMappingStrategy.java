@@ -16,6 +16,8 @@
 
 package com.github.kahalemakai.opencsv.beans;
 
+import com.github.kahalemakai.tuples.Tuple;
+import com.github.kahalemakai.tuples.TupleList;
 import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 import lombok.Getter;
 import lombok.Setter;
@@ -53,16 +55,21 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
         return headerAsList;
     }
 
+    public TupleList<String, Integer> getColumnsToParse() {
+        TupleList<String, Integer> cols = TupleList.of(String.class, Integer.class);
+        for (int i = 0; i < this.header.length; ++i) {
+            final String col = this.header[i];
+            if (!col.equals(IGNORE_COLUMN)) {
+                cols.add(Tuple.of(col, i));
+            }
+        }
+        return TupleList.unmodifiableTupleList(cols);
+    }
+
     public static <S> HeaderDirectMappingStrategy<S> of(final Class<? extends S> type) {
         final HeaderDirectMappingStrategy<S> strategy = new HeaderDirectMappingStrategy<S>();
         strategy.setType(type);
         return strategy;
-    }
-
-    @Override
-    public PropertyDescriptor findDescriptor(int col) throws IntrospectionException {
-        final String columnName = header[col];
-        return findDescriptor(columnName);
     }
 
     @Override
@@ -74,9 +81,6 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
 
     @Override
     protected PropertyDescriptor findDescriptor(String name) throws IntrospectionException {
-        if (IGNORE_COLUMN.equals(name))
-            return null;
-        else
-            return super.findDescriptor(name);
+        return super.findDescriptor(name);
     }
 }

@@ -17,6 +17,8 @@
 package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
+import com.github.kahalemakai.tuples.Tuple;
+import com.github.kahalemakai.tuples.TupleList;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -47,7 +49,10 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final AtomicBoolean readerSetup;
     private final DecoderManager decoderManager;
     private final Iterable<String[]> source;
-    private final Map<Integer, Method> setterMethods;
+    private final Map<String, Method> setterMethods;
+    private final Map<String, String> columnRefs;
+    private final Map<String, Object> columnData;
+    private final TupleList<String, Integer> columnsForIteration;
 
     @Getter(AccessLevel.PRIVATE) @Setter
     private boolean errorOnClosingReader;
@@ -78,6 +83,9 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         this.strictQuotes = builder.quotingMode().isStrictQuotes();
         this.source = defineSource(builder.source(), builder.getReader(), builder.getLineIterator());
         this.setterMethods = new HashMap<>();
+        this.columnRefs = builder.getColumnRefs();
+        this.columnData = builder.getColumnData();
+        this.columnsForIteration = TupleList.of(String.class, Integer.class);
         log.debug(String.format("new CsvToBeanMapper instance built:\n%s", this.toString()));
     }
 
@@ -200,6 +208,138 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         return strategy.isHeaderDefined();
     }
 
+    protected T processLine(HeaderDirectMappingStrategy<T> mapper, String[] line) throws InstantiationException {
+        T bean = null;
+        try {
+            bean = mapper.createBean();
+        } catch (InstantiationException | IllegalAccessException e) {
+            final String msg = "could not create new bean";
+            log.error(msg);
+            throw new CsvToBeanException(msg, e);
+        }
+        if (this.columnsForIteration.isEmpty()) {
+            setupColumnsForIteration(mapper);
+        }
+        for (Tuple<String, Integer> tuple : this.columnsForIteration) {
+            final String columnName = tuple.first();
+            int col = tuple.last();
+            PropertyDescriptor prop = null;
+            try {
+                prop = mapper.findDescriptor(columnName);
+            } catch (IntrospectionException e) {
+                final String msg =
+                        processingErrorMsg(mapper, col, "could not find descriptor");
+                log.error(msg);
+                throw new CsvToBeanException(msg, e);
+            }
+            if (null != prop) {
+                Object obj = null;
+                final String value = line[col];
+                try {
+                    obj = convertValue(value, prop);
+                } catch (IllegalAccessException | CsvToBeanException e) {
+                    final String msg =
+                            processingErrorMsg(mapper, col, "could not convert value %s",
+                                    value == null ? "null" : value);
+                    log.error(msg);
+                    throw new CsvToBeanException(msg, e);
+                }
+                try {
+                    Method setter = getSetter(bean, columnName, prop);
+                    assert setter != null;
+                    setter.invoke(bean, obj);
+                } catch (NoSuchMethodException | InvocationTargetException | NoSuchFieldException | IllegalArgumentException | IllegalAccessException e) {
+                    final String msg = processingErrorMsg(mapper, col, "could not assign object %s of type %s",
+                            obj, obj != null ? obj.getClass().getCanonicalName() : "null");
+                    log.error(msg);
+                    throw new CsvToBeanException(msg, e);
+                }
+            }
+        }
+        for (Map.Entry<String, Object> entry : columnData.entrySet()) {
+            final String column = entry.getKey();
+            final Object value = entry.getValue();
+            try {
+                Method setter = getSetter(bean, column, null);
+                setter.invoke(bean, value);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+                final String msg = String.format("could not assign object %s of type %s to column %s",
+                        value, value != null ? value.getClass().getCanonicalName() : "null", column);
+                log.error(msg);
+                throw new CsvToBeanException(msg, e);
+            }
+        }
+        return bean;
+    }
+
+    private Method getSetter(final T bean, final String column, final PropertyDescriptor prop)
+            throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
+        // cache it! reflection has to be used only for the first line
+        if (!this.setterMethods.containsKey(column)) {
+            Method setter = prop == null ? null : prop.getWriteMethod();
+            // only keep this in order to deal with chained setters
+            // (prop editor doesn't retrieve them)
+            if (setter == null) {
+                final String setterName = getSetterName(column);
+                final Class<? extends T> beanClass = (Class<? extends T>) bean.getClass();
+                final List<Method> methods = new ArrayList<>();
+                for (Method method : beanClass.getMethods()) {
+                    if (setterName.equals(method.getName())) {
+                        methods.add(method);
+                    }
+                }
+                switch (methods.size()) {
+                    case 0:
+                        final String msg = String.format("could not find setter for column %s", column);
+                        log.error(msg);
+                        throw new NoSuchMethodError(msg);
+                    case 1:
+                        setter = methods.get(0);
+                        break;
+                    default:
+                        final Class<?> columnType = beanClass.getDeclaredField(column).getType();
+                        setter = beanClass.getMethod(setterName, columnType);
+                }
+            }
+            this.setterMethods.put(column, setter);
+        }
+        return this.setterMethods.get(column);
+    }
+
+    private String getSetterName(final String column) throws IllegalAccessException {
+        if (column == null || column.length() == 0) {
+            final String msg = String.format("cannot find setter method for column %s", column);
+            log.error(msg);
+            throw new IllegalAccessException(msg);
+        }
+        return String.format("set%s%s",
+                column.substring(0, 1).toUpperCase(), column.substring(1));
+    }
+
+    private String processingErrorMsg(final HeaderDirectMappingStrategy<?> mapper,
+                                      final int col,
+                                      final String formatString,
+                                      Object...values) {
+        return String.format(formatString, values)
+                + String.format(" (in column %s at csv position %d)", mapper.getColumnName(col), col);
+    }
+
+    private void setupColumnsForIteration(final HeaderDirectMappingStrategy<T> mapper) {
+        final TupleList<String, Integer> columnsToParse = mapper.getColumnsToParse();
+        this.columnsForIteration.addAll(columnsToParse);
+        final Map<String, Integer> idxLookup = columnsToParse.asMap();
+        for (Map.Entry<String, String> entry : this.columnRefs.entrySet()) {
+            final String to = entry.getKey();
+            final String from = entry.getValue();
+            final Integer idx = idxLookup.get(from);
+            if (idx == null) {
+                final String msg = String.format("column %s is not defined, but referenced from column %s", to, from);
+                throw new IllegalStateException(msg);
+            }
+            columnsForIteration.add(Tuple.of(to, idx));
+        }
+    }
+
     abstract class CsvIterator implements Iterator<T> {
         @Getter(AccessLevel.PROTECTED)
         private Iterator<String[]> iterator;
@@ -260,107 +400,6 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             }
         }
 
-    }
-
-    protected T processLine(HeaderDirectMappingStrategy<T> mapper, String[] line) throws InstantiationException {
-        T bean = null;
-        try {
-            bean = mapper.createBean();
-        } catch (InstantiationException | IllegalAccessException e) {
-            final String msg = "could not create new bean";
-            log.error(msg);
-            throw new CsvToBeanException(msg, e);
-        }
-        for (int col = 0; col < line.length; col++) {
-            PropertyDescriptor prop = null;
-            try {
-                prop = mapper.findDescriptor(col);
-            } catch (IntrospectionException e) {
-                final String msg =
-                        processingErrorMsg(mapper, col, "could not find descriptor");
-                log.error(msg);
-                throw new CsvToBeanException(msg, e);
-            }
-            if (null != prop) {
-                Object obj = null;
-                final String value = line[col];
-                try {
-                    obj = convertValue(value, prop);
-                } catch (IllegalAccessException | CsvToBeanException e) {
-                    final String msg =
-                            processingErrorMsg(mapper, col, "could not convert value %s",
-                                    value == null ? "null" : value);
-                    log.error(msg);
-                    throw new CsvToBeanException(msg, e);
-                }
-                try {
-                    Method setter = prop.getWriteMethod();
-                    // only keep this in order to deal with chained setters
-                    // (prop editor doesn't retrieve them)
-                    if (setter == null) {
-                        setter = getSetter(mapper, bean, col);
-                    }
-                    assert setter != null;
-                    setter.invoke(bean, obj);
-                } catch (NoSuchMethodException | InvocationTargetException | NoSuchFieldException | IllegalArgumentException | IllegalAccessException e) {
-                    final String msg = processingErrorMsg(mapper, col, "could not assign object %s of type %s",
-                            obj, obj != null ? obj.getClass().getCanonicalName() : "null");
-                    log.error(msg);
-                    throw new CsvToBeanException(msg, e);
-                }
-            }
-        }
-        return bean;
-    }
-
-    private Method getSetter(final HeaderDirectMappingStrategy<T> mapper,
-                             final T bean,
-                             final int col)
-            throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
-        if (!this.setterMethods.containsKey(col)) {
-            final String column = mapper.getColumnName(col);
-            final String setterName = getSetterName(column);
-            final Class<? extends T> beanClass = (Class<? extends T>) bean.getClass();
-            final List<Method> methods = new ArrayList<>();
-            for (Method method : beanClass.getMethods()) {
-                if (setterName.equals(method.getName())) {
-                    methods.add(method);
-                }
-            }
-            Method setter = null;
-            switch (methods.size()) {
-                case 0:
-                    final String msg = String.format("could not find setter for column %s", column);
-                    log.error(msg);
-                    throw new NoSuchMethodError(msg);
-                case 1:
-                    setter = methods.get(0);
-
-                default:
-                    final Class<?> columnType = beanClass.getDeclaredField(column).getType();
-                    setter = beanClass.getMethod(setterName, columnType);
-            }
-            this.setterMethods.put(col, setter);
-        }
-        return this.setterMethods.get(col);
-    }
-
-    private String getSetterName(final String column) throws IllegalAccessException {
-        if (column == null || column.length() == 0) {
-            final String msg = String.format("cannot find setter method for column %s", column);
-            log.error(msg);
-            throw new IllegalAccessException(msg);
-        }
-        return String.format("set%s%s",
-                column.substring(0, 1).toUpperCase(), column.substring(1));
-    }
-
-    private String processingErrorMsg(final HeaderDirectMappingStrategy<?> mapper,
-                                      final int col,
-                                      final String formatString,
-                                      Object...values) {
-        return String.format(formatString, values)
-                + String.format(" (in column %s at csv position %d)", mapper.getColumnName(col), col);
     }
 
     class SkippingIterator extends CsvIterator {

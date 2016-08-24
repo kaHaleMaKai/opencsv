@@ -16,11 +16,7 @@
 
 package com.github.kahalemakai.opencsv.beans;
 
-import com.github.kahalemakai.opencsv.beans.processing.Decoder;
-import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
-import com.github.kahalemakai.opencsv.beans.processing.DecoderPropertyEditor;
-import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
-import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
+import com.github.kahalemakai.opencsv.beans.processing.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -31,9 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -235,6 +229,9 @@ public class Builder<T> {
     private InputStream inputStream;
     private boolean sourceWasChosen;
 
+    private final Map<String, String> columnRefs;
+    private final Map<String, Object> columnData;
+
     /* *************************
      * constructor and builder
      * *************************/
@@ -249,6 +246,8 @@ public class Builder<T> {
     Builder(final Class<? extends T> type) {
         this.decoderManager = DecoderManager.init();
         this.readerSetup = new AtomicBoolean(false);
+        this.columnRefs = new HashMap<>();
+        this.columnData = new HashMap<>();
         log.debug(String.format("setup CsvToBeanMapper for type <%s>", type.getCanonicalName()));
         this.strategy = HeaderDirectMappingStrategy.of(type);
     }
@@ -609,6 +608,46 @@ public class Builder<T> {
     }
 
     /**
+     * Define a column value as input for another column.
+     * <p>
+     * The {@code to} column must not be mapped to a column of the input data.
+     * That, however, can only be checked at runtime <it>after</it> the header
+     * has been set.
+     * @param from column whose value should be used
+     * @param to column the value should be used in
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> setColumnRef(final String from, final String to) {
+        if (this.columnRefs.containsKey(to)) {
+            final String msg = String.format("already setup column reference for column %s", from);
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
+        this.columnRefs.put(to, from);
+        return this;
+    }
+
+    /**
+     * Assign a constant value to a column in a csv output bean.
+     * <p>
+     * The column must not be mapped to a column of the input data. That, however,
+     * can only be checked at runtime <it>after</it> the header has been set.
+     * @param column name of column to be assigned data to
+     * @param value data to be assigned
+     * @param <S> type of data
+     * @return the {@code Builder} instance
+     */
+    public <S> Builder<T> setColumnValue(final String column, final S value) {
+        if (this.columnData.containsKey(column)) {
+            final String msg = String.format("already assigned constant value to column %s", column);
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
+        this.columnData.put(column, value);
+        return this;
+    }
+
+    /**
      * Helper method for setting the header of a mapping strategy.
      * @param strategy strategy for which to set the header
      * @param header the header fields
@@ -657,8 +696,35 @@ public class Builder<T> {
         strategy.captureHeader(completeHeader);
     }
 
-    public DecoderManager getDecoderManager() {
+    /**
+     * Get an immutable copy of the decoder manager.
+     * <p>
+     * This method should be only used upon instance creation
+     * of a new {@code CsvToBeanMapper} from this builder.
+     * @return
+     */
+    DecoderManager getDecoderManager() {
         return decoderManager.immutableCopy();
+    }
+
+    /**
+     * Get an immutable copy of column references.
+     * @return immutable copy of column references
+     */
+    public Map<String, String> getColumnRefs() {
+        // immutable, since columnRefs is map: String -> String
+        return Collections.unmodifiableMap(columnRefs);
+    }
+
+    /**
+     * Get an immutable copy of column data.
+     * <p>
+     * The data should only contain value objects.
+     * @return an immutable copy of column data
+     */
+    public Map<String, Object> getColumnData() {
+        // immutable, since columnData only contains immutable keys and values
+        return Collections.unmodifiableMap(columnData);
     }
 
     /* ********************

@@ -82,6 +82,7 @@ dependencies {
     compile "log4j:log4j:${log4jVersion}"
     compile "log4j:apache-log4j-extras:${log4jVersion}"
     compile 'com.opencsv:opencsv:3.8'
+    compile 'com.github.kahalemakai:tuples:0.3.0'
 
     compile(group: 'com.intellij', name: 'annotations', version: '12.0') {
         exclude group: "com.intellij"

@@ -163,7 +163,6 @@ public class CsvToBeanMapperImplTest {
         assertEquals(decoderClassMap.size(), 2);
     }
 
-
     @Test
     public void testDecoding() throws Exception {
         builder.registerDecoder("surName", (data) -> "Mr. "+data);
@@ -175,6 +174,28 @@ public class CsvToBeanMapperImplTest {
         final Person person = it.next();
         picard.setSurName("Mr. Picard");
         assertEquals(picard, person);
+    }
+
+    @Test
+    public void testDecodingOfAdditionalColumns() throws Exception {
+        builder.registerDecoder("surName", (data) -> "Mr. "+data);
+        final Iterator<Person> it = builder
+                .setHeader(new String[]{"$ignore$","$ignore$","surName","address"})
+                .withParsedLines(() -> iterator)
+                .registerDecoder("givenName", () -> (s) -> "little Mr. " + s, "littleMr")
+                .setColumnRef("surName", "givenName")
+                .setColumnValue("age", 8000)
+                .skipLines(1)
+                .build()
+                .iterator();
+        picard.setAge(8000);
+        picard.setGivenName("little Mr. Picard");
+        picard.setSurName("Mr. "+picard.getSurName());
+        drObvious.setAge(8000);
+        drObvious.setGivenName("little Mr. " + drObvious.getSurName());
+        drObvious.setSurName("Mr. "+drObvious.getSurName());
+        assertEquals(picard, it.next());
+        assertEquals(drObvious, it.next());
     }
 
     @Test
