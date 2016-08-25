@@ -223,6 +223,8 @@ public class Builder<T> {
      * @return the decoder manager instance used for bookkeeping
      */
     private final DecoderManager decoderManager;
+
+    // lock for decoderManager
     private final Object[] $decoderManagerLock = new Object[0];
     /**
      * A reader instance used as source.
@@ -231,6 +233,7 @@ public class Builder<T> {
      */
     @Getter
     private Reader reader;
+
     /**
      * An iterator of yet to parse lines.
      *
@@ -242,7 +245,15 @@ public class Builder<T> {
     private InputStream inputStream;
     private boolean sourceWasChosen;
 
+    /**
+     * Map of column references.
+     * <p>
+     * Format: referenced column -> referencing column (i.e. to -> from)
+     */
     private final Map<String, String> columnRefs;
+    /**
+     * Map of constants to be assigned to unmapped columns.
+     */
     private final Map<String, Object> columnData;
 
     /* *************************

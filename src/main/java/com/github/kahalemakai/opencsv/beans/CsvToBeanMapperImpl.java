@@ -37,6 +37,15 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
+/**
+ * Main implementation of {@code {@link CsvToBeanMapper}}.
+ * <p>
+ * An instance may only be constructed using the {@link Builder} class.
+ * Please refer to it for further information about the individual parameters.
+ * <p>
+ * The main purpose of this class is to provide the user with an {@link #iterator()} method.
+ * @param <T> type of bean to be emitted
+ */
 @RequiredArgsConstructor
 @Log4j
 @ToString
@@ -67,6 +76,13 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final boolean strictQuotes;
     private final boolean ignoreQuotes;
 
+    /**
+     * Return a {@code CsvToBeanMapper} instance.
+     * <p>
+     * Besides from copying over the state of the {@code Builder},
+     * it chooses the correct input source.
+     * @param builder a {@code Builder} instance
+     */
     CsvToBeanMapperImpl(Builder<T> builder) {
         this.strategy = nonNull(builder.getStrategy(), "strategy");
         this.readerSetup = nonNull(builder.getReaderSetup(), "readerSetup");
@@ -87,6 +103,14 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         log.debug(String.format("new CsvToBeanMapper instance built:\n%s", this.toString()));
     }
 
+    /**
+     * Setup the input source.
+     * @param parsedIterable an iterable of parsed csv fields
+     * @param reader a {@code Reader} instance
+     * @param lineIterator an iterable of unparsed csv lines
+     * @return the correct input source turned turned into an {@code Iterable} of parsed lines
+     * @throws IllegalStateException
+     */
     private Iterable<String[]> defineSource(final Iterable<String[]> parsedIterable,
                                             final Reader reader,
                                             final Iterator<String> lineIterator)
@@ -144,13 +168,20 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         };
     }
 
+    /**
+     * Get a property editor.
+     * @param desc a property descriptor
+     * @return a property editor
+     */
     @Override
-    protected PropertyEditor getPropertyEditor(PropertyDescriptor desc)
-            throws InstantiationException, IllegalAccessException, IllegalStateException {
+    protected PropertyEditor getPropertyEditor(PropertyDescriptor desc) {
         final String column = desc.getName();
         return decoderManager.get(column);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Iterator<T> iterator() {
         if (source == null) {
@@ -163,11 +194,18 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         return isOnErrorSkipLine() ? new SkippingIterator(linesToSkip, iterator) : new NonSkippingIterator(linesToSkip, iterator);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<? extends T> getType() {
         return strategy.getType();
     }
 
+    /**
+     * Close the underlying {@code Reader} or {@code CSVReader} instance.
+     * @throws IOException if the reader cannot be closed
+     */
     @Override
     public void close() throws IOException {
         if (unsetReaderIsSetup()) {
@@ -183,16 +221,34 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         }
     }
 
+    /**
+     * Mark the reader as not set up.
+     * @return the resulting falsy state
+     */
     boolean unsetReaderIsSetup() {
         log.debug("marking reader as no setup");
         return readerSetup.getAndSet(false);
     }
 
+    /**
+     * Mark the reader as set up.
+     * @return the resulting truthy state
+     */
     boolean setReaderIsSetup() {
         log.debug("marking reader as setup");
         return readerSetup.getAndSet(true);
     }
 
+    /**
+     * Assert that an object is not null.
+     * <p>
+     * Prints out an appropriate error message.
+     * @param obj object to be checked
+     * @param name name of the object reference
+     * @param <S> type of object to be checked
+     * @return the object to be checked
+     * @throws IllegalStateException if the object is null
+     */
     private <S> S nonNull(final S obj, final String name) throws IllegalStateException {
         if (obj == null) {
             final String msg = String.format("expected: argument %s != null, got: null", name);
@@ -202,11 +258,25 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         return obj;
     }
 
+    /**
+     * Check if the header is defined.
+     * @return if the header is defined or not
+     */
     private boolean isHeaderDefined() {
         return strategy.isHeaderDefined();
     }
 
-    protected T processLine(HeaderDirectMappingStrategy<T> mapper, String[] line) throws InstantiationException {
+    /**
+     * Decode a parsed line into a bean.
+     * <p>
+     * The heavy-lifting is done by the {@link DecoderManager} and the
+     * {@link com.github.kahalemakai.opencsv.beans.processing.DecoderPropertyEditor}.
+     * @param mapper the mapping strategy to be used
+     * @param line the parsed line
+     * @return the decoded bean
+     */
+    protected T processLine(final HeaderDirectMappingStrategy<T> mapper,
+                            final String[] line) {
         T bean = null;
         try {
             bean = mapper.createBean();
@@ -235,7 +305,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                 final String value = line[col];
                 try {
                     obj = convertValue(value, prop);
-                } catch (IllegalAccessException | CsvToBeanException e) {
+                } catch (InstantiationException | IllegalAccessException | CsvToBeanException e) {
                     final String msg =
                             processingErrorMsg(mapper, col, "could not convert value %s",
                                     value == null ? "null" : value);
@@ -270,6 +340,16 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         return bean;
     }
 
+    /**
+     * Lookup and cache a setter method for a specific column.
+     * @param bean the bean to emit be {@link #iterator()}
+     * @param column name of the column
+     * @param prop the corresponding property's descriptor
+     * @return the setter method
+     * @throws IllegalAccessException if the setter method is non-accessible
+     * @throws NoSuchMethodException if no setter method is defined
+     * @throws NoSuchFieldException if the field corresponding to the column ought be looked up, but does not exist
+     */
     private Method getSetter(final T bean, final String column, final PropertyDescriptor prop)
             throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
         // cache it! reflection has to be used only for the first line
@@ -304,6 +384,14 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         return this.setterMethods.get(column);
     }
 
+    /**
+     * Find the name of the setter method.
+     * <p>
+     * Defaults to {@code column -> setColumn}
+     * @param column name of the column to look up
+     * @return name of the setter method
+     * @throws IllegalAccessException if no column name was given
+     */
     private String getSetterName(final String column) throws IllegalAccessException {
         if (column == null || column.length() == 0) {
             final String msg = String.format("cannot find setter method for column %s", column);
@@ -322,6 +410,11 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                 + String.format(" (in column %s at csv position %d)", mapper.getColumnName(col), col);
     }
 
+    /**
+     * Calculate the columns that are either directly mapped to csv columns, or
+     * reference another column.
+     * @param mapper the mapper strategy instance
+     */
     private void setupColumnsForIteration(final HeaderDirectMappingStrategy<T> mapper) {
         final TupleList<String, Integer> columnsToParse = mapper.getColumnsToParse();
         this.columnsForIteration.addAll(columnsToParse);
@@ -338,11 +431,20 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         }
     }
 
-    abstract class CsvIterator implements Iterator<T> {
+    /**
+     * Abstract base class for iterators over parsed csv columns.
+     * <p>
+     * This class or its sub-classes are emitted when calling the
+     * {@link #iterator()} method.
+     * <p>
+     * On instance creation, a header is parsed if not set previously,
+     * and lines are skipped if required.
+     */
+    abstract class BaseCsvIterator implements Iterator<T> {
         @Getter(AccessLevel.PROTECTED)
         private Iterator<String[]> iterator;
 
-        public CsvIterator(final int skipLines, final Iterator<String[]> iterator) {
+        BaseCsvIterator(final int skipLines, final Iterator<String[]> iterator) {
             this.iterator = iterator;
             try {
                 for (int i = 0; i < skipLines; ++i) {
@@ -363,7 +465,13 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
 
     }
 
-    class NonSkippingIterator extends CsvIterator {
+    /**
+     * The most common iterator class to use for parsed csv lines.
+     * <p>
+     * It decodes the input source line-wise and throws on the
+     * first encountered exception.
+     */
+    class NonSkippingIterator extends BaseCsvIterator {
         private long counter;
 
         public NonSkippingIterator(final int skipLines, final Iterator<String[]> iterator) {
@@ -400,7 +508,22 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
 
     }
 
-    class SkippingIterator extends CsvIterator {
+    /**
+     * Class used by the {@link #iterator()} method
+     * when suppressing exceptions.
+     * <p>
+     * This class iterates over the input line-wise, but simply
+     * skips a line if an exception was encountered.
+     * <p>
+     * To that end, all lines until the next correctly decoded line
+     * must be pre-processed when calling the {@link #hasNext()} method.
+     * This requires a lot more bookkeeping and is more expensive than
+     * the {@link NonSkippingIterator}.
+     * <p>
+     * Due to the pre-fetching, {@link #hasNext()} must always be called
+     * before calling {@link #next()}.
+     */
+    class SkippingIterator extends BaseCsvIterator {
         private long counter;
         private T nextElement;
         private boolean nextElementIsEmpty = true;
@@ -410,6 +533,12 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             super(skipLines, iterator);
         }
 
+        /**
+         * Tell if a line remains in the iterator.
+         * <p>
+         * The next line is pre-fetched, that can be correctly decoded.
+         * @return if a line remains in the iterator
+         */
         @Override
         public boolean hasNext() {
             if (!nextElementIsEmpty)
@@ -427,6 +556,13 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             }
         }
 
+        /**
+         * Return the next line that can be correctly decoded.
+         * <p>
+         * This method must never be called without calling
+         * hte {@link #hasNext()} method before.
+         * @return the next line that can be correctly decoded
+         */
         @Override
         public T next() {
             if (!nextElementIsEmpty) {
