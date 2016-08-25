@@ -69,6 +69,10 @@ public class Builder<T> {
      */
     public static final boolean DEFAULT_IGNORE_LEADING_WHITESPACE = true;
     /**
+     * default is ignore trailing white space
+     */
+    public static final boolean DEFAULT_IGNORE_TRAILING_WHITESPACE = true;
+    /**
      * default is non-strict quotes
      */
     public static final QuotingMode DEFAULT_QUOTING_MODE = QuotingMode.NON_STRICT_QUOTES;
@@ -176,6 +180,14 @@ public class Builder<T> {
      */
     @Getter
     private boolean ignoreLeadingWhiteSpace = DEFAULT_IGNORE_LEADING_WHITESPACE;
+
+    /**
+     * Ignore trailing white space.
+     *
+     * @return whether to ignore trailing white space
+     */
+    @Getter
+    private boolean ignoreTrailingWhiteSpace = DEFAULT_IGNORE_TRAILING_WHITESPACE;
     /**
      * Skip to next line, if an error is caught during parsing or processing of a line.
      *
@@ -211,6 +223,7 @@ public class Builder<T> {
      * @return the decoder manager instance used for bookkeeping
      */
     private final DecoderManager decoderManager;
+    private final Object[] $decoderManagerLock = new Object[0];
     /**
      * A reader instance used as source.
      *
@@ -533,6 +546,17 @@ public class Builder<T> {
     }
 
     /**
+     * Don't ignore trailing white space
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> dontIgnoreTrailingWhiteSpace() {
+        log.debug("do not ignore leading white space");
+        this.ignoreTrailingWhiteSpace = false;
+        return this;
+    }
+
+
+    /**
      * Skip to next line, if an error is encountered.
      * @return the {@code Builder} instance
      */
@@ -648,6 +672,16 @@ public class Builder<T> {
     }
 
     /**
+     * Force values of a specific column to be trimmed prior to decoding.
+     * @param column name of column
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> trim(final String column) {
+        decoderManager.setTrim(column, true);
+        return this;
+    }
+
+    /**
      * Helper method for setting the header of a mapping strategy.
      * @param strategy strategy for which to set the header
      * @param header the header fields
@@ -680,8 +714,8 @@ public class Builder<T> {
                     headerList.add(IGNORE_COLUMN);
                 }
             } else {
-                final Matcher accpedtedNamesMatcher = ACCEPTED_NAMES.matcher(column);
-                if (accpedtedNamesMatcher.matches() || IGNORE_COLUMN.equals(column)) {
+                final Matcher acceptedNamesMatcher = ACCEPTED_NAMES.matcher(column);
+                if (acceptedNamesMatcher.matches() || IGNORE_COLUMN.equals(column)) {
                     headerList.add(column);
                 } else if (ELLIPSIS.equals(column)) {
                     headerList.add(IGNORE_COLUMN);
@@ -704,6 +738,15 @@ public class Builder<T> {
      * @return
      */
     DecoderManager getDecoderManager() {
+        final Map<String, DecoderPropertyEditor<?>> editorMap = decoderManager.getPropertyEditorMap();
+        for (Map.Entry<String, DecoderPropertyEditor<?>> entry : editorMap.entrySet()) {
+            final String column = entry.getKey();
+            final DecoderPropertyEditor<?> editor = entry.getValue();
+            final int numDecoders = editor.getNumDecoders();
+            if (numDecoders == 0) {
+                decoderManager.add(column, Decoder.IDENTITY);
+            }
+        }
         return decoderManager.immutableCopy();
     }
 

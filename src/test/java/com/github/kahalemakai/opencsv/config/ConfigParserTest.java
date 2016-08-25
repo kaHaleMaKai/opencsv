@@ -38,6 +38,7 @@ public class ConfigParserTest {
     CSVParser parser;
     String linesWithUmlauts;
     String[] linesWithIgnore;
+    String[] linesWithSpaces;
     String[] lines;
     String[] linesWithEnum;
     Person picard;
@@ -46,6 +47,7 @@ public class ConfigParserTest {
     EnumWrapper enumWrapper;
     Iterator<String[]> iterator;
     Iterator<String[]> iteratorWithIgnore;
+    Iterator<String> getUnparsedIteratorWithSpaces;
     Iterator<String> unparsedIterator;
     Iterator<String> unparsedIteratorWithIgnore;
     Iterator<String> unparsedLinesWithEnum;
@@ -250,7 +252,10 @@ public class ConfigParserTest {
     @Test
     public void testTypeConfig() throws Exception {
         fraenkie.setAge(42);
-        final InputStream resource = ConfigParserTest.class.getClassLoader().getResourceAsStream("xml-config/config.xml");
+        final InputStream resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResourceAsStream("xml-config/config-with-type.xml");
         assert resource != null;
         InputStream inputStream = new ByteArrayInputStream(linesWithUmlauts.getBytes());
         final ConfigParser configParser = ConfigParser.ofInputStream(resource, inputStream);
@@ -259,6 +264,21 @@ public class ConfigParserTest {
         final Person person = it.next();
         assertEquals(fraenkie.getAge(), person.getAge());
         Assert.assertNotEquals(fraenkie, person);
+    }
+
+    @Test
+    public void testTrim() throws Exception {
+        final InputStream resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResourceAsStream("xml-config/config-with-trim.xml");
+        assert resource != null;
+        final ConfigParser configParser = ConfigParser
+                .ofUnparsedLines(resource, () -> getUnparsedIteratorWithSpaces);
+        final CsvToBeanMapper<Person> mapper = configParser.parse();
+        final Iterator<Person> it = mapper.iterator();
+        assertEquals(picard, it.next());
+        assertEquals(drObvious, it.next());
     }
 
     @Before
@@ -273,6 +293,11 @@ public class ConfigParserTest {
                 "X,X,50,X,Jean-Luc,Picard,'Captain\\'s room, Enterprise',X,X,X,X",
                 "X,X,null,X,Dr.,Obvious,Somewhere,X,X,X,X"
         };
+        linesWithSpaces = new String[] {
+                "    50 ,Jean-Luc,   Picard, 'Captain\\'s room, Enterprise' ",
+                " null   ,Dr. ,  Obvious  , Somewhere "
+        };
+
         linesWithEnum = new String[] {"n", "x"};
         picard = new Person();
         picard.setAge(50);
@@ -297,6 +322,7 @@ public class ConfigParserTest {
 
         iterator = toParsedIterator(lines);
         iteratorWithIgnore = toParsedIterator(linesWithIgnore);
+        getUnparsedIteratorWithSpaces = toUnparsedIterator(linesWithSpaces);
         unparsedIterator = toUnparsedIterator(lines);
         unparsedIteratorWithIgnore = toUnparsedIterator(linesWithIgnore);
         unparsedLinesWithEnum = toUnparsedIterator(linesWithEnum);

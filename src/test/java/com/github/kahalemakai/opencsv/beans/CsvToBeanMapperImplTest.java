@@ -42,11 +42,13 @@ public class CsvToBeanMapperImplTest {
     CSVParser parser;
     String[] linesWithIgnore;
     String[] lines;
+    String[] linesWithSpaces;
     Person picard;
     BigPerson PICARD;
     Person drObvious;
     BigPerson DROBVIOUS;
     Iterator<String[]> iterator;
+    Iterator<String> unparsedIteratorWithSpaces;
     Iterator<String[]> iteratorWithIgnore;
     Iterator<String> unparsedIterator;
     Iterator<String> unparsedIteratorWithIgnore;
@@ -119,6 +121,25 @@ public class CsvToBeanMapperImplTest {
         final CsvToBeanMapper<Person> beanMapper = builder
                 .withLines(() -> unparsedIteratorWithIgnore)
                 .registerDecoder("age", IntDecoder.class)
+                .build();
+        final Iterator<Person> it = beanMapper.iterator();
+        assertEquals(picard, it.next());
+    }
+
+    @Test
+    public void testTrim() throws Exception {
+        final String[] header = {"age","givenName","surName","address"};
+        builder.setHeader(header);
+        final CsvToBeanMapper<Person> beanMapper = builder
+                .withLines(() -> unparsedIteratorWithSpaces)
+                .nonStrictQuotes()
+                .quoteChar('\'')
+                .registerDecoder("age", NullDecoder.class)
+                .registerDecoder("age", IntDecoder.class)
+                .trim("age")
+                .trim("givenName")
+                .trim("surName")
+                .trim("address")
                 .build();
         final Iterator<Person> it = beanMapper.iterator();
         assertEquals(picard, it.next());
@@ -366,6 +387,10 @@ public class CsvToBeanMapperImplTest {
                 "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise'",
                 "null,Dr.,Obvious,Somewhere"
         };
+        linesWithSpaces = new String[] {
+                "    50 ,Jean-Luc,   Picard, 'Captain\\'s room, Enterprise' ",
+                " null   ,Dr. ,  Obvious  , Somewhere "
+        };
         linesWithIgnore = new String[] {
                 "X,X,50,X,Jean-Luc,Picard,'Captain\\'s room, Enterprise',X,X,X,X",
                 "X,X,33,X,Dr.,Obvious,Somewhere,X,X,X,X"
@@ -395,6 +420,7 @@ public class CsvToBeanMapperImplTest {
         DROBVIOUS.setAddress("Somewhere");
 
         iterator = toParsedIterator(lines);
+        unparsedIteratorWithSpaces = toUnparsedIterator(linesWithSpaces);
         iteratorWithIgnore = toParsedIterator(linesWithIgnore);
         unparsedIterator = toUnparsedIterator(lines);
         unparsedIteratorWithIgnore = toUnparsedIterator(linesWithIgnore);

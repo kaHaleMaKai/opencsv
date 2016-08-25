@@ -103,6 +103,7 @@
         <xs:attribute name="nullFallsThrough" type="bean:NullFallsThrough" />
         <xs:attribute name="nullString" type="xs:string" use="optional" />
         <xs:attribute name="nullable" type="xs:boolean" use="optional" />
+        <xs:attribute name="trim" type="xs:boolean" use="optional" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="ProcessorAttributes">

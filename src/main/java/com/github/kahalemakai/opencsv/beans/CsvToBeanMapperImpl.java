@@ -19,8 +19,6 @@ package com.github.kahalemakai.opencsv.beans;
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
 import com.github.kahalemakai.tuples.Tuple;
 import com.github.kahalemakai.tuples.TupleList;
-import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.bean.AbstractCSVToBean;
@@ -96,14 +94,14 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         if (parsedIterable != null) {
             return parsedIterable;
         }
-        final CSVParser csvParser = new CSVParserBuilder()
-                .withStrictQuotes(this.strictQuotes)
-                .withIgnoreLeadingWhiteSpace(this.ignoreLeadingWhiteSpace)
-                .withQuoteChar(this.quoteChar)
-                .withEscapeChar(this.escapeChar)
-                .withIgnoreQuotations(this.ignoreQuotes)
-                .withSeparator(this.separator)
-                .build();
+
+        final CsvParser csvParser = new CsvParser(
+                        this.separator,
+                        this.quoteChar,
+                        this.escapeChar,
+                        this.strictQuotes,
+                        this.ignoreLeadingWhiteSpace,
+                        this.ignoreQuotes);
         if (reader != null) {
             final CSVReader csvReader = new CSVReaderBuilder(reader)
                     .withSkipLines(this.skipLines)

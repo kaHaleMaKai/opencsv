@@ -233,6 +233,14 @@ public class ConfigParser {
                         break;
                 }
             }
+            final Optional<String> trim = getValue(field, "trim");
+            if (trim.isPresent()) {
+                final boolean doTrim = Boolean.valueOf(trim.get());
+                if (doTrim) {
+                    builder.trim(column);
+                }
+            }
+            
             final Optional<String> nullable = getValue(field, "nullable");
             final Optional<String> maybeNullString = getValue(field, "nullString");
             final boolean isNullable = Boolean.valueOf(nullable.orElse("false"))

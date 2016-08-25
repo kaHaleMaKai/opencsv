@@ -40,7 +40,7 @@ import java.util.function.Supplier;
 @Log4j
 @ToString
 public class DecoderManager {
-    private final Map<String, DecoderPropertyEditor<?>> decoderMap;
+    private final Map<String, DecoderPropertyEditor<?>> propertyEditorMap;
     private final Map<String, Decoder<?>> decoderClassMap;
     private final Map<String, PostProcessor<?>> postProcessorClassMap;
     private final Map<String, PostValidator<?>> postValidatorClassMap;
@@ -251,7 +251,7 @@ public class DecoderManager {
      * @return {@code Optional} of {@code DecoderPropertyEditor}
      */
     public PropertyEditor get(@NonNull final String column) {
-        final DecoderPropertyEditor<?> editor = decoderMap.get(column.toLowerCase());
+        final DecoderPropertyEditor<?> editor = propertyEditorMap.get(column.toLowerCase());
         return editor != null ? editor : DecoderPropertyEditor.IDENTITY;
     }
 
@@ -262,7 +262,7 @@ public class DecoderManager {
      * @return immutable copy of the {@code DecoderManager} instance
      */
     public DecoderManager immutableCopy() {
-        return new DecoderManager(Collections.unmodifiableMap(decoderMap),
+        return new DecoderManager(Collections.unmodifiableMap(propertyEditorMap),
                                   Collections.unmodifiableMap(decoderClassMap),
                                   Collections.unmodifiableMap(postProcessorClassMap),
                                   Collections.unmodifiableMap(postValidatorClassMap));
@@ -292,27 +292,46 @@ public class DecoderManager {
         return this;
     }
 
+    /**
+     * Set trimming behaviour for a specific column.
+     * @param column name of column
+     * @param value true if field should be trimmed prior to decoding, else false
+     * @return the {@code DecoderManager} instance
+     */
+    public DecoderManager setTrim(final String column, final boolean value) {
+        getPropertyEditor(column).setTrim(value);
+        return this;
+    }
+
+    /**
+     * Get an immutable view of teh map of columns to propertyEditors.
+     * @return the map of columns to propertyEditors
+     */
+    public Map<String, DecoderPropertyEditor<?>> getPropertyEditorMap() {
+        return Collections.unmodifiableMap(propertyEditorMap);
+    }
+
     private <R> DecoderPropertyEditor<R> getPropertyEditor(final String column) {
         final String columnToLower = column.toLowerCase();
-        if (!decoderMap.containsKey(columnToLower)) {
-            decoderMap.put(columnToLower, DecoderPropertyEditor.forColumn(column));
+        if (!propertyEditorMap.containsKey(columnToLower)) {
+            propertyEditorMap.put(columnToLower, DecoderPropertyEditor.forColumn(column));
         }
-        final DecoderPropertyEditor<R> propertyEditor = (DecoderPropertyEditor<R>) decoderMap.get(columnToLower);
+        final DecoderPropertyEditor<R> propertyEditor = (DecoderPropertyEditor<R>) propertyEditorMap.get(columnToLower);
         return propertyEditor;
     }
 
-    private DecoderManager(Map<String, DecoderPropertyEditor<?>> decoderMap,
+    private DecoderManager(Map<String, DecoderPropertyEditor<?>> propertyEditorMap,
                            Map<String, Decoder<?>> decoderClassMap,
                            Map<String, PostProcessor<?>> postProcessorClassMap,
                            Map<String, PostValidator<?>> postValidatorClassMap) {
-        this.decoderMap = decoderMap;
+        this.propertyEditorMap = propertyEditorMap;
         this.decoderClassMap = decoderClassMap;
         this.postProcessorClassMap = postProcessorClassMap;
         this.postValidatorClassMap = postValidatorClassMap;
     }
 
     private DecoderManager() {
-        this.decoderMap = new HashMap<>();
+        this.propertyEditorMap = new HashMap<>();
         this.decoderClassMap = new HashMap<>();
         this.postProcessorClassMap = new HashMap<>();
         this.postValidatorClassMap = new HashMap<>();

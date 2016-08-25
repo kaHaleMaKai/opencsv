@@ -16,9 +16,7 @@
 
 package com.github.kahalemakai.opencsv.beans.processing;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.log4j.Log4j;
 
 import java.beans.PropertyEditorSupport;
@@ -39,24 +37,29 @@ import java.util.List;
  */
 @RequiredArgsConstructor(staticName = "forColumn")
 @Log4j
-public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
+public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     private static final String ANY_COLUMN = "*";
     private final List<Decoder<? extends T>> decoders = new LinkedList<>();
     private PostProcessor<T> postProcessor = PostProcessor.identity();
     private final List<PostValidator<T>> postValidators = new LinkedList<>();
+    @Getter(AccessLevel.PACKAGE)
     private String data;
     @Getter
     private final String columnName;
+    private int numDecoders;
+    private final Object[] $decoderLock = new Object[0];
+    private final Object[] $postProcessorLock = new Object[0];
+    private final Object[] $postValidatorLock = new Object[0];
 
     /**
      * Define trimming behaviour for csv String values before decoding them.
      * <p>
      * Defaults to {@code false}.
-     * @param trimField new value for trimming behaviour
+     * @param trim new value for trimming behaviour
      * @return the trimming behaviour
      */
     @Getter @Setter
-    private boolean trimField = false;
+    private boolean trim = false;
 
     /**
      * The type of the output bean field.
@@ -103,7 +106,10 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
      * @return the {@code DecoderPropertyEditor} instance
      */
     public DecoderPropertyEditor<T> add(Decoder<? extends T> decoder) {
-        decoders.add(decoder);
+        synchronized ($decoderLock) {
+            decoders.add(decoder);
+            numDecoders++;
+        }
         return this;
     }
 
@@ -115,8 +121,10 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
      * @return the {@code DecoderPropertyEditor} instance
      */
     public DecoderPropertyEditor<T> addPostProcessor(final PostProcessor<T> postProcessor) {
-        this.postProcessor = PostProcessor.compose(this.postProcessor, postProcessor);
-        return this;
+        synchronized ($postProcessorLock) {
+            this.postProcessor = PostProcessor.compose(this.postProcessor, postProcessor);
+        }
+       return this;
     }
 
     /**
@@ -127,7 +135,9 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
      * @return the {@code DecoderPropertyEditor} instance
      */
     public DecoderPropertyEditor<T> addPostValidator(final PostValidator<T> postValidator) {
-        postValidators.add(postValidator);
+        synchronized ($postValidatorLock) {
+            postValidators.add(postValidator);
+        }
         return this;
     }
 
@@ -196,14 +206,24 @@ public final class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     /**
      * Set the String-valued csv field as text for further processing.
      * <p>
-     * If {@link #isTrimField()} evaluates to true, the text will get trimmed before setting it.
+     * If {@link #isTrim()} evaluates to true, the text will get trimmed before setting it.
      *
      * @param text the text to set for further processing
      * @throws IllegalArgumentException only declared for matching the interface
      */
     @Override
     public void setAsText(String text) throws IllegalArgumentException {
-        this.data = isTrimField() ? text.trim() : text;
+        this.data = isTrim() ? text.trim() : text;
+    }
+
+    /**
+     * Get the number of registered decoders.
+     * @return number of registered decoders
+     */
+    public int getNumDecoders() {
+        synchronized ($decoderLock) {
+            return numDecoders;
+        }
     }
 
     private T decodeValue() throws DataDecodingException {
