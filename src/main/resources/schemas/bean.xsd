@@ -93,6 +93,7 @@
     <xs:attributeGroup name="BeanAttributes">
         <xs:attribute name="class" use="required" />
         <xs:attribute name="nullString" use="optional" />
+        <xs:attribute name="trim" type="xs:boolean" use="optional" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="FieldAttributes">

@@ -683,7 +683,20 @@ public class Builder<T> {
     }
 
     /**
+     * Force values of a specific column to be trimmed or not prior to decoding.
+     * @param column name of column
+     * @param doTrim if true, trim column, else don't
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> trim(final String column, boolean doTrim) {
+        decoderManager.setTrim(column, doTrim);
+        return this;
+    }
+
+    /**
      * Force values of a specific column to be trimmed prior to decoding.
+     * <p>
+     * This method was only added for convenience.
      * @param column name of column
      * @return the {@code Builder} instance
      */

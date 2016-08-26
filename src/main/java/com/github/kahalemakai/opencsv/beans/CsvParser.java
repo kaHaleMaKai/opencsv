@@ -9,7 +9,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CsvParser extends CSVParser {
+/**
+ * Copy of opencsv.CSVParser.
+ * <p>
+ * Remove the last quote character from a field, even if followed by whitespace.
+ */
+class CsvParser extends CSVParser {
     @Getter
     final char separator;
     @Getter

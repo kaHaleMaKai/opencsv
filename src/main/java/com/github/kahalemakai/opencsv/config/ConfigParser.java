@@ -58,7 +58,12 @@ public class ConfigParser {
     /**
      * The default global null string.
      */
-    public String GLOBAL_NULL_STRING = DEFAULT_NULL_STRING;
+    public String globalNullString = DEFAULT_NULL_STRING;
+
+    /**
+     * By default don't enforce trimming globally.
+     */
+    public String globalTrimmingMode = "false";
 
     /**
      * The namespaced column element name.
@@ -250,7 +255,11 @@ public class ConfigParser {
         final Node config = doc.getElementsByTagName("bean:config").item(0);
         final Optional<String> className = getValue(config, "class");
         final Optional<String> nullString = getValue(config, "nullString");
-        this.GLOBAL_NULL_STRING = nullString.orElse(DEFAULT_NULL_STRING);
+        this.globalNullString = nullString.orElse(DEFAULT_NULL_STRING);
+        final Optional<String> globalTrimming = getValue(config, "trim");
+        if (globalTrimming.isPresent()) {
+            this.globalTrimmingMode = globalTrimming.get();
+        }
 
         /* **********************
          * get the sub-elements
@@ -345,19 +354,15 @@ public class ConfigParser {
                 }
             }
             final Optional<String> trim = getValue(field, "trim");
-            if (trim.isPresent()) {
-                final boolean doTrim = Boolean.valueOf(trim.get());
-                if (doTrim) {
-                    builder.trim(column);
-                }
-            }
-            
+            final boolean doTrim = Boolean.valueOf(trim.orElse(globalTrimmingMode));
+            builder.trim(column, doTrim);
+
             final Optional<String> nullable = getValue(field, "nullable");
             final Optional<String> maybeNullString = getValue(field, "nullString");
             final boolean isNullable = Boolean.valueOf(nullable.orElse("false"))
                     || maybeNullString.isPresent();
             if (isNullable) {
-                final String nullString = maybeNullString.orElse(this.GLOBAL_NULL_STRING);
+                final String nullString = maybeNullString.orElse(this.globalNullString);
                 builder.registerDecoder(
                        column,
                         () -> {

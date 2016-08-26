@@ -281,6 +281,23 @@ public class ConfigParserTest {
         assertEquals(drObvious, it.next());
     }
 
+    @Test
+    public void testGlobalTrim() throws Exception {
+        final InputStream resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResourceAsStream("xml-config/config-with-global-trim.xml");
+        assert resource != null;
+        final ConfigParser configParser = ConfigParser
+                .ofUnparsedLines(resource, () -> getUnparsedIteratorWithSpaces);
+        final CsvToBeanMapper<Person> mapper = configParser.parse();
+        final Iterator<Person> it = mapper.iterator();
+        picard.setSurName("   Picard  ");
+        drObvious.setSurName("  Obvious  ");
+        assertEquals(picard, it.next());
+        assertEquals(drObvious, it.next());
+    }
+
     @Before
     public void setUp() throws Exception {
         lines = new String[] {
@@ -294,7 +311,7 @@ public class ConfigParserTest {
                 "X,X,null,X,Dr.,Obvious,Somewhere,X,X,X,X"
         };
         linesWithSpaces = new String[] {
-                "    50 ,Jean-Luc,   Picard, 'Captain\\'s room, Enterprise' ",
+                "    50 ,Jean-Luc,   Picard  , 'Captain\\'s room, Enterprise' ",
                 " null   ,Dr. ,  Obvious  , Somewhere "
         };
 
