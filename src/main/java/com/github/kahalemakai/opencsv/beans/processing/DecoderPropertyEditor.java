@@ -236,7 +236,7 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
             }
             final Decoder<? extends T> decoder = decoders.get(i);
             try {
-                final ObjectWrapper<? extends T> wrapper = decoder.decode(data);
+                final ResultWrapper<? extends T> wrapper = decoder.decode(data);
                 if (!wrapper.success()) {
                     continue;
                 }

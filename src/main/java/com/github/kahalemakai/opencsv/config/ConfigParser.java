@@ -21,7 +21,7 @@ import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
 import com.github.kahalemakai.opencsv.beans.NullFallsThroughType;
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
-import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
+import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.EnumDecoder;
@@ -395,7 +395,7 @@ public class ConfigParser {
                                         type.get().substring(0, 1).toUpperCase(), type.get().substring(1));
                                 final Class<? extends Decoder<?>> decoderClass = getProcessorClass(decoderType, BEAN_DECODER);
                                 final Decoder<?> decoder = decoderClass.newInstance();
-                                final ObjectWrapper<?> wrapper = decoder.decode(data);
+                                final ResultWrapper<?> wrapper = decoder.decode(data);
                                 if (wrapper.success()) {
                                     decodedRefData = wrapper.get();
                                 }

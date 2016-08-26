@@ -18,6 +18,7 @@ package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
+import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.IntDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.IntToBooleanDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
@@ -95,7 +96,7 @@ public class CsvToBeanMapperImplTest {
                 .quoteChar('\'')
                 .setHeader(header)
                 .registerDecoder("age", NullDecoder.class)
-                .registerDecoder("age", (s) -> Decoder.success(Integer.parseInt(s)))
+                .registerDecoder("age", (s) -> ResultWrapper.of(Integer.parseInt(s)))
                 .registerPostProcessor("age", (Integer i) -> i + 10)
                 .withParsedLines(() -> iterator)
                 .setNullFallthroughForPostProcessors("AGE")
@@ -171,11 +172,11 @@ public class CsvToBeanMapperImplTest {
     public void testCachedDecoding() throws Exception {
         builder.withParsedLines(() -> iterator)
                 .registerDecoder("age", IntDecoder.class) // will not enter cache map
-                .registerDecoder("surName", (data) -> Decoder.success("Mr. " + data))
-                .registerDecoder("age", () -> Decoder::success, "id")
-                .registerDecoder("surName", () -> Decoder::success, "id")
-                .registerDecoder("givenName", () -> Decoder::success, "id")
-                .registerDecoder("address", () -> Decoder::success, "id");
+                .registerDecoder("surName", (data) -> ResultWrapper.of("Mr. " + data))
+                .registerDecoder("age", () -> ResultWrapper::of, "id")
+                .registerDecoder("surName", () -> ResultWrapper::of, "id")
+                .registerDecoder("givenName", () -> ResultWrapper::of, "id")
+                .registerDecoder("address", () -> ResultWrapper::of, "id");
         final DecoderManager decoderManager = builder.getDecoderManager();
         final Field f = decoderManager.getClass().getDeclaredField("decoderClassMap");
         f.setAccessible(true);
@@ -186,7 +187,7 @@ public class CsvToBeanMapperImplTest {
 
     @Test
     public void testDecoding() throws Exception {
-        builder.registerDecoder("surName", (data) -> Decoder.success("Mr. "+data));
+        builder.registerDecoder("surName", (data) -> ResultWrapper.of("Mr. "+data));
         final Iterator<Person> it = builder
                 .withParsedLines(() -> iterator)
                 .registerDecoder("age", IntDecoder.class)
@@ -199,11 +200,11 @@ public class CsvToBeanMapperImplTest {
 
     @Test
     public void testDecodingOfAdditionalColumns() throws Exception {
-        builder.registerDecoder("surName", (data) -> Decoder.success("Mr. "+data));
+        builder.registerDecoder("surName", (data) -> ResultWrapper.of("Mr. "+data));
         final Iterator<Person> it = builder
                 .setHeader(new String[]{"$ignore$","$ignore$","surName","address"})
                 .withParsedLines(() -> iterator)
-                .registerDecoder("givenName", () -> (s) -> Decoder.success("little Mr. " + s), "littleMr")
+                .registerDecoder("givenName", () -> (s) -> ResultWrapper.of("little Mr. " + s), "littleMr")
                 .setColumnRef("surName", "givenName")
                 .setColumnValue("age", 8000)
                 .skipLines(1)
@@ -222,7 +223,7 @@ public class CsvToBeanMapperImplTest {
     @Test
     public void testDecoderSuppressesError() throws Exception {
         builder.registerDecoder("age", NullDecoder.class)
-                .registerDecoder("age", (s) -> Decoder.success(Integer.parseInt(s)))
+                .registerDecoder("age", (s) -> ResultWrapper.of(Integer.parseInt(s)))
                 .registerPostProcessor("age", (Integer i) -> i + 10)
                 .onErrorSkipLine();
         final Iterator<Person> it = builder.withParsedLines(() -> iterator).build().iterator();
@@ -240,7 +241,7 @@ public class CsvToBeanMapperImplTest {
     @Test(expected = NoSuchElementException.class)
     public void testDecoderSuppressesErrorAndFinallyThrows() throws Exception {
         builder.registerDecoder("age", NullDecoder.class)
-                .registerDecoder("age", (s) -> Decoder.success(Integer.parseInt(s)))
+                .registerDecoder("age", (s) -> ResultWrapper.of(Integer.parseInt(s)))
                 .registerPostProcessor("age", (Integer i) -> i + 10)
                 .onErrorSkipLine();
         final Iterator<Person> it = builder.withParsedLines(() -> iterator).build().iterator();
@@ -264,7 +265,7 @@ public class CsvToBeanMapperImplTest {
     @Test
     public void testDecoderChain() throws Exception {
         builder.registerDecoder("age", NullDecoder.class)
-                .registerDecoder("age", (s) -> Decoder.success(Integer.parseInt(s)));
+                .registerDecoder("age", (s) -> ResultWrapper.of(Integer.parseInt(s)));
         final Iterator<Person> it = builder.withParsedLines(() -> iterator).build().iterator();
         final Person person1 = it.next();
         final Person person2 = it.next();
@@ -274,7 +275,7 @@ public class CsvToBeanMapperImplTest {
 
     @Test(expected = CsvToBeanException.class)
     public void testDecoderThrows() throws Exception {
-        builder.registerDecoder("age", (s) -> Decoder.success(Integer.parseInt(s)));
+        builder.registerDecoder("age", (s) -> ResultWrapper.of(Integer.parseInt(s)));
         final Iterator<Person> it = builder.withParsedLines(() -> iterator).build().iterator();
         it.next();
         it.next();
@@ -284,7 +285,7 @@ public class CsvToBeanMapperImplTest {
     public void testPostProcessingThrows() throws Exception {
         final Iterator<Person> it = builder
                 .registerDecoder("age", NullDecoder.class)
-                .registerDecoder("age", (s) -> Decoder.success(Integer.parseInt(s)))
+                .registerDecoder("age", (s) -> ResultWrapper.of(Integer.parseInt(s)))
                 .registerPostProcessor("age", (Integer i) -> i / 0)
                 .setNullFallthroughForPostProcessors("age")
                 .withParsedLines(() -> iterator).build().iterator();
@@ -296,7 +297,7 @@ public class CsvToBeanMapperImplTest {
     public void testPostProcessing() throws Exception {
         final Iterator<Person> it = builder
                 .registerDecoder("age", NullDecoder.class)
-                .registerDecoder("age", (s) -> Decoder.success(Integer.parseInt(s)))
+                .registerDecoder("age", (s) -> ResultWrapper.of(Integer.parseInt(s)))
                 .registerPostProcessor("age", (Integer i) -> i + 1)
                 .setNullFallthroughForPostProcessors("age")
                 .withParsedLines(() -> iterator).build().iterator();
@@ -312,7 +313,7 @@ public class CsvToBeanMapperImplTest {
     public void testPostValidationThrows() throws Exception {
         final Iterator<Person> it = builder
                 .registerDecoder("age", NullDecoder.class)
-                .registerDecoder("age", (s) -> Decoder.success(Integer.parseInt(s)))
+                .registerDecoder("age", (s) -> ResultWrapper.of(Integer.parseInt(s)))
                 .registerPostProcessor("age", (Integer i) -> i + 1)
                 .registerPostValidator("age", (Integer i) -> i > 100)
                 .setNullFallthroughForPostProcessors("age")
@@ -328,7 +329,7 @@ public class CsvToBeanMapperImplTest {
     public void testPostValidation() throws Exception {
         final Iterator<Person> it = builder
                 .registerDecoder("age", NullDecoder.class)
-                .registerDecoder("age", (s) -> Decoder.success(Integer.parseInt(s)))
+                .registerDecoder("age", (s) -> ResultWrapper.of(Integer.parseInt(s)))
                 .registerPostValidator("age", (Integer i) -> i > 0)
                 .setNullFallthroughForPostValidators("age")
                 .withParsedLines(() -> iterator)

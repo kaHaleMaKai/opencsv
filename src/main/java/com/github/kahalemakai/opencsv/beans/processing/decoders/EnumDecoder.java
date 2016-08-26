@@ -1,7 +1,7 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
-import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
+import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.AccessLevel;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
@@ -18,7 +18,7 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
     private Map<String, E> enumMapping = new HashMap<>();
 
     @Override
-    public ObjectWrapper<? extends E> decode(String value) {
+    public ResultWrapper<? extends E> decode(String value) {
         final E e = getEnumConstant(value);
         if (e == null) {
             if (log.isDebugEnabled()) {
@@ -27,7 +27,7 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
             }
             return decodingFailed();
         }
-        return Decoder.success(e);
+        return success(e);
     }
 
     public final void put(final String key, final String value) {

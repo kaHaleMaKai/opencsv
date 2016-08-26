@@ -19,18 +19,22 @@ package com.github.kahalemakai.opencsv.beans.processing;
 /**
  * Decodes a String message into an object.
  *
- * @param <T> type of the returned object
+ * @param <T> type of output value
  */
 @FunctionalInterface
 public interface Decoder<T> {
 
-    Decoder<String> IDENTITY = (Decoder<String>) ObjectWrapper::of;
+    /**
+     * The identity decoder, returns a wrapped string.
+     */
+    Decoder<String> IDENTITY = (Decoder<String>) ResultWrapper::of;
 
     /**
      * Decode a String value into the respective type.
      * <p>
      * A decoder instance should return the correctly
-     * decoded value of type {@code T}, or
+     * decoded value of type {@code T}, wrapped into an
+     * {@code ResultWrapper}, or
      * {@link #decodingFailed()} otherwise.
      * If an unrecoverable state is encountered, a
      * {@code {@link DataDecodingException}} may be thrown.
@@ -39,7 +43,7 @@ public interface Decoder<T> {
      * @return the decoded value, or {@code DECODING_FAILED}
      * @throws DataDecodingException if an unrecoverable state is encountered
      */
-    ObjectWrapper<? extends T> decode(String value) throws DataDecodingException;
+    ResultWrapper<? extends T> decode(String value) throws DataDecodingException;
 
     /**
      * Indicate unsuccessful decoding of a String value.
@@ -53,20 +57,26 @@ public interface Decoder<T> {
      *
      * @return state indicating unsuccessful decoding
      */
-    default ObjectWrapper<? extends T> decodingFailed() {
-        return ObjectWrapper.error();
+    default ResultWrapper<? extends T> decodingFailed() {
+        return ResultWrapper.error();
     }
 
-    static <S> ObjectWrapper<S> success(S value) {
-        return ObjectWrapper.of(value);
+    /**
+     * Signal successful decoding of the input data.
+     * @param value the decoded object
+     * @return the decoded and wrapped object
+     */
+    default ResultWrapper<T> success(T value) {
+        return ResultWrapper.of(value);
     }
 
-    static <S> ObjectWrapper<S> returnNull() {
-        return ObjectWrapper.ofNull();
-    }
-
-    static ObjectWrapper<Boolean> returnBoolean(boolean value) {
-        return ObjectWrapper.ofBoolean(value);
+    /**
+     * Return a wrapped {@code null} reference.
+     * @param <S> type of object to be wrapped
+     * @return a wrapped {@code null} reference
+     */
+    static <S> ResultWrapper<S> returnNull() {
+        return ResultWrapper.ofNull();
     }
 
 }

@@ -4,8 +4,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class ObjectWrapperError<T> implements ObjectWrapper<T> {
-    private static final ObjectWrapperError<?> ERROR = new ObjectWrapperError<>();
+public class ResultWrapperError<T> implements ResultWrapper<T> {
+    private static final ResultWrapperError<?> ERROR = new ResultWrapperError<>();
 
     @Override
     public boolean success() {
@@ -17,9 +17,9 @@ public class ObjectWrapperError<T> implements ObjectWrapper<T> {
         throw new UnsupportedOperationException("trying to get value of error indicating object wrapper");
     }
 
-    public static <S> ObjectWrapper<S> error() {
+    public static <S> ResultWrapper<S> error() {
         @SuppressWarnings("unchecked")
-        final ObjectWrapper<S> error = (ObjectWrapper<S>) ERROR;
+        final ResultWrapper<S> error = (ResultWrapper<S>) ERROR;
         return error;
     }
 

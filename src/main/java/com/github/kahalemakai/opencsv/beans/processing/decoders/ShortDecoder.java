@@ -17,15 +17,15 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
-import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
+import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 public class ShortDecoder implements Decoder<Short> {
     @Override
-    public ObjectWrapper<? extends Short> decode(String value) {
+    public ResultWrapper<? extends Short> decode(String value) {
         try {
-            return Decoder.success(Short.parseShort(value));
+            return success(Short.parseShort(value));
         } catch (NumberFormatException e) {
             return decodingFailed();
         }

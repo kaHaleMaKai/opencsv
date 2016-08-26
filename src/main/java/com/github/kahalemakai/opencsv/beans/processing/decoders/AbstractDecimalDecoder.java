@@ -2,7 +2,7 @@ package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
-import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
+import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -68,7 +68,7 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
     }
 
     @Override
-    public ObjectWrapper<? extends ByteBuffer> decode(String data) {
+    public ResultWrapper<? extends ByteBuffer> decode(String data) {
         // remove a superfluous positive prefix (simplifies parsing with DecimalFormat.parse()
         if (data.startsWith("+") && data.length() > 1)
             data = data.substring(1);
@@ -85,7 +85,7 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
             final BigDecimal number = (BigDecimal) getFormat().parse(data);
             final BigDecimal scaledDecimal = number.setScale(scale, BigDecimal.ROUND_UNNECESSARY);
             final ByteBuffer bytes = toBytes(scaledDecimal);
-            return Decoder.success(bytes);
+            return success(bytes);
         } catch (ParseException e) {
             if (log.isDebugEnabled()) {
                 final String msg = String.format("cannot decode input '%s' as decimal", data);
