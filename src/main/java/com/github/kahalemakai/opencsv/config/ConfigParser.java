@@ -50,17 +50,57 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 
 @Log4j
 public class ConfigParser {
+    /**
+     * The default null string.
+     */
     public static final String DEFAULT_NULL_STRING = "null";
-    public static final String STRICT_QUOTES = "strict";
+
+    /**
+     * The default global null string.
+     */
+    public String GLOBAL_NULL_STRING = DEFAULT_NULL_STRING;
+
+    /**
+     * The namespaced column element name.
+     */
     public static final String CSV_COLUMN = "csv:column";
+
+    /**
+     * The ignore column element name.
+     */
     public static final String CSV_IGNORE = "csv:ignore";
+
+    /**
+     * The namespaced decoder element name.
+     */
     public static final String BEAN_DECODER = "bean:decoder";
+
+    /**
+     * The namespaced enum element name.
+     */
     public static final String BEAN_ENUM = "bean:enum";
+
+    /**
+     * The namespaced enum map element name.
+     */
     public static final String BEAN_ENUM_MAP = "bean:map";
+
+    /**
+     * The namespaced post processor element name.
+     */
     public static final String BEAN_POSTPROCESSOR = "bean:postProcessor";
+
+    /**
+     * The namespaced post validator element name.
+     */
     public static final String BEAN_POSTVALIDATOR = "bean:postValidator";
+
+    /**
+     * The default namespace.
+     */
     public static final String DEFAULT_NAME_SPACE = "com.github.kahalemakai.opencsv.beans.processing";
 
+    // variables passed to the Builder instance
     private final InputStream xmlInputStream;
     private final Reader reader;
     private final Iterable<String> unparsedLines;
@@ -68,9 +108,19 @@ public class ConfigParser {
     private final InputStream inputStream;
     private final ParameterMap parameters;
 
-    private String globalNullString = DEFAULT_NULL_STRING;
-
-    public ConfigParser(InputStream xmlInputStream, Reader reader, Iterable<String> unparsedLines, Iterable<String[]> parsedLines, InputStream inputStream) {
+    /**
+     * Setup the {@code ConfigParser} with the state defined in the calling class.
+     * @param xmlInputStream stream of xml config file
+     * @param reader a {@code Reader} instance, or {@code null}
+     * @param unparsedLines {@code Iterable} of unparsed lines, or {@code null}
+     * @param parsedLines {@code Iterable} of parsed lines, or {@code null}
+     * @param inputStream input stream of unparsed lines, or {@code null}
+     */
+    private ConfigParser(final InputStream xmlInputStream,
+                         final Reader reader,
+                         final Iterable<String> unparsedLines,
+                         final Iterable<String[]> parsedLines,
+                         final InputStream inputStream) {
         this.xmlInputStream = xmlInputStream;
         this.reader = reader;
         this.unparsedLines = unparsedLines;
@@ -79,16 +129,47 @@ public class ConfigParser {
         this.parameters = ParameterMap.init();
     }
 
-    public ConfigParser(File xmlFile, Reader reader, Iterable<String> unparsedLines, Iterable<String[]> parsedLines, InputStream inputStream) throws FileNotFoundException {
+    /**
+     * Setup the {@code ConfigParser} with the state defined in the calling class.
+     * @param xmlFile {@code File} instance of xml config
+     * @param reader a {@code Reader} instance, or {@code null}
+     * @param unparsedLines {@code Iterable} of unparsed lines, or {@code null}
+     * @param parsedLines {@code Iterable} of parsed lines, or {@code null}
+     * @param inputStream input stream of unparsed lines, or {@code null}
+     */
+    private ConfigParser(final File xmlFile,
+                         final Reader reader,
+                         final Iterable<String> unparsedLines,
+                         final Iterable<String[]> parsedLines,
+                         final InputStream inputStream)
+            throws FileNotFoundException {
         this(new FileInputStream(xmlFile), reader, unparsedLines, parsedLines, inputStream);
     }
 
-    public ConfigParser injectParamter(final String name, final String value) throws IllegalStateException {
+    /**
+     * Inject a parameter into the xml parameter table.
+     * <p>
+     * The {@code ConfigParser} or its extensions can allow
+     * for substitution of String values into the xml configuration.
+     * A parameter has to be injected by this method prior to
+     * reading the xml config file, if used there.
+     * @param name a namespaced parameter name (format ns:name)
+     * @param value associated value
+     * @return the {@code ConfigParser} instance
+     * @throws IllegalStateException if the provided {@code name} is not allowed, or a parameter with the same name has already been registered
+     */
+    public ConfigParser injectParameter(final String name, final String value) throws IllegalStateException {
         parameters.put(name, value);
         return this;
     }
-    
-    private String resolveParameter(final String name) {
+
+    /**
+     * Lookup the string value associated with a named config parameter.
+     * @param name the parameter to lookup
+     * @return the associated value
+     * @throws NoSuchElementException if no mapping for this parameter has been defined
+     */
+    private String resolveParameter(final String name) throws NoSuchElementException {
         final Optional<String> value = parameters.get(name);
         if (!value.isPresent()) {
             final String msg = String.format("parameter '%s' has not been defined", name);
@@ -98,6 +179,12 @@ public class ConfigParser {
         return value.get();
     }
 
+    /**
+     * Obtain an xml attribute's value for a specific node.
+     * @param node the xml node
+     * @param attribute the attribute to lookup
+     * @return the attribute's value, if present
+     */
     private Optional<String> getValue(final Node node, final String attribute) {
         final Node item = node.getAttributes().getNamedItem(attribute);
         if (item == null)
@@ -110,19 +197,34 @@ public class ConfigParser {
             return Optional.of(value);
     }
 
+    /**
+     * Get a {@code Schema} instance corresponding to the
+     * opencsv.xsd schema file.
+     * @return the corresponding schema
+     * @throws SAXException if the schema file cannot be parsed
+     */
     private Schema getOpencsvSchema() throws SAXException {
         final URL schemaUrl = getClass()
                 .getResource("/schemas/opencsv.xsd");
         assert schemaUrl != null;
         SchemaFactory schemaFactory = SchemaFactory
                 .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        try {
-            return schemaFactory.newSchema(schemaUrl);
-        } catch (SAXException e) {
-            throw new SAXException(e);
-        }
+        return schemaFactory.newSchema(schemaUrl);
     }
 
+    /**
+     * Parse the xml config file.
+     * <p>
+     * The config is validated against the opencsv.xsd schema file.
+     * @param <T> type of desired output bean
+     * @return a correctly configured {@code CsvToBeanMapper} instance
+     * @throws ParserConfigurationException if the parser configuration is skewed
+     * @throws IOException if the xml config cannot be read
+     * @throws SAXException if the xsd schema or the xml config file cannot be parsed
+     * @throws InstantiationException if the DOM builder or the decoders/processors/validators cannot be instantiated
+     * @throws ClassNotFoundException if the bean output class defined in the config file cannot be found
+     * @throws IllegalAccessException if instance creation of decoder/processor/validator is forbidden
+     */
     public <T> CsvToBeanMapper<T> parse()
             throws ParserConfigurationException, IOException, SAXException, InstantiationException, ClassNotFoundException, IllegalAccessException {
         final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -148,7 +250,7 @@ public class ConfigParser {
         final Node config = doc.getElementsByTagName("bean:config").item(0);
         final Optional<String> className = getValue(config, "class");
         final Optional<String> nullString = getValue(config, "nullString");
-        this.globalNullString = nullString.orElse(DEFAULT_NULL_STRING);
+        this.GLOBAL_NULL_STRING = nullString.orElse(DEFAULT_NULL_STRING);
 
         /* **********************
          * get the sub-elements
@@ -209,6 +311,15 @@ public class ConfigParser {
         return builder.build();
     }
 
+    /**
+     * Configure the {@code bean:field} xml objects.
+     * @param config the parent {@code bean:config} node
+     * @param builder the {@code Builder} instance
+     * @param <T> type of bean to be eventually emitted
+     * @throws ClassNotFoundException if class of decoders/... cannot be found
+     * @throws InstantiationException if decoder/... cannot be instantiated
+     * @throws IllegalAccessException if decoder/... default constructor is inaccessible
+     */
     private <T> void configureFields(final Node config, Builder<T> builder) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
         final NodeList fields = config.getChildNodes();
 //        final Class<? extends T> builderType = builder.getStrategy().getType();
@@ -246,7 +357,7 @@ public class ConfigParser {
             final boolean isNullable = Boolean.valueOf(nullable.orElse("false"))
                     || maybeNullString.isPresent();
             if (isNullable) {
-                final String nullString = maybeNullString.orElse(this.globalNullString);
+                final String nullString = maybeNullString.orElse(this.GLOBAL_NULL_STRING);
                 builder.registerDecoder(
                        column,
                         () -> {
@@ -302,11 +413,33 @@ public class ConfigParser {
         }
     }
 
+    /**
+     * Map a primitive type name to the corresponding decoder.
+     * @param builder the {@code Builder} instance
+     * @param columnName name of bean field to be configured
+     * @param type name of primitive type
+     * @param <T> type of bean to be eventually emitted
+     * @throws ClassNotFoundException if the decoder class cannot be found
+     * @throws InstantiationException if the decoder cannot be instantiated
+     */
     private <T> void defineType(final Builder<T> builder, final String columnName, final String type) throws ClassNotFoundException, InstantiationException {
         final String decoderType = String.format("%s%sDecoder", type.substring(0, 1).toUpperCase(), type.substring(1));
         builder.registerDecoder(columnName, getProcessorClass(decoderType, BEAN_DECODER));
     }
 
+    /**
+     * Register a processor of type decoder/postProcessor/postValidator/enumDecoder.
+     * <p>
+     * The processor class is first looked up as-is, and if not found, the
+     * config parser tries to find it in an opencsv package.
+     * @param column name of bean field to be configured
+     * @param builder the {@code Builder} instance
+     * @param processor the corresponding xml node
+     * @param <T> type of bean to be eventually emitted
+     * @param <R> type of corresponding bean field
+     * @throws InstantiationException if the processor cannot be instantiated
+     * @throws ClassNotFoundException if the processor class cannot be found
+     */
     private <T, R> void registerProcessor(final String column,
                                        final Builder<T> builder,
                                        final Node processor) throws InstantiationException, ClassNotFoundException {
@@ -334,6 +467,13 @@ public class ConfigParser {
 
     }
 
+    /**
+     * Setup an enum decoder.
+     * @param processor the corresponding xml node
+     * @param <E> type of target enumeration
+     * @return the enum decoder
+     * @throws ClassNotFoundException if the corresponding enum decoder class cannot be found
+     */
     private <E extends Enum<E>> EnumDecoder<E> getEnumDecoder(final Node processor) throws ClassNotFoundException {
         final NodeList maps = processor.getChildNodes();
         // presence of attribute "type" is enforced by xsd
@@ -353,6 +493,17 @@ public class ConfigParser {
         return decoder;
     }
 
+    /**
+     * Retrieve the class of the desired processor.
+     * <p>
+     * The class is looked up first as an absolute name, and if not found,
+     * it will be searched for in the appropriate opencsv packages.
+     * @param className name of processor class as found in the xml config file
+     * @param processorType type of processor (decoder/postProcessor/postValidator)
+     * @param <T> type of corresponding bean field
+     * @return the processor class
+     * @throws ClassNotFoundException
+     */
     private <T> Class<T> getProcessorClass(final String className, final String processorType)
             throws ClassNotFoundException {
         String subPackage = null;
@@ -383,6 +534,11 @@ public class ConfigParser {
         return processorClass;
     }
 
+    /**
+     * Parse out the header information.
+     * @param reader xml node for csv:reader element
+     * @return the parsed header
+     */
     private String[] getHeader(final Node reader) {
         final NodeList csvFields = reader.getChildNodes();
         final List<String> fieldList = new LinkedList<>();
@@ -404,60 +560,132 @@ public class ConfigParser {
         return fieldList.toArray(new String[fieldList.size()]);
     }
 
+    /**
+     * Obtain a new {@code ConfigParser} instance for an xml input stream and an
+     * iterable of raw csv data.
+     * @param xmlInputStream stream of the xml config file
+     * @param unparsedLines raw csv data, split into lines
+     * @return the {@code ConfigParser} instance
+     */
     public static ConfigParser ofUnparsedLines(@NonNull final InputStream xmlInputStream,
-                                               @NonNull final Iterable<String> unparsedLines)
-            throws IOException, SAXException {
+                                               @NonNull final Iterable<String> unparsedLines) {
         return new ConfigParser(xmlInputStream, null, unparsedLines, null, null);
     }
 
+    /**
+     * Obtain a new {@code ConfigParser} instance for an xml input stream and an
+     * iterable of raw csv data.
+     * @param xmlFile {@code File} instance for the xml config file
+     * @param unparsedLines raw csv data, split into lines
+     * @return the {@code ConfigParser} instance
+     * @throws FileNotFoundException if the xml file cannot be found
+     */
     public static ConfigParser ofUnparsedLines(@NonNull final File xmlFile,
-                                               @NonNull final Iterable<String> unparsedLines)
-            throws IOException, SAXException {
+                                               @NonNull final Iterable<String> unparsedLines) throws FileNotFoundException {
         return new ConfigParser(xmlFile, null, unparsedLines, null, null);
     }
 
+    /**
+     * Obtain a new {@code ConfigParser} instance for an xml input stream and an
+     * iterable of already parsed lines.
+     * @param xmlInputStream stream of the xml config file
+     * @param parsedLines already parsed lines
+     * @return the {@code ConfigParser} instance
+     */
     public static ConfigParser ofParsedLines(@NonNull final InputStream xmlInputStream,
-                                             @NonNull final Iterable<String[]> parsedLines)
-            throws IOException, SAXException {
+                                             @NonNull final Iterable<String[]> parsedLines) {
         return new ConfigParser(xmlInputStream, null, null, parsedLines, null);
     }
 
+    /**
+     * Obtain a new {@code ConfigParser} instance for an xml input stream and an
+     * iterable of already parsed lines.
+     * @param xmlFile {@code File} instance for the xml config file
+     * @param parsedLines raw csv data, split into lines
+     * @param parsedLines already parsed lines
+     * @return the {@code ConfigParser} instance
+     * @throws FileNotFoundException if the xml file cannot be found
+     */
     public static ConfigParser ofParsedLines(@NonNull final File xmlFile,
                                              @NonNull final Iterable<String[]> parsedLines)
             throws IOException, SAXException {
         return new ConfigParser(xmlFile, null, null, parsedLines, null);
     }
 
+    /**
+     * Obtain a new {@code ConfigParser} instance for an xml input stream and a
+     * reader of the csv data.
+     * @param xmlInputStream stream of the xml config file
+     * @param reader reader of csv data
+     * @return the {@code ConfigParser} instance
+     */
     public static ConfigParser ofReader(@NonNull final InputStream xmlInputStream,
-                                        @NonNull final Reader reader)
-            throws IOException, SAXException {
+                                        @NonNull final Reader reader) {
         return new ConfigParser(xmlInputStream, reader, null, null, null);
     }
 
+    /**
+     * Obtain a new {@code ConfigParser} instance for an xml input stream and a
+     * reader of the csv data.
+     * @param xmlFile {@code File} instance for the xml config file
+     * @param reader reader of csv data
+     * @return the {@code ConfigParser} instance
+     * @throws FileNotFoundException if the xml file cannot be found
+     */
     public static ConfigParser ofReader(@NonNull final File xmlFile,
                                         @NonNull final Reader reader)
             throws IOException, SAXException {
         return new ConfigParser(xmlFile, reader, null, null, null);
     }
 
+    /**
+     * Obtain a new {@code ConfigParser} instance for an xml input stream and an
+     * input stream of the csv source.
+     * @param xmlInputStream stream of the xml config file
+     * @param inputStream stream of csv data
+     * @return the {@code ConfigParser} instance
+     */
     public static ConfigParser ofInputStream(@NonNull final InputStream xmlInputStream,
                                              @NonNull final InputStream inputStream)
             throws IOException, SAXException {
         return new ConfigParser(xmlInputStream, null, null, null, inputStream);
     }
 
+    /**
+     * Obtain a new {@code ConfigParser} instance for an xml input stream and an
+     * input stream of the csv source.
+     * @param xmlFile {@code File} instance for the xml config file
+     * @param inputStream stream of csv data
+     * @return the {@code ConfigParser} instance
+     * @throws FileNotFoundException if the xml file cannot be found
+     */
     public static ConfigParser ofInputStream(@NonNull final File xmlFile,
                                              @NonNull final InputStream inputStream)
             throws IOException, SAXException {
         return new ConfigParser(xmlFile, null, null, null, inputStream);
     }
 
+    /**
+     * Obtain a new {@code ConfigParser} instance for an xml input stream and a
+     * reference to the csv file.
+     * @param xmlInputStream stream of the xml config file
+     * @param inputFile file referring to csv data
+     * @return the {@code ConfigParser} instance
+     */
     public static ConfigParser ofFile(@NonNull final InputStream xmlInputStream,
                                       @NonNull final File inputFile)
             throws IOException, SAXException {
         return new ConfigParser(xmlInputStream, null, null, null, new FileInputStream(inputFile));
     }
 
+    /**
+     * Obtain a new {@code ConfigParser} instance for an xml input stream and an
+     * reference to the csv file.
+     * @param xmlFile {@code File} instance for the xml config file
+     * @param inputFile file referring to csv data
+     * @return the {@code ConfigParser} instance
+     * @throws FileNotFoundException if the xml or the csv cannot be found
+     */
     public static ConfigParser ofFile(@NonNull final File xmlFile,
                                       @NonNull final File inputFile)
             throws IOException, SAXException {

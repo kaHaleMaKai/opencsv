@@ -138,7 +138,7 @@ public class ConfigParserTest {
         assert resource != null;
         ConfigParser configParser = ConfigParser
                 .ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore)
-                .injectParamter("invalid", "123");
+                .injectParameter("invalid", "123");
     }
 
 
@@ -158,7 +158,7 @@ public class ConfigParserTest {
         assert resource != null;
         configParser = ConfigParser
                 .ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore)
-                .injectParamter("test:age", "123");
+                .injectParameter("test:age", "123");
         mapper = configParser.parse();
         it = mapper.iterator();
         assertEquals(picard, it.next());
