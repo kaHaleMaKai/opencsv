@@ -24,11 +24,7 @@ package com.github.kahalemakai.opencsv.beans.processing;
 @FunctionalInterface
 public interface Decoder<T> {
 
-    Object DECODING_FAILED = new Object();
-    /**
-     * The identity decoder {@code String -> String}.
-     */
-    Decoder<String> IDENTITY = value -> value;
+    Decoder<String> IDENTITY = (Decoder<String>) ObjectWrapper::of;
 
     /**
      * Decode a String value into the respective type.
@@ -43,7 +39,7 @@ public interface Decoder<T> {
      * @return the decoded value, or {@code DECODING_FAILED}
      * @throws DataDecodingException if an unrecoverable state is encountered
      */
-    T decode(String value) throws DataDecodingException;
+    ObjectWrapper<? extends T> decode(String value) throws DataDecodingException;
 
     /**
      * Indicate unsuccessful decoding of a String value.
@@ -57,11 +53,20 @@ public interface Decoder<T> {
      *
      * @return state indicating unsuccessful decoding
      */
-    default T decodingFailed() {
-        // suppression is safe, as the returned
-        // object will only be handled internally
-        @SuppressWarnings("unchecked")
-        final T decodingFailed = (T) DECODING_FAILED;
-        return decodingFailed;
+    default ObjectWrapper<? extends T> decodingFailed() {
+        return ObjectWrapper.error();
     }
+
+    static <S> ObjectWrapper<S> success(S value) {
+        return ObjectWrapper.of(value);
+    }
+
+    static <S> ObjectWrapper<S> returnNull() {
+        return ObjectWrapper.ofNull();
+    }
+
+    static ObjectWrapper<Boolean> returnBoolean(boolean value) {
+        return ObjectWrapper.ofBoolean(value);
+    }
+
 }

@@ -236,10 +236,11 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
             }
             final Decoder<? extends T> decoder = decoders.get(i);
             try {
-                final T decodedValue = decoder.decode(data);
-                if (decoder.decodingFailed() == decodedValue) {
+                final ObjectWrapper<? extends T> wrapper = decoder.decode(data);
+                if (!wrapper.success()) {
                     continue;
                 }
+                final T decodedValue = wrapper.get();
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("successfully decoded value %s -> %s : <%s>",
                             data,

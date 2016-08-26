@@ -1,6 +1,7 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
 import lombok.AccessLevel;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
@@ -17,7 +18,7 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
     private Map<String, E> enumMapping = new HashMap<>();
 
     @Override
-    public E decode(String value) {
+    public ObjectWrapper<? extends E> decode(String value) {
         final E e = getEnumConstant(value);
         if (e == null) {
             if (log.isDebugEnabled()) {
@@ -26,7 +27,7 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
             }
             return decodingFailed();
         }
-        return e;
+        return Decoder.success(e);
     }
 
     public final void put(final String key, final String value) {
@@ -34,19 +35,6 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
             throw new IllegalArgumentException(String.format("cannot map value '%s' to enum constant of enum class %s", value, getClass().getCanonicalName()));
         }
         mapping.put(key, enumMapping.get(value));
-    }
-
-    /**
-     * Indicate a failure in decoding a String message.
-     * <p>
-     * An {@code Enum} instance is used, because it allows for
-     * downcasting {@code Enum}s, whereas {@code Object} doesn't.
-     */
-    @Override
-    public E decodingFailed() {
-        @SuppressWarnings("unchecked")
-        final E decodingFailed = (E) DecodingFailed.VALUE;
-        return decodingFailed;
     }
 
     private E getEnumConstant(final String key) {
@@ -59,14 +47,11 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
             if (this.type != null) {
                 throw new UnsupportedOperationException("type has already been set");
             }
+            this.type = newType;
         }
         for (E e : newType.getEnumConstants()) {
             enumMapping.put(e.name(), e);
         }
-    }
-
-    private enum DecodingFailed {
-        VALUE
     }
 
 }

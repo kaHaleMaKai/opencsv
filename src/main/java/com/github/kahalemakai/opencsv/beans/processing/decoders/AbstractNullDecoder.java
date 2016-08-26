@@ -17,6 +17,7 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
 import lombok.extern.log4j.Log4j;
 
 @Log4j
@@ -24,9 +25,9 @@ abstract class AbstractNullDecoder implements Decoder<Object> {
     abstract boolean isNullValued(String value);
 
     @Override
-    public Object decode(String value) {
+    public ObjectWrapper<?> decode(String value) {
         if (isNullValued(value)) {
-            return null;
+            return Decoder.returnNull();
         }
         else {
             log.debug(String.format("cannot decode value '%s' to null", value));

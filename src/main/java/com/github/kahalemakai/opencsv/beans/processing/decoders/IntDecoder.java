@@ -17,14 +17,15 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 public class IntDecoder implements Decoder<Integer> {
     @Override
-    public Integer decode(String value) {
+    public ObjectWrapper<? extends Integer> decode(String value) {
         try {
-            return Integer.parseInt(value);
+            return Decoder.success(Integer.parseInt(value));
         } catch (NumberFormatException e) {
             return decodingFailed();
         }

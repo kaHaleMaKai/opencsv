@@ -2,6 +2,7 @@ package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,8 +25,6 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
     @Getter(value = AccessLevel.PRIVATE, lazy = true)
     private final DecimalFormat format = determineFormat();
     private final static Pattern pattern = Pattern.compile("[-.]");
-
-    private final static ByteBuffer DECODING_FAILED = ByteBuffer.allocate(0);
 
     // subclasses have to set these values by defining the respective methods
     @Setter(AccessLevel.PROTECTED)
@@ -69,12 +68,7 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
     }
 
     @Override
-    public ByteBuffer decodingFailed() {
-        return DECODING_FAILED;
-    }
-
-    @Override
-    public ByteBuffer decode(String data) {
+    public ObjectWrapper<? extends ByteBuffer> decode(String data) {
         // remove a superfluous positive prefix (simplifies parsing with DecimalFormat.parse()
         if (data.startsWith("+") && data.length() > 1)
             data = data.substring(1);
@@ -91,7 +85,7 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
             final BigDecimal number = (BigDecimal) getFormat().parse(data);
             final BigDecimal scaledDecimal = number.setScale(scale, BigDecimal.ROUND_UNNECESSARY);
             final ByteBuffer bytes = toBytes(scaledDecimal);
-            return bytes;
+            return Decoder.success(bytes);
         } catch (ParseException e) {
             if (log.isDebugEnabled()) {
                 final String msg = String.format("cannot decode input '%s' as decimal", data);

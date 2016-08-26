@@ -21,6 +21,7 @@ import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
 import com.github.kahalemakai.opencsv.beans.NullFallsThroughType;
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.EnumDecoder;
@@ -326,7 +327,7 @@ public class ConfigParser {
      * @param builder the {@code Builder} instance
      * @param <T> type of bean to be eventually emitted
      * @throws ClassNotFoundException if class of decoders/... cannot be found
-     * @throws InstantiationException if decoder/... cannot be instantiated
+     * @throws InstantiationException if decoder/... cannot be instantiated, or column ref data cannot be decoded
      * @throws IllegalAccessException if decoder/... default constructor is inaccessible
      */
     private <T> void configureFields(final Node config, Builder<T> builder) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
@@ -394,7 +395,15 @@ public class ConfigParser {
                                         type.get().substring(0, 1).toUpperCase(), type.get().substring(1));
                                 final Class<? extends Decoder<?>> decoderClass = getProcessorClass(decoderType, BEAN_DECODER);
                                 final Decoder<?> decoder = decoderClass.newInstance();
-                                decodedRefData = decoder.decode(data);
+                                final ObjectWrapper<?> wrapper = decoder.decode(data);
+                                if (wrapper.success()) {
+                                    decodedRefData = wrapper.get();
+                                }
+                                else {
+                                    final String msg = String.format("could not decode refData '%s' as type %s", data, type);
+                                    log.error(msg);
+                                    throw new InstantiationError(msg);
+                                }
                             }
                             builder.setColumnValue(column, decodedRefData);
                             break;

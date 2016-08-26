@@ -1,6 +1,7 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
 import lombok.extern.log4j.Log4j;
 
 import java.time.LocalDateTime;
@@ -28,15 +29,15 @@ public class TimestampDecoder implements Decoder<Long> {
      * @param dateTime the parsed {@code LocalDateTime} instance
      * @return milli seconds since unix epoch
      */
-    public Long convert(final LocalDateTime dateTime) {
+    private Long convert(final LocalDateTime dateTime) {
         return dateTime.toEpochSecond(ZoneOffset.UTC) * 1000;
     }
 
     @Override
-    public Long decode(String data) {
+    public ObjectWrapper<? extends Long> decode(String data) {
         try {
             final LocalDateTime dateTime = LocalDateTime.parse(data, FORMAT);
-            return convert(dateTime);
+            return Decoder.success(convert(dateTime));
         } catch (DateTimeParseException e) {
             log.debug(String.format("cannot parse date '%s'", data));
             return decodingFailed();

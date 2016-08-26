@@ -17,6 +17,7 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j;
 
@@ -24,9 +25,9 @@ import lombok.extern.log4j.Log4j;
 @Log4j
 public class DoubleDecoder implements Decoder<Double> {
     @Override
-    public Double decode(String value) {
+    public ObjectWrapper<? extends Double> decode(String value) {
         try {
-            return Double.parseDouble(value);
+            return Decoder.success(Double.parseDouble(value));
         } catch (NumberFormatException e) {
             log.debug(String.format("could not decode '%s' as double", value), e);
             return decodingFailed();

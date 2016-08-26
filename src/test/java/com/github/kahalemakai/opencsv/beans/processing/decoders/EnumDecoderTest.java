@@ -25,8 +25,8 @@ public class EnumDecoderTest {
 
     @Test
     public void testDecode() throws Exception {
-        assertEquals(STRICT_QUOTES, decoder.decode("s"));
-        assertEquals(NON_STRICT_QUOTES, decoder.decode("n"));
-        assertEquals(IGNORE_QUOTES, decoder.decode("i"));
+        assertEquals(STRICT_QUOTES, decoder.decode("s").get());
+        assertEquals(NON_STRICT_QUOTES, decoder.decode("n").get());
+        assertEquals(IGNORE_QUOTES, decoder.decode("i").get());
     }
 }

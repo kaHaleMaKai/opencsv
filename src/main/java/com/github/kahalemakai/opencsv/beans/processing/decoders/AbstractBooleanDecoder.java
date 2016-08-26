@@ -1,6 +1,7 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.ObjectWrapper;
 
 public abstract class AbstractBooleanDecoder implements Decoder<Boolean> {
 
@@ -9,12 +10,12 @@ public abstract class AbstractBooleanDecoder implements Decoder<Boolean> {
     abstract protected boolean isFalse(String value);
 
     @Override
-    public Boolean decode(String value) {
+    public ObjectWrapper<? extends Boolean> decode(String value) {
         if (isTrue(value)) {
-            return true;
+            return Decoder.returnBoolean(true);
         }
         if (isFalse(value)) {
-            return false;
+            return Decoder.returnBoolean(false);
         }
         return decodingFailed();
     }
