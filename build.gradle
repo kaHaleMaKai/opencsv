@@ -138,7 +138,7 @@ task cleanTests(group: "verification") {
     dependsOn cleanTest
 }
 
-defaultTasks 'clean', 'test', 'build'
+defaultTasks 'clean', 'build', 'test', 'javadocDelux', 'jacocoTestReport'
 
 publishing {
     publications {
