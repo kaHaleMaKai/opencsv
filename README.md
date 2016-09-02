@@ -1,4 +1,4 @@
-# opencsv wrapper [![travis-ci.org](https://travis-ci.org/kaHaleMaKai/opencsv.svg?branch=master)](https://travis-ci.org/kaHaleMaKai/opencsv.svg?branch=master) [![codecov.io](https://codecov.io/github/kaHaleMaKai/opencsv/coverage.svg?branch=master)](https://codecov.io/github/kaHaleMaKai/opencsv?branch=master) [ ![Download](https://api.bintray.com/packages/kahalemakai/maven/opencsv/images/download.svg) ](https://bintray.com/kahalemakai/maven/opencsv/_latestVersion)
+# opencsv wrapper [![travis-ci.org](https://travis-ci.org/kaHaleMaKai/opencsv.svg?branch=master)](https://travis-ci.org/kaHaleMaKai/opencsv/branches) [![codecov.io](https://codecov.io/github/kaHaleMaKai/opencsv/coverage.svg?branch=master)](https://codecov.io/gh/kaHaleMaKai/opencsv/branch/master) [ ![Download](https://api.bintray.com/packages/kahalemakai/maven/opencsv/images/download.svg) ](https://bintray.com/kahalemakai/maven/opencsv/_latestVersion)
 
 easily parse csv data into java beans
 
