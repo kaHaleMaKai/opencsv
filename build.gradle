@@ -93,7 +93,7 @@ dependencies {
 configurations.compile.transitive = true
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.14'
+    gradleVersion = '3.0'
 }
 
 task delombok << {
