@@ -44,6 +44,10 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     private final List<PostValidator<T>> postValidators = new LinkedList<>();
     @Getter(AccessLevel.PACKAGE)
     private String data;
+    /**
+     * Name of the referenced csv column.
+     * @return name of the referenced csv column
+     */
     @Getter
     private final String columnName;
     private int numDecoders;

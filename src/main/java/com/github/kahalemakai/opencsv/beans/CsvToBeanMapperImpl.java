@@ -275,7 +275,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      * @param line the parsed line
      * @return the decoded bean
      */
-    protected T processLine(final HeaderDirectMappingStrategy<T> mapper,
+    private T processLine(final HeaderDirectMappingStrategy<T> mapper,
                             final String[] line) {
         T bean = null;
         try {

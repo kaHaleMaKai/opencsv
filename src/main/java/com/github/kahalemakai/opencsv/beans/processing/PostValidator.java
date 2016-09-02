@@ -16,7 +16,20 @@
 
 package com.github.kahalemakai.opencsv.beans.processing;
 
+/**
+ * Validate a (decoded and post-processed) object.
+ * <p>
+ * This is a <a href="package-summary.html">functional interface</a>
+ * whose functional method is {@link #validate(Object)}.
+ *
+ * @param <T> type of object to be validated
+ */
 @FunctionalInterface
 public interface PostValidator<T> {
+    /**
+     * Validate an object.
+     * @param value object to validate
+     * @return {@code true} if valid, else {@code false}
+     */
     boolean validate(T value);
 }

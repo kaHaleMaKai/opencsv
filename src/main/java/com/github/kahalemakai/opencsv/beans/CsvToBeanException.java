@@ -19,17 +19,31 @@ package com.github.kahalemakai.opencsv.beans;
 import lombok.Getter;
 
 /**
- * Created by lars on 10.07.16.
+ * High-level exception that will be re-thrown by the
+ * {@link CsvToBeanMapper} in case of error.
  */
 public class CsvToBeanException extends RuntimeException {
+    /**
+     * The last thrown exception.
+     * @return the last thrown exception
+     */
     @Getter
     private final Throwable lastException;
 
-    public CsvToBeanException(String message, Throwable cause) {
+    /**
+     * Create a new {@code CsvToBeanException}.
+     * @param message the error message
+     * @param cause the re-thrown cause
+     */
+    CsvToBeanException(String message, Throwable cause) {
         super(message, cause);
         lastException = cause;
     }
 
+    /**
+     * Re-throw the last caught exception explicitely.
+     * @throws Throwable the last exception that was caught
+     */
     public void rethrow() throws Throwable {
         throw lastException;
     }

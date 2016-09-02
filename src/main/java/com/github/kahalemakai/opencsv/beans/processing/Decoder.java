@@ -19,6 +19,10 @@ package com.github.kahalemakai.opencsv.beans.processing;
 /**
  * Decodes a String message into an object.
  *
+ * <p>
+ * This is a <a href="package-summary.html">functional interface</a>
+ * whose functional method is {@link #decode(String)}.
+ *
  * @param <T> type of output value
  */
 @FunctionalInterface

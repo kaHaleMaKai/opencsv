@@ -16,8 +16,17 @@
 
 package com.github.kahalemakai.opencsv.beans.processing;
 
-public class PostProcessingException extends RuntimeException {
-    public PostProcessingException(String message, Throwable cause) {
+/**
+ * High-level exception that will be used for re-throwing
+ * exceptions encountered by {@link PostProcessor} instances.
+ */
+class PostProcessingException extends RuntimeException {
+    /**
+     * Create a new exception from a cause.
+     * @param message the error message
+     * @param cause the error cause
+     */
+    PostProcessingException(String message, Throwable cause) {
         super(message, cause);
     }
 }

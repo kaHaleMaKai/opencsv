@@ -20,8 +20,15 @@ import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.NoArgsConstructor;
 
+/**
+ * Decode textual data to {@code long}.
+ */
 @NoArgsConstructor
 public class LongDecoder implements Decoder<Long> {
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResultWrapper<? extends Long> decode(String value) {
         try {

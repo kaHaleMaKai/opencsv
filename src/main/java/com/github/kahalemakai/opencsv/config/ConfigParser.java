@@ -18,7 +18,6 @@ package com.github.kahalemakai.opencsv.config;
 
 import com.github.kahalemakai.opencsv.beans.Builder;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
-import com.github.kahalemakai.opencsv.beans.NullFallsThroughType;
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
@@ -49,6 +48,23 @@ import java.util.Optional;
 
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
+/**
+ * Build a {@link CsvToBeanMapper} from an xml config file.
+ * <p>
+ * This class essentially maps all configuration possibilities
+ * of the {@link Builder} class to an xml. It consists of two
+ * basic blocks, the {@code <csv:reader>} and the
+ * {@code <bean:config>} tag. The csv parsing can be configured
+ * via the former tag, whereas the latter configures the
+ * mapping to a bean including decoding, post-processing
+ * and -validation.
+ * <p>
+ * For a most detailed overview of the xml configuration,
+ * please refer to the javadoc of the individual methods in this
+ * class, to the xsd schemas under src/main/resources/schemas/,
+ * to the README.md file or to the overview page of
+ * com/github/kahalemakai/opencsv/config.
+ */
 @Log4j
 public class ConfigParser {
     /**
@@ -366,10 +382,7 @@ public class ConfigParser {
                 final String nullString = maybeNullString.orElse(this.globalNullString);
                 builder.registerDecoder(
                        column,
-                        () -> {
-                            final NullDecoder nullDecoder = new NullDecoder();
-                            nullDecoder.setNullString(nullString);
-                            return nullDecoder; },
+                        () -> new NullDecoder(nullString),
                         String.format("%s#%s", NullDecoder.class.getCanonicalName(), nullString));
             }
             final Optional<String> type = getValue(field, "type");
@@ -595,7 +608,8 @@ public class ConfigParser {
      * @throws FileNotFoundException if the xml file cannot be found
      */
     public static ConfigParser ofUnparsedLines(@NonNull final File xmlFile,
-                                               @NonNull final Iterable<String> unparsedLines) throws FileNotFoundException {
+                                               @NonNull final Iterable<String> unparsedLines)
+            throws FileNotFoundException {
         return new ConfigParser(xmlFile, null, unparsedLines, null, null);
     }
 
@@ -615,14 +629,13 @@ public class ConfigParser {
      * Obtain a new {@code ConfigParser} instance for an xml input stream and an
      * iterable of already parsed lines.
      * @param xmlFile {@code File} instance for the xml config file
-     * @param parsedLines raw csv data, split into lines
      * @param parsedLines already parsed lines
      * @return the {@code ConfigParser} instance
      * @throws FileNotFoundException if the xml file cannot be found
      */
     public static ConfigParser ofParsedLines(@NonNull final File xmlFile,
                                              @NonNull final Iterable<String[]> parsedLines)
-            throws IOException, SAXException {
+            throws FileNotFoundException {
         return new ConfigParser(xmlFile, null, null, parsedLines, null);
     }
 
@@ -648,7 +661,7 @@ public class ConfigParser {
      */
     public static ConfigParser ofReader(@NonNull final File xmlFile,
                                         @NonNull final Reader reader)
-            throws IOException, SAXException {
+            throws FileNotFoundException {
         return new ConfigParser(xmlFile, reader, null, null, null);
     }
 
@@ -660,8 +673,7 @@ public class ConfigParser {
      * @return the {@code ConfigParser} instance
      */
     public static ConfigParser ofInputStream(@NonNull final InputStream xmlInputStream,
-                                             @NonNull final InputStream inputStream)
-            throws IOException, SAXException {
+                                             @NonNull final InputStream inputStream) {
         return new ConfigParser(xmlInputStream, null, null, null, inputStream);
     }
 
@@ -675,7 +687,7 @@ public class ConfigParser {
      */
     public static ConfigParser ofInputStream(@NonNull final File xmlFile,
                                              @NonNull final InputStream inputStream)
-            throws IOException, SAXException {
+            throws FileNotFoundException {
         return new ConfigParser(xmlFile, null, null, null, inputStream);
     }
 
@@ -685,10 +697,11 @@ public class ConfigParser {
      * @param xmlInputStream stream of the xml config file
      * @param inputFile file referring to csv data
      * @return the {@code ConfigParser} instance
+     * @throws FileNotFoundException if the xml file cannot be found
      */
     public static ConfigParser ofFile(@NonNull final InputStream xmlInputStream,
                                       @NonNull final File inputFile)
-            throws IOException, SAXException {
+            throws FileNotFoundException {
         return new ConfigParser(xmlInputStream, null, null, null, new FileInputStream(inputFile));
     }
 
@@ -702,7 +715,7 @@ public class ConfigParser {
      */
     public static ConfigParser ofFile(@NonNull final File xmlFile,
                                       @NonNull final File inputFile)
-            throws IOException, SAXException {
+            throws FileNotFoundException {
         return new ConfigParser(xmlFile, null, null, null, new FileInputStream(inputFile));
     }
 

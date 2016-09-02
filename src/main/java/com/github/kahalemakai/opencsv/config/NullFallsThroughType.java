@@ -14,15 +14,23 @@
  * limitations under the License.
 */
 
-package com.github.kahalemakai.opencsv.beans;
+package com.github.kahalemakai.opencsv.config;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Enumerate all possible {@code nullFallsThrough} types.
+ * <p>
+ * Internally used enumeration for mapping the
+ * {@code nullFallsThrough} attribute of {@code <bean:field>} tags
+ * to the behaviour of registered {@code PostProcessors} and
+ * {@code PostValidators}.
+ */
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
-public enum NullFallsThroughType {
+enum NullFallsThroughType {
 
     POST_PROCESSOR("postprocessor"),
     POST_VALIDATOR("postvalidator"),
@@ -32,6 +40,12 @@ public enum NullFallsThroughType {
     @Getter
     private final String textValue;
 
+    /**
+     * Map the xml attribute value to the corresponding Enumeration.
+     * @param text the xml attribute value
+     * @return the Enumeration
+     * @throws IllegalArgumentException if no Enumeration corresponds to the given text
+     */
     public static NullFallsThroughType forText(@NonNull final String text) throws IllegalArgumentException {
         for (NullFallsThroughType mode : NullFallsThroughType.values()) {
             if (mode.getTextValue().equals(text)) {

@@ -18,22 +18,60 @@ package com.github.kahalemakai.opencsv.beans.processing;
 
 import lombok.NonNull;
 
+/**
+ * Post-process a (decoded) element.
+ * <p>
+ * This is a <a href="package-summary.html">functional interface</a>
+ * whose functional method is {@link #process(Object)}.
+ *
+ * @param <T> type of object to be post-processed
+ */
 @FunctionalInterface
 public interface PostProcessor<T> {
+    /**
+     * Post-process an object.
+     * <p>
+     * Unsuccessful post-processing should throw
+     * any kind of runtime exception.
+     *
+     * @param value object to be post-processed
+     * @return the post-processed object
+     */
     T process(T value);
 
+    /**
+     * The identity transformation.
+     */
     PostProcessor<?> IDENTITY = x -> x;
 
+    /**
+     * Apply the functional composition of two consecutive {@code PostProcessors}.
+     * @param after the {@code PostProcessor} to execute afterwards
+     * @return the functional composition of two consecutive {@code PostProcessors}
+     */
     default PostProcessor<T> andThen(@NonNull PostProcessor<T> after) {
         return (T t) -> after.process(process(t));
     }
 
+    /**
+     * Return the identity transformation, appropriately cast.
+     * @param <R> type of object to transform
+     * @return the identity transformation
+     */
     static <R> PostProcessor<R> identity() {
         @SuppressWarnings("unchecked")
         final PostProcessor<R> identity = (PostProcessor<R>) IDENTITY;
         return identity;
     }
 
+    /**
+     * Compose a new {@code PostProcessor} out of two existing ones.
+     *
+     * @param first first {@code PostProcessor}
+     * @param then second {@code PostProcessor}
+     * @param <R> type of object to transform
+     * @return the functional composition of both {@code PostProcessors}
+     */
     static <R> PostProcessor<R> compose(PostProcessor<R> first, @NonNull PostProcessor<R> then) {
         if (first == null) {
             return then;

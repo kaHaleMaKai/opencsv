@@ -23,9 +23,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.log4j.Log4j;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -391,6 +389,27 @@ public class Builder<T> {
         return this;
     }
 
+    /**
+     * Setup csv mapper with a file of unparsed data as source.
+     *
+     * @param inputFile File to be used as source
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> withInputStream(final File inputFile) {
+        onSourceChosenThrow();
+        sourceWasChosen = true;
+        try {
+            this.inputStream = new FileInputStream(inputFile);
+        } catch (FileNotFoundException e) {
+            final String msg = String.format("unable to find file %s", inputFile);
+            log.error(msg);
+            throw new CsvToBeanException(msg, e);
+        }
+        log.debug(String.format("using file of type %s as source", inputStream.getClass().getCanonicalName()));
+        return this;
+    }
+
+
     /* ***************************************************
      * register decoders, postprocessors and -validators
      * ***************************************************/
@@ -403,6 +422,7 @@ public class Builder<T> {
      * @see DecoderManager#add(java.lang.String, Supplier, String) DecoderManager.add()
      * @param column name of column
      * @param decoder decoder supplier
+     * @param label key that will be used for caching
      * @return the {@code Builder} instance
      */
     public Builder<T> registerDecoder(final String column,
@@ -467,6 +487,7 @@ public class Builder<T> {
      * @see DecoderManager#addPostProcessor(String, Class) DecoderManager.addPostProcessor()
      * @param column name of column
      * @param postProcessor postprocessor supplier
+     * @param label the key used for caching
      * @param <R> type of {@code PostProcessor} input and output value
      * @return the {@code Builder} instance
      */
@@ -516,6 +537,7 @@ public class Builder<T> {
      * @see DecoderManager#addPostValidator(String, Class) DecoderManager.addPostValidator()
      * @param column name of column
      * @param postValidator type of {@code PostValidator} instance
+     * @param label the key used for caching
      * @return the {@code Builder} instance
      */
     public Builder<T> registerPostValidator(final String column,
@@ -637,7 +659,7 @@ public class Builder<T> {
      * @return the {@code Builder} instance
      * @throws IllegalArgumentException if the header is malformed
      */
-    public Builder<T> setHeader(String[] header) throws IllegalArgumentException {
+    public Builder<T> setHeader(String...header) throws IllegalArgumentException {
         setHeader(getStrategy(), header);
         return this;
     }

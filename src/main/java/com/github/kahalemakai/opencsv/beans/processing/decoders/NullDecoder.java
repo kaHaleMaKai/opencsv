@@ -16,30 +16,38 @@
 
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 
-@NoArgsConstructor
+/**
+ * Decode a {@code String} to {@code null}.
+ */
+@RequiredArgsConstructor
 @Log4j
 public class NullDecoder extends AbstractNullDecoder {
-    private String NULL = "null";
-    private boolean nullWasSet;
+    /**
+     * The default null value.
+     */
+    public static final String DEFAULT_NULL_VALUE = "null";
 
-    public synchronized void setNullString(final String nullString) {
-        if (!nullWasSet) {
-            NULL = nullString;
-            nullWasSet = true;
-        }
-        else {
-            final String msg = "value of null string may only be set once";
-            log.error(msg);
-            throw new IllegalStateException(msg);
-        }
+    /**
+     * The String that maps to {@code null}.
+     */
+    private final String nullValue;
+
+    /**
+     * Create a new instance using {@link #DEFAULT_NULL_VALUE}.
+     */
+    public NullDecoder() {
+        nullValue = DEFAULT_NULL_VALUE;
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     boolean isNullValued(String value) {
-        return NULL.equals(value);
+        return nullValue.equals(value);
     }
 
 }

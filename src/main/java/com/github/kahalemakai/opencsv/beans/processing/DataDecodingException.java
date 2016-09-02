@@ -16,12 +16,25 @@
 
 package com.github.kahalemakai.opencsv.beans.processing;
 
+/**
+ * High-level exception that will be used for re-throwing
+ * exceptions encountered by {@link Decoder} instances.
+ */
 public class DataDecodingException extends RuntimeException {
-    public DataDecodingException(String message) {
+    /**
+     * Create a new exception without a cause.
+     * @param message the error message
+     */
+    DataDecodingException(String message) {
         super(message);
     }
 
-    public DataDecodingException(String message, Throwable cause) {
+    /**
+     * Create a new exception from a cause.
+     * @param message the error message
+     * @param cause the error cause
+     */
+    DataDecodingException(String message, Throwable cause) {
         super(message, cause);
     }
 

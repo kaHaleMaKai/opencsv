@@ -16,8 +16,17 @@
 
 package com.github.kahalemakai.opencsv.beans.processing;
 
-public class PostValidationException extends RuntimeException {
-    public PostValidationException(String message) {
+/**
+ * High-level exception that will be used for re-throwing
+ * exceptions encountered by {@link PostValidator} instances.
+ */
+class PostValidationException extends RuntimeException {
+    /**
+     * Create a new exception from a cause.
+     * @param message the error message
+     */
+    PostValidationException(String message) {
         super(message);
     }
+
 }

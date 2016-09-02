@@ -21,9 +21,15 @@ import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j;
 
+/**
+ * Decode textual data into a {@code double}.
+ */
 @NoArgsConstructor
 @Log4j
 public class DoubleDecoder implements Decoder<Double> {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResultWrapper<? extends Double> decode(String value) {
         try {

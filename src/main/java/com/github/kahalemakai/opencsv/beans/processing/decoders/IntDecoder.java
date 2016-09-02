@@ -20,8 +20,15 @@ import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.NoArgsConstructor;
 
+/**
+ * Decode textual data into an integer.
+ */
 @NoArgsConstructor
 public class IntDecoder implements Decoder<Integer> {
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ResultWrapper<? extends Integer> decode(String value) {
         try {

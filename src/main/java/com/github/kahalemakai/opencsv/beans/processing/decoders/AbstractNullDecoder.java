@@ -20,12 +20,33 @@ import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.extern.log4j.Log4j;
 
+/**
+ * Base class for decoding String data to the {@code null} reference.
+ * <p>
+ * Usually when implementing {@link Decoder}, the {@link Decoder#decode(String)}
+ * method needs to be overriden. In this case, override the
+ * {@link #isNullValued(String)} method instead.
+ */
 @Log4j
 abstract class AbstractNullDecoder implements Decoder<Object> {
+    /**
+     * Decode string data to the {@code null} reference.
+     * @param value the text to decode
+     * @return {@code true} if text decodes to {@code null}, else {@code false}
+     */
     abstract boolean isNullValued(String value);
 
+    /**
+     * Decode text to the {@code null} reference.
+     * <p>
+     * Instead of overriding this method, override the
+     * {@link #isNullValued(String)} method instead.
+     *
+     * @param value String input message
+     * @return the {@code null} reference if successful
+     */
     @Override
-    public ResultWrapper<?> decode(String value) {
+    public final ResultWrapper<?> decode(String value) {
         if (isNullValued(value)) {
             return Decoder.returnNull();
         }

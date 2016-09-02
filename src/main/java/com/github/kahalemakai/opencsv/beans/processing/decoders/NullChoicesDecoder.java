@@ -22,18 +22,42 @@ import lombok.Setter;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Decode textual data to the {@code null} reference in a many-to-one mapping.
+ */
 public class NullChoicesDecoder extends AbstractNullDecoder {
+    /**
+     * The default value mapping to {@code null}.
+     */
     public static final String DEFAULT_NULL_VALUE = "null";
+
+    /**
+     * The set of text data that maps to {@code null}.
+     * @param nullValues the set of text data that maps to {@code null}
+     */
     @Setter(AccessLevel.PROTECTED)
     private Set<String> nullValues = new HashSet<>();
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     boolean isNullValued(String value) {
         return nullValues.contains(value);
     }
 
+    /**
+     * Create a new {@code Decoder} instance.
+     * @param nullValues the set of text data that maps to {@code null}
+     */
     public NullChoicesDecoder(Set<String> nullValues) {
-        this.nullValues.add(DEFAULT_NULL_VALUE);
+        this.nullValues.addAll(nullValues);
     }
 
+    /**
+     * Create a new {@code Decoder} instance with the default {@code null} mapping {@link #DEFAULT_NULL_VALUE}.
+     */
+    public NullChoicesDecoder() {
+        this.nullValues.add(DEFAULT_NULL_VALUE);
+    }
 }

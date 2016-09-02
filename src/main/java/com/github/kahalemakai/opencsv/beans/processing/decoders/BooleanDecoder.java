@@ -19,22 +19,45 @@ package com.github.kahalemakai.opencsv.beans.processing.decoders;
 import lombok.AccessLevel;
 import lombok.Setter;
 
+/**
+ * Decode textual data to booleans in a one-to-one mapping.
+ */
 public class BooleanDecoder extends AbstractBooleanDecoder {
+    /**
+     * Set the text value that maps to {@code true}.
+     * @param trueValue the text value that maps to {@code true}
+     */
     @Setter(AccessLevel.PROTECTED)
     private String trueValue;
+
+    /**
+     * Set the text value that maps to {@code false}.
+     * @param falseValue the text value that maps to {@code false}
+     */
     @Setter(AccessLevel.PROTECTED)
     private String falseValue;
 
+    /**
+     * Create a new instance of the default implementation.
+     * <p>
+     * {@code "true" -> true}, {@code "false" -> false}
+     */
     public BooleanDecoder() {
         trueValue = "true";
         falseValue = "false";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected boolean isFalse(String value) {
         return falseValue.equals(value);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected boolean isTrue(String value) {
         return trueValue.equals(value);

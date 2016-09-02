@@ -18,7 +18,15 @@ package com.github.kahalemakai.opencsv.beans.processing.postvalidators;
 
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 
+/**
+ * Ensure that an integer is positive.
+ */
 public class PositiveInt implements PostValidator<Integer> {
+    /**
+     * Ensure that an integer is positive.
+     * @param value object to validate
+     * @return {@code true} if the integer is positive, else {@code false}
+     */
     @Override
     public boolean validate(Integer value) {
         return value > 0;
