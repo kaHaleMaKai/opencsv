@@ -1,0 +1,19 @@
+version "${rootProject.version}-0"
+def fullName = "${rootProject.name}.${project.name}"
+
+dependencies {
+    compile project(":core")
+}
+
+publishing {
+    publications {
+        "opencsv.plugins"(MavenPublication) {
+            from components.java
+            artifact javadocJar
+            artifact sourcesJar
+            groupId rootProject.group
+            artifactId fullName
+            version project.version
+        }
+    }
+}

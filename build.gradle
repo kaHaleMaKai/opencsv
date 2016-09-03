@@ -15,23 +15,13 @@
  */
 
 plugins {
-    id "com.jfrog.bintray" version "1.6"
+    id "com.jfrog.bintray" version "1.6" apply false
 }
 
 group 'com.github.kahalemakai'
-version '0.3.10'
+version '0.4.0'
 
-def license = "Apache-2.0"
-def github = "https://github.com"
-def githubUsername = "kaHaleMaKai"
-def delombokedDir = "${buildDir}/src-delomboked"
-def log4jVersion = "1.2.17"
-
-apply plugin: 'java'
 apply plugin: 'idea'
-apply plugin: 'jacoco'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
 
 idea {
     project {
@@ -65,131 +55,131 @@ idea {
     }
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+subprojects {
+    def fullName = "${rootProject.name}.${project.name}"
+    def license = "Apache-2.0"
+    def github = "https://github.com"
+    def githubUsername = "kaHaleMaKai"
+    def delombokedDir = "${buildDir}/${fullName}/src-delomboked"
+    def log4jVersion = "1.2.17"
+    println "${fullName}:${project.version}"
 
-repositories {
-    jcenter()
-    maven { url "file://${System.getProperty("user.home")}/.m2/repository" }
-    maven { url "https://plugins.gradle.org/m2/" }
-    maven { url "http://nexus.pmd.local:8081/nexus/content/groups/PIA_Private/" }
-    maven { url "http://nexus.pmd.local:8081/nexus/content/groups/public/" }
-    maven { url "https://repository.jboss.org/nexus/content/groups/public" }
-}
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
+    apply plugin: "com.jfrog.bintray"
 
-dependencies {
-    compile "org.projectlombok:lombok:1.16.10"
-    compile "log4j:log4j:${log4jVersion}"
-    compile "log4j:apache-log4j-extras:${log4jVersion}"
-    compile 'com.opencsv:opencsv:3.8'
-    compile 'com.github.kahalemakai:tuples:0.3.0'
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
-    compile(group: 'com.intellij', name: 'annotations', version: '12.0') {
-        exclude group: "com.intellij"
+    repositories {
+        jcenter()
+        maven { url "file://${System.getProperty("user.home")}/.m2/repository" }
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://repository.jboss.org/nexus/content/groups/public" }
     }
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-}
 
-configurations.compile.transitive = true
+    dependencies {
+        compile "org.projectlombok:lombok:1.16.10"
+        compile "log4j:log4j:${log4jVersion}"
+        compile "log4j:apache-log4j-extras:${log4jVersion}"
+        compile(group: 'com.intellij', name: 'annotations', version: '12.0') {
+            exclude group: "com.intellij"
+        }
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+    }
+
+    configurations.compile.transitive = true
+
+    task delombok << {
+        description 'Delomboks the source code'
+        ant.taskdef(classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compile.asPath, name: 'delombok')
+        ant.mkdir(dir: delombokedDir)
+        ant.delombok(verbose: 'true', encoding: 'UTF-8', to: delombokedDir, from: 'src/main/java')
+    }
+
+    task javadocDelux(type: Javadoc, group: "documentation") {
+        dependsOn delombok
+        source delombokedDir
+    }
+
+    jacocoTestReport {
+        dependsOn delombok
+        additionalSourceDirs = files(delombokedDir)
+        reports {
+            xml.enabled true
+        }
+    }
+
+    task javadocJar(type: Jar) {
+        classifier = 'javadoc'
+        from javadocDelux
+        dependsOn javadocDelux
+    }
+
+    task sourcesJar(type: Jar) {
+        dependsOn classes
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" << "-Xdiags:verbose"
+        }
+    }
+
+    task cleanTests(group: "verification") {
+        dependsOn cleanTest
+    }
+
+    defaultTasks 'clean', 'build', 'test', 'javadocDelux', 'jacocoTestReport'
+
+
+    test {
+        useJUnit {
+            excludeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
+        }
+    }
+
+    task performanceTest(type: Test, group: "verification") {
+        useJUnit {
+            includeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
+        }
+    }
+
+    bintray {
+        user = rootProject.hasProperty("bintrayUser") ? bintrayUser : ""
+        key = rootProject.hasProperty("bintrayApiKey") ? bintrayApiKey : ""
+        publications = [fullName]
+        pkg {
+            repo = 'maven'
+            name = fullName
+            licenses = [license]
+            vcsUrl = "${github}/${githubUsername}/${rootProject.name}"
+
+            githubRepo = "${githubUsername}/${rootProject.name}"
+            githubReleaseNotesFile = 'README.md'
+
+            publicDownloadNumbers = true
+
+            version {
+                name = project.version
+                desc = "add apache2 license"
+                released = new Date()
+                vcsTag = project.version
+
+                gpg {
+                    sign = true
+                    passphrase = hasProperty("gpgPassPhrase") ? gpgPassPhrase : ""
+                }
+            }
+        }
+    }
+}
 
 task wrapper(type: Wrapper) {
     gradleVersion = '3.0'
 }
 
-task delombok << {
-    description 'Delomboks the source code'
-    ant.taskdef(classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compile.asPath, name: 'delombok')
-    ant.mkdir(dir: delombokedDir)
-    ant.delombok(verbose: 'true', encoding: 'UTF-8', to: delombokedDir, from: 'src/main/java')
-}
-
-task javadocDelux(type: Javadoc, group: "documentation") {
-    dependsOn delombok
-    source delombokedDir
-}
-
-jacocoTestReport {
-    dependsOn delombok
-    additionalSourceDirs = files(delombokedDir)
-    reports {
-        xml.enabled true
-    }
-}
-
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadocDelux
-    dependsOn javadocDelux
-}
-
-task sourcesJar(type: Jar) {
-    dependsOn classes
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-gradle.projectsEvaluated {
-    tasks.withType(JavaCompile) {
-        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" << "-Xdiags:verbose"
-    }
-}
-
-task cleanTests(group: "verification") {
-    dependsOn cleanTest
-}
-
-defaultTasks 'clean', 'build', 'test', 'javadocDelux', 'jacocoTestReport'
-
-publishing {
-    publications {
-        opencsv(MavenPublication) {
-            from components.java
-            artifact javadocJar
-            artifact sourcesJar
-            groupId rootProject.group
-            artifactId rootProject.name
-            version rootProject.version
-        }
-    }
-}
-
-test {
-    useJUnit {
-        excludeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
-    }
-}
-
-task performanceTest(type: Test, group: "verification") {
-    useJUnit {
-        includeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
-    }
-}
-
-bintray {
-    user = rootProject.hasProperty("bintrayUser") ? bintrayUser : ""
-    key = rootProject.hasProperty("bintrayApiKey") ? bintrayApiKey : ""
-    publications = [rootProject.name]
-    pkg {
-        repo = 'maven'
-        name = rootProject.name
-        licenses = [license]
-        vcsUrl = "${github}/${githubUsername}/${rootProject.name}"
-
-        githubRepo = "${githubUsername}/${rootProject.name}"
-        githubReleaseNotesFile = 'README.md'
-
-        publicDownloadNumbers = true
-
-        version {
-            name = rootProject.version
-            desc = "add apache2 license"
-            released = new Date()
-            vcsTag = rootProject.version
-
-            gpg {
-                sign = true
-                passphrase = hasProperty("gpgPassPhrase") ? gpgPassPhrase : ""
-            }
-        }
-    }
-}
