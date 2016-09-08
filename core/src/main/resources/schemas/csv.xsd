@@ -78,4 +78,5 @@
             <xs:attributeGroup ref="csv:ReaderAttributes" />
         </xs:complexType>
     </xs:element>
+
 </xs:schema>

@@ -35,6 +35,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 
 /**
@@ -60,6 +61,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final Map<String, String> columnRefs;
     private final Map<String, Object> columnData;
     private final TupleList<String, Integer> columnsForIteration;
+    private final Consumer<Iterator<?>> sink;
 
     @Getter(AccessLevel.PRIVATE) @Setter
     private boolean errorOnClosingReader;
@@ -100,6 +102,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         this.columnRefs = builder.getColumnRefs();
         this.columnData = builder.getColumnData();
         this.columnsForIteration = TupleList.of(String.class, Integer.class);
+        this.sink = builder.sink();
         log.debug(String.format("new CsvToBeanMapper instance built:\n%s", this.toString()));
     }
 
@@ -181,17 +184,17 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
 
     /**
      * {@inheritDoc}
+     * @throws UnsupportedOperationException if a sink was set up
      */
     @Override
     public Iterator<T> iterator() {
-        if (source == null) {
-            final String msg = "no csv data source defined";
+        if (this.sink != null) {
+            final String msg = "direct iteration forbidden, since a sink was added";
             log.error(msg);
-            throw new IllegalStateException(msg);
+            throw new UnsupportedOperationException(msg);
         }
-        final int linesToSkip = getReaderSetup().get() ? 0 : getSkipLines();
-        final Iterator<String[]> iterator = source.iterator();
-        return isOnErrorSkipLine() ? new SkippingIterator(linesToSkip, iterator) : new NonSkippingIterator(linesToSkip, iterator);
+
+        return obtainIteratorForInternalAccess();
     }
 
     /**
@@ -200,6 +203,25 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     @Override
     public Class<? extends T> getType() {
         return strategy.getType();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void intoSink() throws UnsupportedOperationException {
+        if (this.sink == null) {
+            final String msg = "no sink has been added";
+            log.error(msg);
+            throw new UnsupportedOperationException(msg);
+        }
+        try {
+            this.sink.accept(obtainIteratorForInternalAccess());
+        } catch (Throwable e) {
+            final String msg = "caught exception in sink";
+            log.error(msg);
+            throw new CsvToBeanException(msg, e);
+        }
     }
 
     /**
@@ -429,6 +451,25 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             }
             columnsForIteration.add(Tuple.of(to, idx));
         }
+    }
+
+    /**
+     * Provide an iterator over the complete data set.
+     * <p>
+     * This auxiliary method is required, because {@link #iterator()} is safe-guarded
+     * against calls if a sink has been added. In that case, direct iteration
+     * is forbidden and the iterator can only be accessed internally.
+     * @return iterator over the complete data set
+     */
+    private Iterator<T> obtainIteratorForInternalAccess() {
+        if (source == null) {
+            final String msg = "no csv data source defined";
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
+        final int linesToSkip = getReaderSetup().get() ? 0 : getSkipLines();
+        final Iterator<String[]> iterator = source.iterator();
+        return isOnErrorSkipLine() ? new SkippingIterator(linesToSkip, iterator) : new NonSkippingIterator(linesToSkip, iterator);
     }
 
     /**

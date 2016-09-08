@@ -120,6 +120,11 @@ public class ConfigParser {
     public static final String BEAN_POSTVALIDATOR = "bean:postValidator";
 
     /**
+     * The namespaced sink config element name.
+     */
+    public static final String SINK_ID = "sink";
+
+    /**
      * The default namespace.
      */
     public static final String DEFAULT_NAME_SPACE = "com.github.kahalemakai.opencsv.beans.processing";
@@ -132,6 +137,9 @@ public class ConfigParser {
     private final Iterable<String[]> parsedLines;
     private final InputStream inputStream;
     private final ParameterMap parameters;
+
+    private SinkPlugin sinkPlugin;
+    private Object[] $sinkPluginLock = new Object[0];
 
     /**
      * Setup the {@code ConfigParser} with the state defined in the calling class.
@@ -196,6 +204,40 @@ public class ConfigParser {
     }
 
     /**
+     * Add a plugin to the config parser.
+     * <p>
+     * Currently, only sink plugins are supported.
+     * TODO: enhance documentation, link to plugin classes
+     * @param plugin plugin to be added
+     * @return the {@code ConfigParser} instance
+     * @throws UnsupportedOperationException if trying to add an unsupported plugin type
+     */
+    public ConfigParser addPlugin(final Plugin plugin) throws UnsupportedOperationException {
+        if (plugin instanceof SinkPlugin) {
+            addSinkPlugin((SinkPlugin) plugin);
+        }
+        else {
+            final String msg = String.format("plugin of type %s is currently not supported. please use one of %s",
+                    plugin.getClass().getCanonicalName(), Plugin.getSupportedPlugins());
+            log.error(msg);
+            throw new UnsupportedOperationException(msg);
+        }
+        return this;
+    }
+
+    private void addSinkPlugin(final SinkPlugin plugin) {
+        synchronized ($sinkPluginLock) {
+            if (this.sinkPlugin == null) {
+                this.sinkPlugin = plugin;
+                return;
+            }
+        }
+        final String msg = "trying to add multiple sink plugins";
+        log.error(msg);
+        throw new UnsupportedOperationException(msg);
+    }
+
+    /**
      * Lookup the string value associated with a named config parameter.
      * @param name the parameter to lookup
      * @return the associated value
@@ -235,13 +277,18 @@ public class ConfigParser {
      * @return the corresponding schema
      * @throws SAXException if the schema file cannot be parsed
      */
-    private Schema getOpencsvSchema() throws SAXException {
+    private Schema getSchema() throws SAXException, FileNotFoundException {
         final URL schemaUrl = getClass()
                 .getResource("/schemas/opencsv.xsd");
         assert schemaUrl != null;
         SchemaFactory schemaFactory = SchemaFactory
                 .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        return schemaFactory.newSchema(schemaUrl);
+        final StreamSource opencsvSchemaSource = new StreamSource(new File(schemaUrl.getFile()));
+        if (this.sinkPlugin != null) {
+            final StreamSource sinkSchemaSource = new StreamSource(this.sinkPlugin.getSchemaFile());
+            return schemaFactory.newSchema(new Source[]{opencsvSchemaSource, sinkSchemaSource});
+        }
+        return schemaFactory.newSchema(opencsvSchemaSource);
     }
 
     /**
@@ -348,7 +395,15 @@ public class ConfigParser {
         }
 
         configureFields(config, builder);
+        configureSinkIfRequired(builder, doc);
+
         return builder.build();
+    }
+
+    private <T> void configureSinkIfRequired(final Builder<T> builder, final Document doc) {
+        if (this.sinkPlugin != null) {
+            this.sinkPlugin.configure(builder, doc);
+        }
     }
 
     /**

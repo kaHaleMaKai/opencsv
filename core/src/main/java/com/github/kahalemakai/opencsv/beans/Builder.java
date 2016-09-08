@@ -27,6 +27,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -253,6 +254,10 @@ public class Builder<T> {
      * Map of constants to be assigned to unmapped columns.
      */
     private final Map<String, Object> columnData;
+
+    @Accessors(chain = true, fluent = true) @Getter
+    private Consumer<Iterator<?>> sink;
+    private final Object[] $sinkLock = new Object[0];
 
     /* *************************
      * constructor and builder
@@ -725,6 +730,24 @@ public class Builder<T> {
     public Builder<T> trim(final String column) {
         decoderManager.setTrim(column, true);
         return this;
+    }
+
+    /**
+     * Set a sink.
+     * @param newSink the sink to add
+     * @return the {@code Builder} instance
+     * @throws IllegalStateException on repeated invocation
+     */
+    public Builder<T> sink(final Consumer<Iterator<?>> newSink) throws IllegalStateException {
+        synchronized ($sinkLock) {
+            if (this.sink == null) {
+                this.sink = newSink;
+                return this;
+            }
+        }
+        final String msg = "trying to set sink repeatedly";
+        log.error(msg);
+        throw new IllegalStateException(msg);
     }
 
     /**

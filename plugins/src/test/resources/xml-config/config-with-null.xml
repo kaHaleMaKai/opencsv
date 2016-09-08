@@ -16,12 +16,14 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.2.1/opencsv.xsd"
+                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.3.7/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
+                   xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
+                   xmlns:console="http://github.com/kaHaleMaKai/opencsv/plugins/console-writer"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-    <csv:reader quoteChar="&apos;" charset="WINDOWS-1252">
+    <csv:reader quoteChar="&apos;">
         <csv:ignore count="2"/>
         <csv:column name="age" />
         <csv:ignore />
@@ -29,19 +31,19 @@
         <csv:column name="surName" />
         <csv:column name="address" />
         <csv:ignore count="4"/>
-        <csv:ignorex count="4"/>
     </csv:reader>
 
-    <bean:config class="com.github.kahalemakai.opencsv.examples.Person">
-        <bean:field name="age">
+    <bean:config class="com.github.kahalemakai.opencsv.plugins.Person">
+        <bean:field name="age" nullFallsThrough="both">
             <bean:decoder type="NullDecoder" />
             <bean:decoder type="IntDecoder" />
-            <bean:postProcessor type="com.github.kahalemakai.opencsv.examples.IncrementBy10" />
             <bean:postValidator type="PositiveInt" />
         </bean:field>
         <bean:field name="givenName" />
         <bean:field name="surName" />
         <bean:field name="address" />
     </bean:config>
+
+    <console:config prefix="***** " id="sink" />
 
 </opencsv:resources>

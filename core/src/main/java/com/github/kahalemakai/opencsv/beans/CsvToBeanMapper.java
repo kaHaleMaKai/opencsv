@@ -32,6 +32,12 @@ public interface CsvToBeanMapper<T> extends Closeable, Iterable<T> {
     Class<? extends T> getType();
 
     /**
+     * Carry out an irreversible consuming action on the entire data set.
+     * @throws UnsupportedOperationException if no sink has been setup
+     */
+    void intoSink() throws UnsupportedOperationException;
+
+    /**
      * Get a new {@code Builder} instance for creating a {@code CsvToBeanMapper}.
      *
      * @param type the class object that the csv rows shall be converted to
