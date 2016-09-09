@@ -39,7 +39,7 @@
     <!--attribute definitions-->
 
     <xs:attributeGroup name="ReaderAttributes">
-        <xs:attribute name="separator" type="xs:string" default="&#9;" />
+        <xs:attribute name="separator" type="xs:string" default="," />
         <xs:attribute name="skipLines" type="xs:int" default="0" />
         <xs:attribute name="quoteChar" type="xs:string" default="&quot;" />
         <xs:attribute name="ignoreLeadingWhiteSpace" type="xs:boolean" default="true" />

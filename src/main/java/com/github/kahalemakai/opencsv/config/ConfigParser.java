@@ -20,9 +20,9 @@ import com.github.kahalemakai.opencsv.beans.Builder;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
-import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
+import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.EnumDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import lombok.NonNull;
@@ -36,8 +36,10 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -123,7 +125,8 @@ public class ConfigParser {
     public static final String DEFAULT_NAME_SPACE = "com.github.kahalemakai.opencsv.beans.processing";
 
     // variables passed to the Builder instance
-    private final InputStream xmlInputStream;
+    private final Optional<File> xmlFile;
+    private final Optional<byte[]> xmlFileAsArray;
     private final Reader reader;
     private final Iterable<String> unparsedLines;
     private final Iterable<String[]> parsedLines;
@@ -138,12 +141,13 @@ public class ConfigParser {
      * @param parsedLines {@code Iterable} of parsed lines, or {@code null}
      * @param inputStream input stream of unparsed lines, or {@code null}
      */
-    private ConfigParser(final InputStream xmlInputStream,
+    private ConfigParser(@NonNull final InputStream xmlInputStream,
                          final Reader reader,
                          final Iterable<String> unparsedLines,
                          final Iterable<String[]> parsedLines,
-                         final InputStream inputStream) {
-        this.xmlInputStream = xmlInputStream;
+                         final InputStream inputStream) throws IOException {
+        this.xmlFileAsArray = Optional.ofNullable(asByteArray(xmlInputStream));
+        this.xmlFile = Optional.empty();
         this.reader = reader;
         this.unparsedLines = unparsedLines;
         this.parsedLines = parsedLines;
@@ -159,13 +163,19 @@ public class ConfigParser {
      * @param parsedLines {@code Iterable} of parsed lines, or {@code null}
      * @param inputStream input stream of unparsed lines, or {@code null}
      */
-    private ConfigParser(final File xmlFile,
+    private ConfigParser(@NonNull final File xmlFile,
                          final Reader reader,
                          final Iterable<String> unparsedLines,
                          final Iterable<String[]> parsedLines,
                          final InputStream inputStream)
             throws FileNotFoundException {
-        this(new FileInputStream(xmlFile), reader, unparsedLines, parsedLines, inputStream);
+        this.xmlFileAsArray = Optional.empty();
+        this.xmlFile = Optional.of(xmlFile);
+        this.reader = reader;
+        this.unparsedLines = unparsedLines;
+        this.parsedLines = parsedLines;
+        this.inputStream = inputStream;
+        this.parameters = ParameterMap.init();
     }
 
     /**
@@ -252,8 +262,12 @@ public class ConfigParser {
         final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         // don't set validating behaviour to true -> or else a DTD is expected
         documentBuilderFactory.setSchema(getOpencsvSchema());
+        documentBuilderFactory.setNamespaceAware(true);
+        final Schema schema = documentBuilderFactory.getSchema();
+        final Validator validator = schema.newValidator();
+        validator.validate(new StreamSource(this.getXmlInputStream()));
         final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-        final Document doc = documentBuilder.parse(this.xmlInputStream);
+        final Document doc = documentBuilder.parse(this.getXmlInputStream());
         doc.getDocumentElement().normalize();
         final Node reader = doc.getElementsByTagName("csv:reader").item(0);
         final Optional<String> separator = getValue(reader, "separator");
@@ -587,15 +601,38 @@ public class ConfigParser {
         return fieldList.toArray(new String[fieldList.size()]);
     }
 
+    private InputStream getXmlInputStream() throws FileNotFoundException {
+        InputStream xmlInputStream;
+        if (xmlFileAsArray.isPresent()) {
+            xmlInputStream = new ByteArrayInputStream(this.xmlFileAsArray.get());
+        }
+        else {
+            xmlInputStream = new FileInputStream(this.xmlFile.get());
+        }
+        return xmlInputStream;
+    }
+
+    private byte[] asByteArray(final InputStream xmlInputSream) throws IOException {
+        final ByteArrayOutputStream sink = new ByteArrayOutputStream();
+        int nRead;
+        byte[] buffer = new byte[1024];
+        while ((nRead = xmlInputSream.read(buffer, 0, buffer.length)) != -1) {
+            sink.write(buffer, 0, nRead);
+        }
+        return sink.toByteArray();
+    }
+
     /**
      * Obtain a new {@code ConfigParser} instance for an xml input stream and an
      * iterable of raw csv data.
      * @param xmlInputStream stream of the xml config file
      * @param unparsedLines raw csv data, split into lines
      * @return the {@code ConfigParser} instance
+     * @throws IOException if the {@code xmlInputStream} cannot be read
      */
     public static ConfigParser ofUnparsedLines(@NonNull final InputStream xmlInputStream,
-                                               @NonNull final Iterable<String> unparsedLines) {
+                                               @NonNull final Iterable<String> unparsedLines)
+            throws IOException {
         return new ConfigParser(xmlInputStream, null, unparsedLines, null, null);
     }
 
@@ -619,9 +656,11 @@ public class ConfigParser {
      * @param xmlInputStream stream of the xml config file
      * @param parsedLines already parsed lines
      * @return the {@code ConfigParser} instance
+     * @throws IOException if the {@code xmlInputStream} cannot be read
      */
     public static ConfigParser ofParsedLines(@NonNull final InputStream xmlInputStream,
-                                             @NonNull final Iterable<String[]> parsedLines) {
+                                             @NonNull final Iterable<String[]> parsedLines)
+            throws IOException {
         return new ConfigParser(xmlInputStream, null, null, parsedLines, null);
     }
 
@@ -645,9 +684,11 @@ public class ConfigParser {
      * @param xmlInputStream stream of the xml config file
      * @param reader reader of csv data
      * @return the {@code ConfigParser} instance
+     * @throws IOException if the {@code xmlInputStream} cannot be read
      */
     public static ConfigParser ofReader(@NonNull final InputStream xmlInputStream,
-                                        @NonNull final Reader reader) {
+                                        @NonNull final Reader reader)
+            throws IOException {
         return new ConfigParser(xmlInputStream, reader, null, null, null);
     }
 
@@ -671,9 +712,11 @@ public class ConfigParser {
      * @param xmlInputStream stream of the xml config file
      * @param inputStream stream of csv data
      * @return the {@code ConfigParser} instance
+     * @throws IOException if the {@code xmlInputStream} cannot be read
      */
     public static ConfigParser ofInputStream(@NonNull final InputStream xmlInputStream,
-                                             @NonNull final InputStream inputStream) {
+                                             @NonNull final InputStream inputStream)
+            throws IOException {
         return new ConfigParser(xmlInputStream, null, null, null, inputStream);
     }
 
@@ -697,11 +740,11 @@ public class ConfigParser {
      * @param xmlInputStream stream of the xml config file
      * @param inputFile file referring to csv data
      * @return the {@code ConfigParser} instance
-     * @throws FileNotFoundException if the xml file cannot be found
+     * @throws IOException if the {@code xmlInputStream} cannot be read
      */
     public static ConfigParser ofFile(@NonNull final InputStream xmlInputStream,
                                       @NonNull final File inputFile)
-            throws FileNotFoundException {
+            throws IOException {
         return new ConfigParser(xmlInputStream, null, null, null, new FileInputStream(inputFile));
     }
 

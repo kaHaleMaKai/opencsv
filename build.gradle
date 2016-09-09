@@ -19,7 +19,7 @@ plugins {
 }
 
 group 'com.github.kahalemakai'
-version '0.3.9'
+version '0.3.10'
 
 def license = "Apache-2.0"
 def github = "https://github.com"
