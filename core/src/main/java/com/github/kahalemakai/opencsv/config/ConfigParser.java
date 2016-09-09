@@ -36,6 +36,7 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -308,7 +309,7 @@ public class ConfigParser {
             throws ParserConfigurationException, IOException, SAXException, InstantiationException, ClassNotFoundException, IllegalAccessException {
         final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         // don't set validating behaviour to true -> or else a DTD is expected
-        documentBuilderFactory.setSchema(getOpencsvSchema());
+        documentBuilderFactory.setSchema(this.getSchema());
         documentBuilderFactory.setNamespaceAware(true);
         final Schema schema = documentBuilderFactory.getSchema();
         final Validator validator = schema.newValidator();

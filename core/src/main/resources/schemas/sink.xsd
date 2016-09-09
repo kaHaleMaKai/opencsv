@@ -20,6 +20,7 @@
            xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
            elementFormDefault="qualified">
 
-    <xs:element name="config" abstract="true" />
+    <xs:complexType name="AbstractSinkConfig" abstract="true" />
+    <xs:element name="config" type="sink:AbstractSinkConfig" abstract="true" />
 
 </xs:schema>

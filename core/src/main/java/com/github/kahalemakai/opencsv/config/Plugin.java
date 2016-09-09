@@ -9,8 +9,7 @@ import java.util.*;
 
 public interface Plugin {
     File getSchemaFile();
-    String getNamespaceUri();
-    Map<String, String> getSubstitutions();
+    String getNameSpace();
 
     default <T> void configure(Builder<T> builder, final Document doc) { }
 

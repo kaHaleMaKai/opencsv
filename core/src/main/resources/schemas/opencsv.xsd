@@ -19,6 +19,7 @@
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
            xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
+           xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
            elementFormDefault="qualified">
 
     <xs:import schemaLocation="bean.xsd"
@@ -33,6 +34,7 @@
             <xs:sequence>
                 <xs:element ref="csv:reader" />
                 <xs:element ref="bean:config" />
+                <xs:element ref="sink:config" minOccurs="0"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
