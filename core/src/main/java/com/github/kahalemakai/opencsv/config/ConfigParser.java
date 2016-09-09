@@ -121,11 +121,6 @@ public class ConfigParser {
     public static final String BEAN_POSTVALIDATOR = "bean:postValidator";
 
     /**
-     * The namespaced sink config element name.
-     */
-    public static final String SINK_ID = "sink";
-
-    /**
      * The default namespace.
      */
     public static final String DEFAULT_NAME_SPACE = "com.github.kahalemakai.opencsv.beans.processing";

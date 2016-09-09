@@ -17,6 +17,7 @@
 package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.*;
+import com.github.kahalemakai.opencsv.config.Sink;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -27,7 +28,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -256,7 +256,8 @@ public class Builder<T> {
     private final Map<String, Object> columnData;
 
     @Accessors(chain = true, fluent = true) @Getter
-    private Consumer<Iterator<?>> sink;
+    private Sink sink;
+    @Accessors(chain = true, fluent = true) @Getter
     private final Object[] $sinkLock = new Object[0];
 
     /* *************************
@@ -738,7 +739,7 @@ public class Builder<T> {
      * @return the {@code Builder} instance
      * @throws IllegalStateException on repeated invocation
      */
-    public Builder<T> sink(final Consumer<Iterator<?>> newSink) throws IllegalStateException {
+    public Builder<T> sink(final Sink newSink) throws IllegalStateException {
         synchronized ($sinkLock) {
             if (this.sink == null) {
                 this.sink = newSink;
@@ -749,6 +750,7 @@ public class Builder<T> {
         log.error(msg);
         throw new IllegalStateException(msg);
     }
+
 
     /**
      * Helper method for setting the header of a mapping strategy.

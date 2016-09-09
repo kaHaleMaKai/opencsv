@@ -29,7 +29,7 @@
         <csv:column name="surName" />
         <csv:column name="address" />
         <csv:ignore count="4"/>
-        <csv:ignorex count="4"/>
+        <csv:ignore count="4"/>
     </csv:reader>
 
     <bean:config class="com.github.kahalemakai.opencsv.examples.Person">

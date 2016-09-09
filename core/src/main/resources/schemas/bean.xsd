@@ -15,7 +15,7 @@
   limitations under the License.
 -->
 
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="http://github.com/kaHaleMaKai/opencsv/bean"
            xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
            elementFormDefault="qualified">

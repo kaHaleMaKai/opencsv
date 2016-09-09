@@ -17,6 +17,8 @@
 package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
+import com.github.kahalemakai.opencsv.config.PluginException;
+import com.github.kahalemakai.opencsv.config.Sink;
 import com.github.kahalemakai.tuples.Tuple;
 import com.github.kahalemakai.tuples.TupleList;
 import com.opencsv.CSVReader;
@@ -35,7 +37,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 
 /**
@@ -61,7 +62,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final Map<String, String> columnRefs;
     private final Map<String, Object> columnData;
     private final TupleList<String, Integer> columnsForIteration;
-    private final Consumer<Iterator<?>> sink;
+    private final Sink sink;
 
     @Getter(AccessLevel.PRIVATE) @Setter
     private boolean errorOnClosingReader;
@@ -221,6 +222,15 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             final String msg = "caught exception in sink";
             log.error(msg);
             throw new CsvToBeanException(msg, e);
+        }
+        finally {
+            try {
+                this.sink.close();
+            } catch (IOException e) {
+                final String msg = "failed to close sink";
+                log.error(msg);
+                throw new PluginException(msg, e);
+            }
         }
     }
 

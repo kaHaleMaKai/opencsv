@@ -6,13 +6,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.util.Iterator;
-import java.util.function.Consumer;
-
 public interface SinkPlugin extends Plugin {
     Logger log = Logger.getLogger(SinkPlugin.class);
 
-    Consumer<Iterator<?>> getSink();
+    Sink getSink();
 
     <T> void configure(Builder<T> builder, Node sink);
 
