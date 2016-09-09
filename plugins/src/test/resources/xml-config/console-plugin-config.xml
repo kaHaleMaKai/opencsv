@@ -16,12 +16,11 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.3.7/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.0/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
-                   xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
-                   xmlns:console="http://github.com/kaHaleMaKai/opencsv/plugins/console-writer"
-                   xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
+                   xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
+                   xmlns:console="http://github.com/kaHaleMaKai/opencsv/plugins/console-writer">
 
     <csv:reader quoteChar="&apos;">
         <csv:ignore count="2"/>
@@ -44,6 +43,6 @@
         <bean:field name="address" />
     </bean:config>
 
-    <console:config prefix="***** " id="sink" />
+    <console:config prefix="***** " />
 
 </opencsv:resources>
