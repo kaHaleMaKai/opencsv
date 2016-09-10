@@ -15,8 +15,12 @@
   limitations under the License.
 -->
 
+
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.0/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv
+                                           http://kahalemakai.github.io/schemas/opencsv/0.4.0/opencsv.xsd
+                                       http://github.com/kaHaleMaKai/opencsv/plugins/console-writer
+                                           http://kahalemakai.github.io/schemas/opencsv/plugins/0.4.0-0/console-writer.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
@@ -24,25 +28,25 @@
 
     <csv:reader quoteChar="&apos;">
         <csv:ignore count="2"/>
-        <csv:column name="age" />
-        <csv:ignore />
-        <csv:column name="givenName" />
-        <csv:column name="surName" />
-        <csv:column name="address" />
+        <csv:column name="age"/>
+        <csv:ignore/>
+        <csv:column name="givenName"/>
+        <csv:column name="surName"/>
+        <csv:column name="address"/>
         <csv:ignore count="4"/>
     </csv:reader>
 
     <bean:config class="com.github.kahalemakai.opencsv.plugins.Person">
         <bean:field name="age" nullFallsThrough="both">
-            <bean:decoder type="NullDecoder" />
-            <bean:decoder type="IntDecoder" />
-            <bean:postValidator type="PositiveInt" />
+            <bean:decoder type="NullDecoder"/>
+            <bean:decoder type="IntDecoder"/>
+            <bean:postValidator type="PositiveInt"/>
         </bean:field>
-        <bean:field name="givenName" />
-        <bean:field name="surName" />
-        <bean:field name="address" />
+        <bean:field name="givenName"/>
+        <bean:field name="surName"/>
+        <bean:field name="address"/>
     </bean:config>
 
-    <console:config prefix="***** " />
+    <console:config prefix="***** "/>
 
 </opencsv:resources>

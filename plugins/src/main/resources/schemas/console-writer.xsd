@@ -21,19 +21,19 @@
            xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
            elementFormDefault="qualified">
 
-    <xs:import schemaLocation="sink.xsd"
-               namespace="http://github.com/kaHaleMaKai/opencsv/sink" />
+    <xs:import schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.4.0/sink.xsd"
+               namespace="http://github.com/kaHaleMaKai/opencsv/sink"/>
 
     <xs:complexType name="ConsoleWriterConfig">
         <xs:complexContent>
             <xs:extension base="sink:AbstractSinkConfig">
-                <xs:attribute name="prefix" type="xs:string" />
+                <xs:attribute name="prefix" type="xs:string"/>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
 
     <xs:element name="config"
                 type="console:ConsoleWriterConfig"
-                substitutionGroup="sink:config" />
+                substitutionGroup="sink:config"/>
 
 </xs:schema>
