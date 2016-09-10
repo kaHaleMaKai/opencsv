@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2016, Lars Winderling
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://github.com/kaHaleMaKai/opencsv/plugins/file-writer"
+           xmlns:file="http://github.com/kaHaleMaKai/opencsv/plugins/file-writer"
+           xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
+           elementFormDefault="qualified">
+
+    <xs:import schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.4.0/sink.xsd"
+               namespace="http://github.com/kaHaleMaKai/opencsv/sink"/>
+
+    <xs:attributeGroup name="FileWriterAttributes">
+        <xs:attribute name="path" type="file:LocalFilePath" />
+        <xs:attribute name="append" type="xs:boolean" default="false" use="optional" />
+        <!-- the system default charset is used as default encoding -->
+        <xs:attribute name="encoding" type="xs:string" use="optional" />
+        <xs:attribute name="type" type="file:FileWriterType" default="csv" use="optional" />
+        <xs:attribute name="batches" type="xs:positiveInteger" default="1" use="optional" />
+        <!-- csv attributes -->
+        <xs:attribute name="separator" type="file:Char" default="," use="optional" />
+        <xs:attribute name="quoteChar" type="file:CharOrEmpty" default="" use="optional" />
+        <xs:attribute name="includeHeader" type="xs:boolean" default="false" use="optional" />
+    </xs:attributeGroup>
+
+    <xs:simpleType name="OpenMode">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="append" />
+            <xs:enumeration value="prepend" />
+            <xs:enumeration value="overwrite" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="Char">
+        <xs:restriction base="xs:string">
+            <xs:length value="1" />
+        </xs:restriction>
+    </xs:simpleType>
+
+
+    <xs:simpleType name="CharOrEmpty">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="1" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="FileWriterType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="csv" />
+            <xs:enumeration value="serialization" />
+            <xs:enumeration value="toString()" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="LocalFilePath">
+        <xs:restriction base="xs:string" />
+    </xs:simpleType>
+
+    <xs:complexType name="FileWriterConfig">
+        <xs:complexContent>
+            <xs:extension base="sink:AbstractSinkConfig">
+                <xs:attributeGroup ref="file:FileWriterAttributes" />
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="config"
+                type="file:FileWriterConfig"
+                substitutionGroup="sink:config"/>
+
+</xs:schema>
