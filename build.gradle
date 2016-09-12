@@ -56,7 +56,7 @@ idea {
 }
 
 subprojects {
-    def fullName = "${rootProject.name}.${project.name}"
+    def fullName = "${rootProject.name}.${project.name}".replace("_", ".")
     def license = "Apache-2.0"
     def github = "https://github.com"
     def githubUsername = "kaHaleMaKai"

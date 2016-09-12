@@ -44,10 +44,8 @@ import javax.xml.validation.Validator;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
@@ -125,6 +123,9 @@ public class ConfigParser {
      */
     public static final String DEFAULT_NAME_SPACE = "com.github.kahalemakai.opencsv.beans.processing";
 
+    private static final PluginService<SinkPlugin> registeredSinkPlugins = PluginService.of(SinkPlugin.class);
+    private final List<SinkPlugin> sinkPlugins;
+
     // variables passed to the Builder instance
     private final Optional<File> xmlFile;
     private final Optional<byte[]> xmlFileAsArray;
@@ -133,9 +134,6 @@ public class ConfigParser {
     private final Iterable<String[]> parsedLines;
     private final InputStream inputStream;
     private final ParameterMap parameters;
-
-    private SinkPlugin sinkPlugin;
-    private Object[] $sinkPluginLock = new Object[0];
 
     /**
      * Setup the {@code ConfigParser} with the state defined in the calling class.
@@ -157,6 +155,15 @@ public class ConfigParser {
         this.parsedLines = parsedLines;
         this.inputStream = inputStream;
         this.parameters = ParameterMap.init();
+        try {
+            this.sinkPlugins = getSinkPlugins();
+        } catch (IllegalAccessException | InstantiationException e) {
+            final String msg = "could not setup sink plugins";
+            log.error(msg, e);
+            // FIXME: you specific exception and think about exception usage
+            // in ConfigParser in general
+            throw new RuntimeException(msg, e);
+        }
     }
 
     /**
@@ -180,6 +187,15 @@ public class ConfigParser {
         this.parsedLines = parsedLines;
         this.inputStream = inputStream;
         this.parameters = ParameterMap.init();
+        try {
+            this.sinkPlugins = getSinkPlugins();
+        } catch (IllegalAccessException | InstantiationException e) {
+            final String msg = "could not setup sink plugins";
+            log.error(msg, e);
+            // FIXME: you specific exception and think about exception usage
+            // in ConfigParser in general
+            throw new RuntimeException(msg, e);
+        }
     }
 
     /**
@@ -199,39 +215,23 @@ public class ConfigParser {
         return this;
     }
 
-    /**
-     * Add a plugin to the config parser.
-     * <p>
-     * Currently, only sink plugins are supported.
-     * TODO: enhance documentation, link to plugin classes
-     * @param plugin plugin to be added
-     * @return the {@code ConfigParser} instance
-     * @throws UnsupportedOperationException if trying to add an unsupported plugin type
-     */
-    public ConfigParser addPlugin(final Plugin plugin) throws UnsupportedOperationException {
-        if (plugin instanceof SinkPlugin) {
-            addSinkPlugin((SinkPlugin) plugin);
-        }
-        else {
-            final String msg = String.format("plugin of type %s is currently not supported. please use one of %s",
-                    plugin.getClass().getCanonicalName(), Plugin.getSupportedPlugins());
-            log.error(msg);
-            throw new UnsupportedOperationException(msg);
-        }
-        return this;
-    }
-
-    private void addSinkPlugin(final SinkPlugin plugin) {
-        synchronized ($sinkPluginLock) {
-            if (this.sinkPlugin == null) {
-                this.sinkPlugin = plugin;
-                return;
-            }
-        }
-        final String msg = "trying to add multiple sink plugins";
-        log.error(msg);
-        throw new UnsupportedOperationException(msg);
-    }
+//    public static boolean addPlugin(final Class<? extends Plugin> pluginClass) {
+//        if (registeredSinkPlugins.contains(pluginClass)) {
+//            return false;
+//        }
+//        if (SinkPlugin.class.isAssignableFrom(pluginClass)) {
+//            @SuppressWarnings("unchecked")
+//            final Class<? extends SinkPlugin> sinkPluginClass = (Class<? extends SinkPlugin>) pluginClass;
+//            registeredSinkPlugins.add(sinkPluginClass);
+//            return true;
+//        }
+//        else {
+//            final String msg = String.format("plugin of type %s is currently not supported. please use one of %s",
+//                    pluginClass.getCanonicalName(), Plugin.getSupportedPlugins());
+//            log.error(msg);
+//            throw new UnsupportedOperationException(msg);
+//        }
+//    }
 
     /**
      * Lookup the string value associated with a named config parameter.
@@ -280,11 +280,14 @@ public class ConfigParser {
         SchemaFactory schemaFactory = SchemaFactory
                 .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         final StreamSource opencsvSchemaSource = new StreamSource(new File(schemaUrl.getFile()));
-        if (this.sinkPlugin != null) {
-            final StreamSource sinkSchemaSource = new StreamSource(this.sinkPlugin.getSchemaFile());
-            return schemaFactory.newSchema(new Source[]{opencsvSchemaSource, sinkSchemaSource});
-        }
-        return schemaFactory.newSchema(opencsvSchemaSource);
+        final int numSchemas = sinkPlugins.size() + 1;
+        final List<StreamSource> schemas = sinkPlugins
+                .stream()
+                .map(Plugin::getSchemaFile)
+                .map(StreamSource::new)
+                .collect(Collectors.toList());
+        schemas.add(0, opencsvSchemaSource);
+        return schemaFactory.newSchema(schemas.toArray(new Source[numSchemas]));
     }
 
     /**
@@ -396,9 +399,26 @@ public class ConfigParser {
         return builder.build();
     }
 
+    /**
+     * Configure a {@code <sink:configure>} tag.
+     * <p>
+     * A plugin {@link Plugin#configure(Builder, Document)} method
+     * is only invoked, if a corresponding tag is found. At most, one
+     * sink plugin will be configured and the remaining registered
+     * ones will be silently ignored.
+     * <p>
+     * The {@link ConfigParser} does currently not check if a
+     * tag cannot be mapped to any plugin.
+     * @param builder the {@link Builder} instance to be configured
+     * @param doc the {@link Document} root of the xml configuration file
+     * @param <T> target bean type for the {@link Builder}
+     */
     private <T> void configureSinkIfRequired(final Builder<T> builder, final Document doc) {
-        if (this.sinkPlugin != null) {
-            this.sinkPlugin.configure(builder, doc);
+        for (SinkPlugin plugin : sinkPlugins) {
+            try {
+                plugin.configure(builder, doc);
+                return;
+            } catch (PluginConfigurationException ignored) {}
         }
     }
 
@@ -594,7 +614,7 @@ public class ConfigParser {
      * @param processorType type of processor (decoder/postProcessor/postValidator)
      * @param <T> type of corresponding bean field
      * @return the processor class
-     * @throws ClassNotFoundException
+     * @throws ClassNotFoundException if no corresponding class can be found
      */
     private <T> Class<T> getProcessorClass(final String className, final String processorType)
             throws ClassNotFoundException {
@@ -663,14 +683,24 @@ public class ConfigParser {
         return xmlInputStream;
     }
 
-    private byte[] asByteArray(final InputStream xmlInputSream) throws IOException {
+    private byte[] asByteArray(final InputStream xmlInputStream) throws IOException {
         final ByteArrayOutputStream sink = new ByteArrayOutputStream();
         int nRead;
         byte[] buffer = new byte[1024];
-        while ((nRead = xmlInputSream.read(buffer, 0, buffer.length)) != -1) {
+        while ((nRead = xmlInputStream.read(buffer, 0, buffer.length)) != -1) {
             sink.write(buffer, 0, nRead);
         }
         return sink.toByteArray();
+    }
+
+    private static List<SinkPlugin> getSinkPlugins() throws IllegalAccessException, InstantiationException {
+        registeredSinkPlugins.reload();
+        final List<SinkPlugin> plugins = new ArrayList<>();
+        for (SinkPlugin plugin : registeredSinkPlugins) {
+            final SinkPlugin sinkPlugin = plugin.getClass().newInstance();
+            plugins.add(sinkPlugin);
+        }
+        return Collections.unmodifiableList(plugins);
     }
 
     /**

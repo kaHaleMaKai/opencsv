@@ -11,7 +11,7 @@ public interface Plugin {
     File getSchemaFile();
     String getNameSpace();
 
-    default <T> void configure(Builder<T> builder, final Document doc) { }
+    <T> void configure(Builder<T> builder, final Document doc) throws PluginConfigurationException;
 
     static List<Class<? extends Plugin>> getSupportedPlugins() {
         final ArrayList<Class<? extends Plugin>> plugins = new ArrayList<>();

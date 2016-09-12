@@ -1,10 +1,7 @@
 package com.github.kahalemakai.opencsv.plugins;
 
 import com.github.kahalemakai.opencsv.beans.Builder;
-import com.github.kahalemakai.opencsv.config.Plugin;
-import com.github.kahalemakai.opencsv.config.PluginException;
-import com.github.kahalemakai.opencsv.config.Sink;
-import com.github.kahalemakai.opencsv.config.SinkPlugin;
+import com.github.kahalemakai.opencsv.config.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +18,7 @@ import java.util.Optional;
 
 import static java.nio.file.StandardOpenOption.*;
 
-@RequiredArgsConstructor(staticName = "init")
+@RequiredArgsConstructor
 @Log4j
 public class FileWriterPlugin implements SinkPlugin {
     private static final String NAMESPACE = "http://github.com/kaHaleMaKai/opencsv/plugins/file-writer";
