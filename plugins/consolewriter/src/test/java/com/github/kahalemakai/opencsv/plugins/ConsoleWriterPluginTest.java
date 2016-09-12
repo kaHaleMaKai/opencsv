@@ -6,12 +6,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class FileWriterPluginTest {
+import static org.junit.Assert.assertEquals;
+
+public class ConsoleWriterPluginTest {
     private String[] linesWithIgnore;
     private Iterator<String> unparsedIteratorWithIgnore;
     private Person picard;
@@ -19,7 +23,7 @@ public class FileWriterPluginTest {
 
     @Test(expected = SAXException.class)
     public void xmlFileThrowsOnBadAttribute() throws Exception {
-        final URL resource = FileWriterPluginTest
+        final URL resource = ConsoleWriterPluginTest
                 .class
                 .getClassLoader()
                 .getResource("xml-config/config-with-invalid-attribute.xml");
@@ -31,7 +35,7 @@ public class FileWriterPluginTest {
 
     @Test(expected = SAXException.class)
     public void xmlFileThrowsOnBadElement() throws Exception {
-        final URL resource = FileWriterPluginTest
+        final URL resource = ConsoleWriterPluginTest
                 .class
                 .getClassLoader()
                 .getResource("xml-config/config-with-invalid-element.xml");
@@ -42,19 +46,23 @@ public class FileWriterPluginTest {
     }
 
     @Test
-    public void testFileWriterPlugin() throws Exception {
+    public void testConsolePlugin() throws Exception {
         drObvious.setAge(null);
         ConfigParser configParser;
         CsvToBeanMapper<Person> mapper;
-        final URL resource = FileWriterPluginTest
+        final URL resource = ConsoleWriterPluginTest
                 .class
-                .getResource("/xml-config/file-writer-plugin-config.xml");
+                .getResource("/xml-config/console-plugin-config.xml");
         assert resource != null;
         configParser = ConfigParser.ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
         mapper = configParser.parse();
         final String expectedOutput = "***** Person(age=50, givenName=Jean-Luc, surName=Picard, address=Captain's room, Enterprise)\n" +
-                "***** Person(age=null, givenName=Dr., surName=Obvious, address=Somewhere)\n";
+                                      "***** Person(age=null, givenName=Dr., surName=Obvious, address=Somewhere)\n";
+        final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
         mapper.intoSink();
+        assertEquals(expectedOutput, outContent.toString());
+        System.setOut(System.out);
     }
 
     @Before

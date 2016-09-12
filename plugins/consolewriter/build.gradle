@@ -1,5 +1,5 @@
 version "${rootProject.version}-0"
-def fullName = "${rootProject.name}.plugins.filewriter"
+def fullName = "${rootProject.name}.plugins.consolewriter"
 
 dependencies {
     compile project(":core")

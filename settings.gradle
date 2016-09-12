@@ -1,2 +1,2 @@
 rootProject.name = 'opencsv'
-include 'core', 'plugins'
+include 'core', 'plugins/filewriter', 'plugins/consolewriter'
