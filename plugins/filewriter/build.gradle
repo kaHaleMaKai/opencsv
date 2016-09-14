@@ -7,7 +7,7 @@ dependencies {
 
 publishing {
     publications {
-        "opencsv.plugins"(MavenPublication) {
+        "opencsv.plugins.filewriter"(MavenPublication) {
             from components.java
             artifact javadocJar
             artifact sourcesJar

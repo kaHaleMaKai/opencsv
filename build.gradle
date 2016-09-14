@@ -84,9 +84,6 @@ subprojects {
         compile "org.projectlombok:lombok:1.16.10"
         compile "log4j:log4j:${log4jVersion}"
         compile "log4j:apache-log4j-extras:${log4jVersion}"
-        compile(group: 'com.intellij', name: 'annotations', version: '12.0') {
-            exclude group: "com.intellij"
-        }
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 
@@ -177,6 +174,7 @@ subprojects {
             }
         }
     }
+
 }
 
 task wrapper(type: Wrapper) {

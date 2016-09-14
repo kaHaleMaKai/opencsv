@@ -265,11 +265,16 @@ public class ConfigParser {
         SchemaFactory schemaFactory = SchemaFactory
                 .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         final StreamSource opencsvSchemaSource = new StreamSource(new File(schemaUrl.getFile()));
+        opencsvSchemaSource.setSystemId(schemaUrl.toExternalForm());
         final int numSchemas = sinkPlugins.size() + 1;
         final List<StreamSource> schemas = sinkPlugins
                 .stream()
-                .map(Plugin::getSchemaFile)
-                .map(StreamSource::new)
+                .map((sinkPlugin) -> {
+                    final URL url = sinkPlugin.getSchemaUrl();
+                    final StreamSource source = new StreamSource(new File(url.getFile()));
+                    source.setSystemId(url.toExternalForm());
+                    return source;
+                })
                 .collect(Collectors.toList());
         schemas.add(0, opencsvSchemaSource);
         return schemaFactory.newSchema(schemas.toArray(new Source[numSchemas]));

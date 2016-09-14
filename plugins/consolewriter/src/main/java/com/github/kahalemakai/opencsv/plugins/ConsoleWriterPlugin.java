@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import org.w3c.dom.Node;
 
-import java.io.File;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.Optional;
 
@@ -38,11 +38,8 @@ public class ConsoleWriterPlugin implements SinkPlugin {
      * {@inheritDoc}
      */
     @Override
-    public File getSchemaFile() {
-        return new File(
-                getClass()
-                        .getResource("/schemas/console-writer.xsd")
-                        .getFile());
+    public URL getSchemaUrl() {
+        return getClass().getResource("/schemas/console-writer.xsd");
     }
 
     /**

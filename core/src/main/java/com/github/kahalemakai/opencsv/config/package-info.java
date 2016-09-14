@@ -10,7 +10,5 @@
  * respective nested elements map to methods
  * of the {@link com.github.kahalemakai.opencsv.beans.Builder}
  * class.
- * <p>
- *
  */
 package com.github.kahalemakai.opencsv.config;

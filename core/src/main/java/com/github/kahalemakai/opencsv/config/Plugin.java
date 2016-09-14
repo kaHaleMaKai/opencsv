@@ -3,7 +3,7 @@ package com.github.kahalemakai.opencsv.config;
 import com.github.kahalemakai.opencsv.beans.Builder;
 import org.w3c.dom.Document;
 
-import java.io.File;
+import java.net.URL;
 import java.util.ServiceLoader;
 
 /**
@@ -20,10 +20,10 @@ import java.util.ServiceLoader;
  */
 public interface Plugin {
     /**
-     * Return the associated xml schema file.
-     * @return the associated xml schema file
+     * Return the associated xml schema file url.
+     * @return the associated xml schema file url
      */
-    File getSchemaFile();
+    URL getSchemaUrl();
 
     /**
      * Get the xml namespace that the plugin lives in.
