@@ -15,7 +15,11 @@
  */
 
 version rootProject.version
-def fullName = "${rootProject.name}.${project.name}"
+
+def license = "Apache-2.0"
+def github = "https://github.com"
+def githubUsername = "kaHaleMaKai"
+def fullName = "${rootProject.name}"
 
 dependencies {
     compile 'com.opencsv:opencsv:3.8'
@@ -24,14 +28,48 @@ dependencies {
 
 publishing {
     publications {
-        "opencsv.core"(MavenPublication) {
+        "opencsv"(MavenPublication) {
             from components.java
             artifact javadocJar
             artifact sourcesJar
             groupId rootProject.group
             artifactId fullName
-            version project.version
+            version version
         }
+    }
+}
+
+bintray {
+    user = rootProject.hasProperty("bintrayUser") ? bintrayUser : ""
+    key = rootProject.hasProperty("bintrayApiKey") ? bintrayApiKey : ""
+    publications = [fullName]
+    pkg {
+        repo = 'maven'
+        name = fullName
+        licenses = [license]
+        vcsUrl = "${github}/${githubUsername}/${rootProject.name}"
+
+        githubRepo = "${githubUsername}/${rootProject.name}"
+        githubReleaseNotesFile = 'README.md'
+
+        publicDownloadNumbers = true
+
+        version {
+            name = project.version
+            released = new Date()
+            vcsTag = project.version
+
+            gpg {
+                sign = true
+                passphrase = hasProperty("gpgPassPhrase") ? gpgPassPhrase : ""
+            }
+        }
+    }
+}
+
+task performanceTest(type: Test, group: "verification") {
+    useJUnit {
+        includeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
     }
 }
 

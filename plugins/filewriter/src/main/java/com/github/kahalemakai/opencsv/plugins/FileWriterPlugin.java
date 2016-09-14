@@ -63,8 +63,7 @@ public class FileWriterPlugin implements SinkPlugin {
     }
 
     /**
-     * The sink to use for the target beans.
-     * @return the sink to use for the target beans
+     * {@inheritDoc}
      */
     @Override
     public <T> void configure(Builder<T> builder, Node sink) {

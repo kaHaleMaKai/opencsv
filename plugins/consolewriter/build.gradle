@@ -1,4 +1,8 @@
 version "${rootProject.version}-0"
+
+def license = "Apache-2.0"
+def github = "https://github.com"
+def githubUsername = "kaHaleMaKai"
 def fullName = "${rootProject.name}.plugins.consolewriter"
 
 dependencies {
@@ -14,6 +18,35 @@ publishing {
             groupId rootProject.group
             artifactId fullName
             version project.version
+        }
+    }
+}
+
+bintray {
+    user = rootProject.hasProperty("bintrayUser") ? bintrayUser : ""
+    key = rootProject.hasProperty("bintrayApiKey") ? bintrayApiKey : ""
+    publications = [fullName]
+    pkg {
+        repo = 'maven'
+        name = fullName
+        licenses = [license]
+        vcsUrl = "${github}/${githubUsername}/${rootProject.name}"
+
+        githubRepo = "${githubUsername}/${rootProject.name}"
+        githubReleaseNotesFile = 'README.md'
+
+        publicDownloadNumbers = true
+
+        version {
+            name = project.version
+            desc = ""
+            released = new Date()
+            vcsTag = project.version
+
+            gpg {
+                sign = true
+                passphrase = hasProperty("gpgPassPhrase") ? gpgPassPhrase : ""
+            }
         }
     }
 }

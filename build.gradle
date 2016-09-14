@@ -15,7 +15,7 @@
  */
 
 plugins {
-    id "com.jfrog.bintray" version "1.6" apply false
+    id "com.jfrog.bintray" version "1.7.1" apply false
 }
 
 group 'com.github.kahalemakai'
@@ -57,12 +57,8 @@ idea {
 
 subprojects {
     def fullName = "${rootProject.name}.${project.name}".replace("_", ".")
-    def license = "Apache-2.0"
-    def github = "https://github.com"
-    def githubUsername = "kaHaleMaKai"
     def delombokedDir = "${buildDir}/${fullName}/src-delomboked"
     def log4jVersion = "1.2.17"
-    println "${fullName}:${project.version}"
 
     apply plugin: 'java'
     apply plugin: 'jacoco'
@@ -137,41 +133,6 @@ subprojects {
     test {
         useJUnit {
             excludeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
-        }
-    }
-
-    task performanceTest(type: Test, group: "verification") {
-        useJUnit {
-            includeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
-        }
-    }
-
-    bintray {
-        user = rootProject.hasProperty("bintrayUser") ? bintrayUser : ""
-        key = rootProject.hasProperty("bintrayApiKey") ? bintrayApiKey : ""
-        publications = [fullName]
-        pkg {
-            repo = 'maven'
-            name = fullName
-            licenses = [license]
-            vcsUrl = "${github}/${githubUsername}/${rootProject.name}"
-
-            githubRepo = "${githubUsername}/${rootProject.name}"
-            githubReleaseNotesFile = 'README.md'
-
-            publicDownloadNumbers = true
-
-            version {
-                name = project.version
-                desc = "add apache2 license"
-                released = new Date()
-                vcsTag = project.version
-
-                gpg {
-                    sign = true
-                    passphrase = hasProperty("gpgPassPhrase") ? gpgPassPhrase : ""
-                }
-            }
         }
     }
 
