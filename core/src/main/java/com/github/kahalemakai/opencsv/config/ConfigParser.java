@@ -123,7 +123,10 @@ public class ConfigParser {
      */
     public static final String DEFAULT_NAME_SPACE = "com.github.kahalemakai.opencsv.beans.processing";
 
-    private static final PluginService<SinkPlugin> registeredSinkPlugins = PluginService.of(SinkPlugin.class);
+    /**
+     * List of all registered plugins.
+     */
+    private static final ServiceLoader<SinkPlugin> registeredSinkPlugins = ServiceLoader.load(SinkPlugin.class);
     private final List<SinkPlugin> sinkPlugins;
 
     // variables passed to the Builder instance
@@ -250,24 +253,6 @@ public class ConfigParser {
     }
 
     /**
-     * Obtain an xml attribute's value for a specific node.
-     * @param node the xml node
-     * @param attribute the attribute to lookup
-     * @return the attribute's value, if present
-     */
-    private Optional<String> getValue(final Node node, final String attribute) {
-        final Node item = node.getAttributes().getNamedItem(attribute);
-        if (item == null)
-            return Optional.empty();
-
-        final String value = item.getNodeValue();
-        if (value == null)
-            return Optional.empty();
-        else
-            return Optional.of(value);
-    }
-
-    /**
      * Get a {@code Schema} instance corresponding to the
      * opencsv.xsd schema file.
      * @return the corresponding schema
@@ -316,24 +301,24 @@ public class ConfigParser {
         final Document doc = documentBuilder.parse(this.getXmlInputStream());
         doc.getDocumentElement().normalize();
         final Node reader = doc.getElementsByTagName("csv:reader").item(0);
-        final Optional<String> separator = getValue(reader, "separator");
-        final Optional<String> skipLines = getValue(reader, "skipLines");
+        final Optional<String> separator = getAttributeValue(reader, "separator");
+        final Optional<String> skipLines = getAttributeValue(reader, "skipLines");
 
         /* ********************
          * get the attributes
          * ********************/
 
-        final Optional<String> quoteChar = getValue(reader, "quoteChar");
-        final Optional<String> ignoreLeadingWhiteSpace = getValue(reader, "ignoreLeadingWhiteSpace");
-        final Optional<String> onErrorSkipLine = getValue(reader, "onErrorSkipLine");
-        final Optional<String> quotingBehaviour = getValue(reader, "quotingBehaviour");
-        final Optional<String> charset = getValue(reader, "charset");
+        final Optional<String> quoteChar = getAttributeValue(reader, "quoteChar");
+        final Optional<String> ignoreLeadingWhiteSpace = getAttributeValue(reader, "ignoreLeadingWhiteSpace");
+        final Optional<String> onErrorSkipLine = getAttributeValue(reader, "onErrorSkipLine");
+        final Optional<String> quotingBehaviour = getAttributeValue(reader, "quotingBehaviour");
+        final Optional<String> charset = getAttributeValue(reader, "charset");
 
         final Node config = doc.getElementsByTagName("bean:config").item(0);
-        final Optional<String> className = getValue(config, "class");
-        final Optional<String> nullString = getValue(config, "nullString");
+        final Optional<String> className = getAttributeValue(config, "class");
+        final Optional<String> nullString = getAttributeValue(config, "nullString");
         this.globalNullString = nullString.orElse(DEFAULT_NULL_STRING);
-        final Optional<String> globalTrimming = getValue(config, "trim");
+        final Optional<String> globalTrimming = getAttributeValue(config, "trim");
         if (globalTrimming.isPresent()) {
             this.globalTrimmingMode = globalTrimming.get();
         }
@@ -439,8 +424,8 @@ public class ConfigParser {
             if (field.getNodeType() != ELEMENT_NODE)
                 continue;
             // presence of "name" attribute is enforced by xsd
-            final String column = getValue(field, "name").get();
-            final Optional<String> nullFallsThrough = getValue(field, "nullFallsThrough");
+            final String column = getAttributeValue(field, "name").get();
+            final Optional<String> nullFallsThrough = getAttributeValue(field, "nullFallsThrough");
             if (nullFallsThrough.isPresent()) {
                 switch (NullFallsThroughType.forText(nullFallsThrough.get())) {
                     case BOTH:
@@ -455,12 +440,12 @@ public class ConfigParser {
                         break;
                 }
             }
-            final Optional<String> trim = getValue(field, "trim");
+            final Optional<String> trim = getAttributeValue(field, "trim");
             final boolean doTrim = Boolean.valueOf(trim.orElse(globalTrimmingMode));
             builder.trim(column, doTrim);
 
-            final Optional<String> nullable = getValue(field, "nullable");
-            final Optional<String> maybeNullString = getValue(field, "nullString");
+            final Optional<String> nullable = getAttributeValue(field, "nullable");
+            final Optional<String> maybeNullString = getAttributeValue(field, "nullString");
             final boolean isNullable = Boolean.valueOf(nullable.orElse("false"))
                     || maybeNullString.isPresent();
             if (isNullable) {
@@ -470,14 +455,14 @@ public class ConfigParser {
                         () -> new NullDecoder(nullString),
                         String.format("%s#%s", NullDecoder.class.getCanonicalName(), nullString));
             }
-            final Optional<String> type = getValue(field, "type");
+            final Optional<String> type = getAttributeValue(field, "type");
             if (type.isPresent()) {
                 defineType(builder, column, type.get());
             }
-            final Optional<String> ref = getValue(field, "ref");
+            final Optional<String> ref = getAttributeValue(field, "ref");
             if (ref.isPresent()) {
                 final String refType = ref.get();
-                final Optional<String> refData = getValue(field, "refData");
+                final Optional<String> refData = getAttributeValue(field, "refData");
                 if (refData.isPresent()) {
                     String data = refData.get();
                     switch (refType) {
@@ -557,7 +542,7 @@ public class ConfigParser {
                                        final Node processor) throws InstantiationException, ClassNotFoundException {
         final String processorNodeName = processor.getNodeName();
         // present of attribute "type" is enforced by xsd
-        final String type = getValue(processor, "type").get();
+        final String type = getAttributeValue(processor, "type").get();
         switch (processorNodeName) {
             case BEAN_DECODER:
                 final Class<? extends Decoder<R>> decoderClass = getProcessorClass(type, BEAN_DECODER);
@@ -589,7 +574,7 @@ public class ConfigParser {
     private <E extends Enum<E>> EnumDecoder<E> getEnumDecoder(final Node processor) throws ClassNotFoundException {
         final NodeList maps = processor.getChildNodes();
         // presence of attribute "type" is enforced by xsd
-        final String typeName = getValue(processor, "type").get();
+        final String typeName = getAttributeValue(processor, "type").get();
         final Class<? extends E> enumClass = (Class<? extends E>) Class.forName(typeName);
         final EnumDecoder<E> decoder = new EnumDecoder<>();
         decoder.setType(enumClass);
@@ -597,8 +582,8 @@ public class ConfigParser {
             final Node node = maps.item(i);
             if (node.getNodeType() == ELEMENT_NODE && BEAN_ENUM_MAP.equals(node.getNodeName())) {
                 // presence of attributes "key", "value" is enforced by xsd
-                final String key = getValue(node, "key").get();
-                final String value = getValue(node, "value").get();
+                final String key = getAttributeValue(node, "key").get();
+                final String value = getAttributeValue(node, "value").get();
                 decoder.put(key, value);
             }
         }
@@ -660,10 +645,10 @@ public class ConfigParser {
             if (item.getNodeType() == ELEMENT_NODE) {
                 switch (item.getNodeName()) {
                     case CSV_COLUMN:
-                        fieldList.add(getValue(item, "name").get());
+                        fieldList.add(getAttributeValue(item, "name").get());
                         break;
                     case CSV_IGNORE:
-                        final String count = getValue(item, "count").orElse("1");
+                        final String count = getAttributeValue(item, "count").orElse("1");
                         fieldList.add(String.format("$ignore%s$", count));
                         break;
                 }
@@ -672,6 +657,14 @@ public class ConfigParser {
         return fieldList.toArray(new String[fieldList.size()]);
     }
 
+    /**
+     * Get an {@link InputStream} of the xml config file.
+     * <p>
+     * Repeated invocations always return a fresh input stream.
+     * @return an {@link InputStream} of the xml config file
+     * @throws FileNotFoundException if the underlying {@link File} object
+     * cannot be found
+     */
     private InputStream getXmlInputStream() throws FileNotFoundException {
         InputStream xmlInputStream;
         if (xmlFileAsArray.isPresent()) {
@@ -683,6 +676,16 @@ public class ConfigParser {
         return xmlInputStream;
     }
 
+    /**
+     * Turn an {@link InputStream} into a byte array.
+     * <p>
+     * This method is used to save a copy of the xml config passed in as
+     * {@link InputStream} that can be queries multiple times. This is
+     * essential for validation against an xml schema.
+     * @param xmlInputStream the {@link InputStream} to be saved
+     * @return the {@link InputStream} converted into an array of {@code byte}s
+     * @throws IOException if the {@link InputStream} cannot be read
+     */
     private byte[] asByteArray(final InputStream xmlInputStream) throws IOException {
         final ByteArrayOutputStream sink = new ByteArrayOutputStream();
         int nRead;
@@ -693,6 +696,12 @@ public class ConfigParser {
         return sink.toByteArray();
     }
 
+    /**
+     * Get a copy of the registered sink plugins.
+     * @return a copy of the registered sink plugins
+     * @throws IllegalAccessException if the {@code SinkPlugins} constructor cannot be accessed
+     * @throws InstantiationException if the creation of a new {@link SinkPlugin} fails
+     */
     private static List<SinkPlugin> getSinkPlugins() throws IllegalAccessException, InstantiationException {
         registeredSinkPlugins.reload();
         final List<SinkPlugin> plugins = new ArrayList<>();
@@ -701,6 +710,24 @@ public class ConfigParser {
             plugins.add(sinkPlugin);
         }
         return Collections.unmodifiableList(plugins);
+    }
+
+    /**
+     * Obtain an xml attribute's value for a specific node.
+     * @param node the xml node
+     * @param attribute the attribute to lookup
+     * @return the attribute's value, if present
+     */
+    public static Optional<String> getAttributeValue(final Node node, final String attribute) {
+        final Node item = node.getAttributes().getNamedItem(attribute);
+        if (item == null)
+            return Optional.empty();
+
+        final String value = item.getNodeValue();
+        if (value == null)
+            return Optional.empty();
+        else
+            return Optional.of(value);
     }
 
     /**

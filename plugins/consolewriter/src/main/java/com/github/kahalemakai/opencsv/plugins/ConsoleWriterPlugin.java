@@ -1,7 +1,7 @@
 package com.github.kahalemakai.opencsv.plugins;
 
 import com.github.kahalemakai.opencsv.beans.Builder;
-import com.github.kahalemakai.opencsv.config.Plugin;
+import com.github.kahalemakai.opencsv.config.ConfigParser;
 import com.github.kahalemakai.opencsv.config.Sink;
 import com.github.kahalemakai.opencsv.config.SinkPlugin;
 import lombok.Getter;
@@ -13,14 +13,30 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.Optional;
 
+/**
+ * A toy example of a sink plugin that simply outputs to stdout.
+ * <p>
+ * The xml {@code <config>} tab accepts an attribute {@code prefix}. The given
+ * value will be prefixed to every line of output; it defaults to the empty string.
+ */
 @RequiredArgsConstructor
 @Log4j
 public class ConsoleWriterPlugin implements SinkPlugin {
+    /**
+     * The associated xml namespace.
+     */
     private static final String NAMESPACE = "http://github.com/kaHaleMaKai/opencsv/plugins/console-writer";
 
+    /**
+     * The sink that consumes the bean iterator.
+     * @return the sink that consumes the bean iterator
+     */
     @Getter
     Sink sink;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public File getSchemaFile() {
         return new File(
@@ -29,13 +45,19 @@ public class ConsoleWriterPlugin implements SinkPlugin {
                         .getFile());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public <T> void configure(Builder<T> builder, Node sink) {
-        final Optional<String> prefix = Plugin.getAttributeValue(sink, "prefix");
+        final Optional<String> prefix = ConfigParser.getAttributeValue(sink, "prefix");
         this.sink = (Iterator<?> it) -> it.forEachRemaining((el) -> System.out.println(prefix.orElse("") + el.toString()));
         builder.sink(this.sink);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getNameSpace() {
         return NAMESPACE;

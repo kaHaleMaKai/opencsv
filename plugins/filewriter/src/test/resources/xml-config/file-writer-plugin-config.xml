@@ -48,6 +48,7 @@
     </bean:config>
 
     <file:config path="/tmp/test.out"
-                 type="toString()" />
+                 type="toString()"
+                 append="false" />
 
 </opencsv:resources>

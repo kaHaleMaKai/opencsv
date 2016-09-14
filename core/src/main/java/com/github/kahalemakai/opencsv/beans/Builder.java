@@ -241,7 +241,14 @@ public class Builder<T> {
     @Getter
     private Iterator<String> lineIterator;
 
+    /**
+     * An input stream that can be used as source for the csv data.
+     */
     private InputStream inputStream;
+
+    /**
+     * Determines if a source has been set up.
+     */
     private boolean sourceWasChosen;
 
     /**
@@ -255,8 +262,16 @@ public class Builder<T> {
      */
     private final Map<String, Object> columnData;
 
+    /**
+     * The {@link Sink} that consumes the iterator of beans.
+     * @return the {@link Sink} that consumes the iterator of beans
+     */
     @Accessors(chain = true, fluent = true) @Getter
     private Sink sink;
+    /**
+     * A monitor lock for the sink.
+     * @return a monitor lock for the sink
+     */
     @Accessors(chain = true, fluent = true) @Getter
     private final Object[] $sinkLock = new Object[0];
 
@@ -845,11 +860,20 @@ public class Builder<T> {
      * non-public methods
      * ********************/
 
+    /**
+     * Signal whether a reader was set up as input source.
+     * @param value the new boolean state
+     * @return the {@link Builder} instance
+     */
     private Builder<T> setReaderSetup(final boolean value) {
         readerSetup.set(value);
         return this;
     }
 
+    /**
+     * Assert that a source is only set once.
+     * @throws IllegalStateException if a source has been defined earlier
+     */
     private void onSourceChosenThrow() throws IllegalStateException {
         if (sourceWasChosen) {
             final String msg = "source has already been set and may not be set twice";
@@ -858,6 +882,10 @@ public class Builder<T> {
         }
     }
 
+    /**
+     * Tell if a header has been defined.
+     * @return if a header has been defined
+     */
     private boolean isHeaderDefined() {
         return getStrategy().isHeaderDefined();
     }
