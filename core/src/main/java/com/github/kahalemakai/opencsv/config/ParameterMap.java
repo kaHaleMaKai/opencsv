@@ -15,14 +15,21 @@ import java.util.regex.Pattern;
 @Log4j
 @RequiredArgsConstructor(staticName = "init")
 public class ParameterMap {
+
     /**
      * Backing map.
      */
     private final Map<String, String> parameters = new HashMap<>();
+
     /**
      * Pattern for valid parameter names (ns:name).
      */
-    private final Pattern VALID_NAME = Pattern.compile("^[a-zA-Z]+[a-zA-Z0-9-_]*:[a-zA-Z]+[a-zA-Z0-9-_]*$");
+    private static final Pattern VALID_NAME = Pattern.compile("^[a-zA-Z]+[a-zA-Z0-9-_]*:[a-zA-Z]+[a-zA-Z0-9-_]*$");
+
+    /**
+     * Basic attribute value validation.
+     */
+    private static final Pattern VALID_VALUE = Pattern.compile("^[^<\"]*");
 
     /**
      * Put a new key=value pair into the parameter map.
@@ -32,16 +39,24 @@ public class ParameterMap {
      * @throws IllegalStateException if the parameter has already been defined
      */
     public void put(final String name, final String value) throws IllegalArgumentException, IllegalStateException {
-        final Matcher matcher = VALID_NAME.matcher(name);
-        if (!matcher.matches()) {
-            final String msg = String.format("parameter '%s' is invalid. must match pattern %s", name, VALID_NAME.pattern());
-            log.error(msg);
-            throw new IllegalArgumentException(msg);
-        }
         if (parameters.containsKey(name)) {
             final String msg = String.format("ConfigParser already includes mapping for parameter '%s'", name);
             log.error(msg);
             throw new IllegalStateException(msg);
+        }
+        final Matcher nameMatcher = VALID_NAME.matcher(name);
+        if (!nameMatcher.matches()) {
+            final String msg = String.format("parameter '%s' is invalid. must match pattern %s",
+                    name, VALID_NAME.pattern());
+            log.error(msg);
+            throw new IllegalArgumentException(msg);
+        }
+        final Matcher valueMatcher = VALID_VALUE.matcher(value);
+        if (!valueMatcher.matches()) {
+            final String msg = String.format("value '%s' for parameter '%s' is invalid. must match pattern %s",
+                    value, name, VALID_VALUE.pattern());
+            log.error(msg);
+            throw new IllegalArgumentException(msg);
         }
         parameters.put(name, value);
 

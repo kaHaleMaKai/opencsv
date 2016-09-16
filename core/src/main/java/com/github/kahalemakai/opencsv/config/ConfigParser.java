@@ -31,11 +31,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.*;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -252,6 +251,123 @@ public class ConfigParser {
         return value.get();
     }
 
+
+    /**
+     * Inject registered parameters into the xml document.
+     * <p>
+     * A parameter pattern is defined as the sequence
+     * <code>$&#123;</code>{@code [a-z][a-z0-9_]*:[a-z][a-z0-9_]*}<code></code>&#125;</code>. If it is
+     * found anywhere inside an xml document (wellformedness of xml limits possible locations to
+     * attribute values), it will be replaced by the registered parameter value.
+     * <p>
+     * FIXME: care for different character encodings
+     * @param xmlInputStream the xml config file as an {@link InputStream}
+     * @return a byte array with parameters substituted by the corresponding values
+     * @throws NoSuchElementException if an unregistered parameter is encountered
+     * @throws IllegalStateException if a parameter pattern is not correctly closed
+     * @throws IOException if en error happens while reading the xml config file
+     */
+    private byte[] withParameters(final InputStream xmlInputStream)
+            throws NoSuchElementException, IllegalStateException, IOException {
+        final InputStreamReader reader = new InputStreamReader(xmlInputStream);
+        final ByteArrayOutputStream sink = new ByteArrayOutputStream();
+        final OutputStreamWriter writer = new OutputStreamWriter(sink);
+        boolean dollarFound = false,
+                paramFound = false;
+        int paramLength = 0,
+            currentColumn = 0,
+            currentLine = 1,
+            nextChar,
+            parameterSequenceStartCol = 0;
+        final char[] paramBuffer = new char[1024];
+        char c;
+        final char dollar = '$';
+        final char opening = '{';
+        final char closing = '}';
+        final char eol = '\n';
+
+        while ((nextChar = reader.read()) != -1) {
+            c = (char) nextChar;
+
+            // for pretty printing
+            if (c == eol) {
+                currentColumn = 0;
+                currentLine++;
+            }
+            currentColumn++;
+
+            if (!dollarFound) { // are still in regular text mode
+                if (c == dollar) {
+                    dollarFound = true; // expect a parameter pattern: ${...},
+                    continue;           // continue with the next char
+                }
+                // else it's just a regular char; write it out
+                writer.write(nextChar);
+            }
+            else { // expect a parameter pattern
+                if (!paramFound) { // which has not been found yet
+                    if (c == opening) { // but here it comes
+                        paramFound = true;
+                        parameterSequenceStartCol = currentColumn - 2;
+                        continue; // and step to the next char
+                    }
+                    // previous dollar was just a regular token,
+                    // just write it out
+                    writer.write(dollar);
+
+                    // if current char were a dollar, a parameter pattern
+                    // should again be expected (dollarFound stays true)
+                    if (c != dollar) { // but if it's not a dollar,
+                        dollarFound = false; // go back to normal text mode
+                        writer.write(c); // and write the current character out
+                    }
+                }
+                else { // parameter found
+                    if (c != closing) { // still not at the end of the pattern
+                        if (c == ':'
+                                || c == '_'
+                                || (nextChar >= '0' && nextChar <= '9')
+                                || (nextChar >= 'A' && nextChar <= 'Z')
+                                || (nextChar >= 'a' && nextChar <= 'z')) {
+                            paramBuffer[paramLength] = c; // and construct the parameter name
+                            paramLength++; // and memorize the length of the parameter name
+                        }
+                        else {
+                            final String msg = new StringBuilder()
+                                    .append("found illegal parameter substitution sequence '${")
+                                    .append(paramBuffer, 0, paramLength)
+                                    .append(c)
+                                    .append("' at line: ")
+                                    .append(currentLine)
+                                    .append(", column: ")
+                                    .append(parameterSequenceStartCol)
+                                    .toString();
+                            log.error(msg);
+                            throw new IllegalStateException(msg);
+                        }
+                    }
+                    else {
+                        // end of the parameter pattern reached
+                        // query the global parameter map for the corresponding value
+                        // if no param has been injected, this will throw
+                        final String paramName = new String(paramBuffer, 0, paramLength);
+                        final String paramValue = resolveParameter(paramName);
+                        writer.write(paramValue); // write the value instead of the parameter pattern
+                        paramLength = 0; // reset the memorized parameter length
+                        paramFound = false; // and reset the book-keeping flags
+                        dollarFound = false;
+                        parameterSequenceStartCol = 0;
+                    }
+                }
+            }
+        }
+        // no need to check for un-closed parameter patterns at the end
+        // xml is well-formed, so every attribute (only place for ${...} patterns)
+        // will be closed until the eof and thus no further checking is required
+        writer.flush(); // remaining chars get written to the ByteArrayOutputStream
+        return sink.toByteArray();
+    }
+
     /**
      * Get a {@code Schema} instance corresponding to the
      * opencsv.xsd schema file.
@@ -295,15 +411,23 @@ public class ConfigParser {
      */
     public <T> CsvToBeanMapper<T> parse()
             throws ParserConfigurationException, IOException, SAXException, InstantiationException, ClassNotFoundException, IllegalAccessException {
+
+        // check wellformedness
+        final boolean wellFormed = isWellFormed(getXmlInputStream());
+        if (!wellFormed) {
+            //FIXME
+            throw new RuntimeException("not well-formed");
+        }
+        final byte[] bytes = withParameters(getXmlInputStream());
         final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         // don't set validating behaviour to true -> or else a DTD is expected
         documentBuilderFactory.setSchema(this.getSchema());
         documentBuilderFactory.setNamespaceAware(true);
         final Schema schema = documentBuilderFactory.getSchema();
         final Validator validator = schema.newValidator();
-        validator.validate(new StreamSource(this.getXmlInputStream()));
+        validator.validate(new StreamSource(new ByteArrayInputStream(bytes)));
         final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-        final Document doc = documentBuilder.parse(this.getXmlInputStream());
+        final Document doc = documentBuilder.parse(new ByteArrayInputStream(bytes));
         doc.getDocumentElement().normalize();
         final Node reader = doc.getElementsByTagName("csv:reader").item(0);
         final Optional<String> separator = getAttributeValue(reader, "separator");
@@ -733,6 +857,29 @@ public class ConfigParser {
             return Optional.empty();
         else
             return Optional.of(value);
+    }
+
+    /**
+     * Assert that an xml document is well-formed.
+     * <p>
+     * The xml document is fed into a sax parser and checked for errors.
+     * @param xmlInputStream the xml document as input stream
+     * @return true if the document is well-formed, else false
+     * @throws IOException if the document cannot be read
+     * @throws ParserConfigurationException if the sax parser cannot be configured
+     * @throws SAXException if the sax parser cannot be created
+     */
+    private static boolean isWellFormed(final InputStream xmlInputStream) throws IOException, ParserConfigurationException, SAXException {
+        final SAXParserFactory factory = SAXParserFactory.newInstance();
+        factory.setNamespaceAware(true);
+        factory.setValidating(false);
+        final SAXParser parser = factory.newSAXParser();
+        try {
+            parser.parse(xmlInputStream, new DefaultHandler());
+        } catch (SAXException e) {
+            return false;
+        }
+        return true;
     }
 
     /**

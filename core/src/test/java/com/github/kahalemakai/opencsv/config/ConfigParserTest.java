@@ -165,6 +165,56 @@ public class ConfigParserTest {
         assertEquals(drObvious, it.next());
     }
 
+    @Test
+    public void testArbitraryParameterInjection() throws Exception {
+        picard.setAge(123);
+        drObvious.setAge(123);
+        picard.setGivenName(picard.getSurName());
+        drObvious.setGivenName(drObvious.getSurName());
+        ConfigParser configParser;
+        CsvToBeanMapper<Person> mapper;
+        Iterator<Person> it;
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-arbitrary-injection.xml");
+        assert resource != null;
+        configParser = ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore)
+                .injectParameter("test:age", "123")
+                .injectParameter("test:ageColumnName", "age")
+                .injectParameter("test:ignoreFour", "4")
+                .injectParameter("test:nullable", "ru");
+        mapper = configParser.parse();
+        it = mapper.iterator();
+        assertEquals(picard, it.next());
+        assertEquals(drObvious, it.next());
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void unresolvedParametersThrow() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-arbitrary-injection.xml");
+        assert resource != null;
+        ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore)
+                .parse();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void badParameterPatternThrows() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-wrong-parameter-substitution.xml");
+        assert resource != null;
+        ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore)
+                .parse();
+    }
+
     @Test(expected = NoSuchElementException.class)
     public void testParameterInjectionThrows() throws Exception {
         ConfigParser configParser;
