@@ -340,12 +340,13 @@ public class ConfigParserTest {
         assert resource != null;
         final ConfigParser configParser = ConfigParser
                 .ofUnparsedLines(resource, () -> getUnparsedIteratorWithSpaces);
-        final CsvToBeanMapper<Person> mapper = configParser.parse();
-        final Iterator<Person> it = mapper.iterator();
-        picard.setSurName("   Picard  ");
-        drObvious.setSurName("  Obvious  ");
-        assertEquals(picard, it.next());
-        assertEquals(drObvious, it.next());
+        try ( CsvToBeanMapper<Person> mapper = configParser.parse()) {
+            final Iterator<Person> it = mapper.iterator();
+            picard.setSurName("   Picard  ");
+            drObvious.setSurName("  Obvious  ");
+            assertEquals(picard, it.next());
+            assertEquals(drObvious, it.next());
+        }
     }
 
     @Before

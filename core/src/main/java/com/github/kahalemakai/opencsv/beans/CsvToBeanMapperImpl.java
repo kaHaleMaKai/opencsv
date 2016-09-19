@@ -30,7 +30,6 @@ import lombok.extern.log4j.Log4j;
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyEditor;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
@@ -63,6 +62,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final Map<String, Object> columnData;
     private final TupleList<String, Integer> columnsForIteration;
     private final Sink sink;
+    private final ExceptionalAction<IOException> finalizer;
 
     @Getter(AccessLevel.PRIVATE) @Setter
     private boolean errorOnClosingReader;
@@ -104,6 +104,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         this.columnData = builder.getColumnData();
         this.columnsForIteration = TupleList.of(String.class, Integer.class);
         this.sink = builder.sink();
+        this.finalizer = builder.finalizer();
         log.debug(String.format("new CsvToBeanMapper instance built:\n%s", this.toString()));
     }
 
@@ -113,7 +114,8 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      * @param reader a {@code Reader} instance
      * @param lineIterator an iterable of unparsed csv lines
      * @return the correct input source turned turned into an {@code Iterable} of parsed lines
-     * @throws IllegalStateException
+     * @throws IllegalStateException if using csv column header directly from the datas' first line
+     * fails (in case the headers have not been defined programmatically before)
      */
     private Iterable<String[]> defineSource(final Iterable<String[]> parsedIterable,
                                             final Reader reader,
@@ -210,7 +212,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      * {@inheritDoc}
      */
     @Override
-    public void intoSink() throws UnsupportedOperationException {
+    public void intoSink() throws UnsupportedOperationException, PluginException {
         if (this.sink == null) {
             final String msg = "no sink has been added";
             log.error(msg);
@@ -240,17 +242,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      */
     @Override
     public void close() throws IOException {
-        if (unsetReaderIsSetup()) {
-            try {
-                if (source instanceof Closeable) {
-                    ((Closeable) source).close();
-                }
-            } catch (IOException e) {
-                setReaderIsSetup();
-                setErrorOnClosingReader(true);
-                e.printStackTrace();
-            }
-        }
+        this.finalizer.act();
     }
 
     /**
@@ -660,6 +652,5 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         }
 
     }
-
 
 }

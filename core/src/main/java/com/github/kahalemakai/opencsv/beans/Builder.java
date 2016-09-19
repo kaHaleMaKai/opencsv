@@ -416,7 +416,7 @@ public class Builder<T> {
      * @param inputFile File to be used as source
      * @return the {@code Builder} instance
      */
-    public Builder<T> withInputStream(final File inputFile) {
+    public Builder<T> withFile(final File inputFile) {
         onSourceChosenThrow();
         sourceWasChosen = true;
         try {
@@ -888,6 +888,23 @@ public class Builder<T> {
      */
     private boolean isHeaderDefined() {
         return getStrategy().isHeaderDefined();
+    }
+
+    ExceptionalAction<IOException> finalizer() {
+        return () -> {
+            if (this.inputStream != null) {
+                this.inputStream.close();
+            }
+            if (this.reader != null) {
+                this.reader.close();
+            }
+            if (this.source != null && this.source instanceof Closeable) {
+                ((Closeable) this.source).close();
+            }
+            if (this.lineIterator != null && this.lineIterator instanceof Closeable) {
+                ((Closeable) this.lineIterator).close();
+            }
+        };
     }
 
 }

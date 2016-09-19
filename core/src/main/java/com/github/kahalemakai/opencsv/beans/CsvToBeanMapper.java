@@ -16,13 +16,11 @@
 
 package com.github.kahalemakai.opencsv.beans;
 
-import java.io.Closeable;
-
 /**
  * Interface type for easy-to-use mappers that convert csvs into beans.
  * @param <T> type the bean shall be converted to
  */
-public interface CsvToBeanMapper<T> extends Closeable, Iterable<T> {
+public interface CsvToBeanMapper<T> extends AutoCloseable, Iterable<T> {
 
     /**
      * Get the type the csv shall be converted to.
