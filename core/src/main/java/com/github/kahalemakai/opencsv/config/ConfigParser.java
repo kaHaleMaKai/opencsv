@@ -217,24 +217,6 @@ public class ConfigParser {
         return this;
     }
 
-//    public static boolean addPlugin(final Class<? extends Plugin> pluginClass) {
-//        if (registeredSinkPlugins.contains(pluginClass)) {
-//            return false;
-//        }
-//        if (SinkPlugin.class.isAssignableFrom(pluginClass)) {
-//            @SuppressWarnings("unchecked")
-//            final Class<? extends SinkPlugin> sinkPluginClass = (Class<? extends SinkPlugin>) pluginClass;
-//            registeredSinkPlugins.add(sinkPluginClass);
-//            return true;
-//        }
-//        else {
-//            final String msg = String.format("plugin of type %s is currently not supported. please use one of %s",
-//                    pluginClass.getCanonicalName(), Plugin.getSupportedPlugins());
-//            log.error(msg);
-//            throw new UnsupportedOperationException(msg);
-//        }
-//    }
-
     /**
      * Lookup the string value associated with a named config parameter.
      * @param name the parameter to lookup
@@ -438,6 +420,7 @@ public class ConfigParser {
          * ********************/
 
         final Optional<String> quoteChar = getAttributeValue(reader, "quoteChar");
+        final Optional<String> escapeChar = getAttributeValue(reader, "escapeChar");
         final Optional<String> ignoreLeadingWhiteSpace = getAttributeValue(reader, "ignoreLeadingWhiteSpace");
         final Optional<String> onErrorSkipLine = getAttributeValue(reader, "onErrorSkipLine");
         final Optional<String> quotingBehaviour = getAttributeValue(reader, "quotingBehaviour");
@@ -466,6 +449,7 @@ public class ConfigParser {
         final Builder<T> builder = CsvToBeanMapper.builder(type);
 
         if (quoteChar.isPresent()) builder.quoteChar(quoteChar.get().charAt(0));
+        if (escapeChar.isPresent()) builder.escapeChar(escapeChar.get().charAt(0));
         if (separator.isPresent()) builder.separator(separator.get().charAt(0));
         if (ignoreLeadingWhiteSpace.isPresent()) {
             final boolean b = Boolean.parseBoolean(ignoreLeadingWhiteSpace.get());
