@@ -20,7 +20,6 @@
            xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
            elementFormDefault="qualified">
 
-
     <!--type definitions-->
 
     <xs:complexType name="Processor">
@@ -43,10 +42,10 @@
 
     <xs:complexType name="Field">
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="decoder"        type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
-            <xs:element name="enum"           type="bean:EnumDecoder" minOccurs="0" maxOccurs="unbounded" />
-            <xs:element name="postProcessor"  type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
-            <xs:element name="postValidator"  type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="decoder"       type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="enum"          type="bean:EnumDecoder" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="postProcessor" type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="postValidator" type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
         </xs:choice>
 
         <xs:attributeGroup ref="bean:FieldAttributes" />
@@ -63,9 +62,6 @@
 
     <xs:simpleType name="ColumnDataSource">
         <xs:restriction base="xs:string">
-            <!--<xs:enumeration value="input" />-->
-            <!--<xs:enumeration value="output" />-->
-            <!--<xs:enumeration value="enum" />-->
             <xs:enumeration value="column" />
             <xs:enumeration value="value" />
             <xs:enumeration value="parameter" />
@@ -80,6 +76,8 @@
             <xs:enumeration value="boolean" />
             <xs:enumeration value="float" />
             <xs:enumeration value="double" />
+            <xs:enumeration value="double" />
+            <xs:enumeration value="String" />
         </xs:restriction>
     </xs:simpleType>
     
@@ -100,7 +98,7 @@
         <xs:attribute name="name" type="xs:string" use="required" />
         <xs:attribute name="ref" type="bean:ColumnDataSource" use="optional" />
         <xs:attribute name="refData" type="xs:string" use="optional" />
-        <xs:attribute name="type" type="bean:ColumnType" use="optional" />
+        <xs:attribute name="type" type="bean:ColumnType" use="optional" default="String" />
         <xs:attribute name="nullFallsThrough" type="bean:NullFallsThrough" />
         <xs:attribute name="nullString" type="xs:string" use="optional" />
         <xs:attribute name="nullable" type="xs:boolean" use="optional" />
@@ -124,4 +122,5 @@
 
         </xs:complexType>
     </xs:element>
+
 </xs:schema>

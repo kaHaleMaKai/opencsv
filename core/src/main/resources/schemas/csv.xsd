@@ -36,12 +36,44 @@
         </xs:restriction>
     </xs:simpleType>
 
+    <xs:simpleType name="Separators">
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="," />
+                    <xs:enumeration value="\t" />
+                    <xs:enumeration value=" " />
+                    <xs:enumeration value=";" />
+                    <xs:enumeration value="|" />
+                    <xs:enumeration value=":" />
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string" />
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+
+    <xs:simpleType name="QuoteChars">
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="&quot;" />
+                    <xs:enumeration value="&apos;" />
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string" />
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+
     <!--attribute definitions-->
 
     <xs:attributeGroup name="ReaderAttributes">
-        <xs:attribute name="separator" type="xs:string" default="," />
+        <xs:attribute name="separator" type="csv:Separators" default="," />
         <xs:attribute name="skipLines" type="xs:int" default="0" />
-        <xs:attribute name="quoteChar" type="xs:string" default="&quot;" />
+        <xs:attribute name="quoteChar" type="csv:QuoteChars" default="&quot;" />
         <xs:attribute name="ignoreLeadingWhiteSpace" type="xs:boolean" default="true" />
         <xs:attribute name="onErrorSkipLine" type="xs:boolean" default="false" />
         <xs:attribute name="quotingBehaviour" type="csv:QuotingMode" default="non-strict" />
@@ -54,7 +86,7 @@
     </xs:attributeGroup>
 
     <xs:attributeGroup name="IgnoreAttributes">
-        <xs:attribute name="count" default="1" type="csv:PositiveInt" />
+        <xs:attribute name="count" type="csv:PositiveInt" default="1" />
     </xs:attributeGroup>
 
     <!--element definitions-->

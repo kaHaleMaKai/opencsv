@@ -37,6 +37,7 @@ import static org.junit.Assert.assertEquals;
 public class ConfigParserTest {
     CSVParser parser;
     String linesWithUmlauts;
+    String linesWithEscape;
     String[] linesWithIgnore;
     String[] linesWithSpaces;
     String[] lines;
@@ -274,6 +275,17 @@ public class ConfigParserTest {
     }
 
     @Test
+    public void testEscapeChar() throws Exception {
+        final InputStream resource = ConfigParserTest.class.getClassLoader().getResourceAsStream("xml-config/config-with-escape-char.xml");
+        assert resource != null;
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(linesWithEscape.getBytes());
+        final ConfigParser configParser = ConfigParser.ofInputStream(resource, inputStream);
+        final CsvToBeanMapper<Person> mapper = configParser.parse();
+        final Iterator<Person> it = mapper.iterator();
+        assertEquals(picard, it.next());
+    }
+
+    @Test
     public void testParseFromInputStream() throws Exception {
         fraenkie.setAge(42);
         final InputStream resource = ConfigParserTest.class.getClassLoader().getResourceAsStream("xml-config/config.xml");
@@ -365,6 +377,7 @@ public class ConfigParserTest {
                 "    50 ,Jean-Luc,   Picard  , 'Captain\\'s room, Enterprise' ",
                 " null   ,Dr. ,  Obvious  , Somewhere "
         };
+        linesWithEscape = "50xJean-LucxPicardxCaptain9's room, Enterprise";
 
         linesWithEnum = new String[] {"n", "x"};
         picard = new Person();

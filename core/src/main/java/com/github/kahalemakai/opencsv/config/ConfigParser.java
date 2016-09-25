@@ -569,7 +569,7 @@ public class ConfigParser {
                         String.format("%s#%s", NullDecoder.class.getCanonicalName(), nullString));
             }
             final Optional<String> type = getAttributeValue(field, "type");
-            if (type.isPresent()) {
+            if (type.isPresent() && !type.get().equals("String")) {
                 defineType(builder, column, type.get());
             }
             final Optional<String> ref = getAttributeValue(field, "ref");
