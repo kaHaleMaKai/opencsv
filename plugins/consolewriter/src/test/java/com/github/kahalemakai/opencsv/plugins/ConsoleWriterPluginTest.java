@@ -33,7 +33,7 @@ public class ConsoleWriterPluginTest {
     }
 
 
-    @Test(expected = SAXException.class)
+    @Test(expected = RuntimeException.class)
     public void xmlFileThrowsOnBadElement() throws Exception {
         final URL resource = ConsoleWriterPluginTest
                 .class
