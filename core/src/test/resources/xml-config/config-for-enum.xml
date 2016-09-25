@@ -16,7 +16,7 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.2.3/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.2.3/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
