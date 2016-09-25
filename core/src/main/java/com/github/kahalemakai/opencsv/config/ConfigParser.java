@@ -67,6 +67,27 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
  */
 @Log4j
 public class ConfigParser {
+
+    /**
+     * Xml namespace of opencsv root element.
+     */
+    public static final String OPENCSV_NAMESPACE = "http://github.com/kaHaleMaKai/opencsv";
+
+    /**
+     * Xml namespace of csv reader config.
+     */
+    public static final String CSV_NAMESPACE = "http://github.com/kaHaleMaKai/opencsv/csv";
+
+    /**
+     * Xml namespace of bean mapper config.
+     */
+    public static final String BEAN_NAMESPACE = "http://github.com/kaHaleMaKai/opencsv/bean";
+
+    /**
+     * Xml namespace of sink config.
+     */
+    public static final String SINK_NAMESPACE = "http://github.com/kaHaleMaKai/opencsv/sink";
+
     /**
      * The default null string.
      */
@@ -85,42 +106,42 @@ public class ConfigParser {
     /**
      * The namespaced column element name.
      */
-    public static final String CSV_COLUMN = "csv:column";
+    public static final String CSV_COLUMN = "column";
 
     /**
      * The ignore column element name.
      */
-    public static final String CSV_IGNORE = "csv:ignore";
+    public static final String CSV_IGNORE = "ignore";
 
     /**
      * The namespaced decoder element name.
      */
-    public static final String BEAN_DECODER = "bean:decoder";
+    public static final String BEAN_DECODER = "decoder";
 
     /**
      * The namespaced enum element name.
      */
-    public static final String BEAN_ENUM = "bean:enum";
+    public static final String BEAN_ENUM = "enum";
 
     /**
      * The namespaced enum map element name.
      */
-    public static final String BEAN_ENUM_MAP = "bean:map";
+    public static final String BEAN_ENUM_MAP = "map";
 
     /**
      * The namespaced post processor element name.
      */
-    public static final String BEAN_POSTPROCESSOR = "bean:postProcessor";
+    public static final String BEAN_POSTPROCESSOR = "postProcessor";
 
     /**
      * The namespaced post validator element name.
      */
-    public static final String BEAN_POSTVALIDATOR = "bean:postValidator";
+    public static final String BEAN_POSTVALIDATOR = "postValidator";
 
     /**
-     * The default namespace.
+     * The default processing package.
      */
-    public static final String DEFAULT_NAME_SPACE = "com.github.kahalemakai.opencsv.beans.processing";
+    public static final String DEFAULT_PROCESSING_PACKAGE = "com.github.kahalemakai.opencsv.beans.processing";
 
     /**
      * List of all registered plugins.
@@ -411,7 +432,7 @@ public class ConfigParser {
         final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
         final Document doc = documentBuilder.parse(new ByteArrayInputStream(bytes));
         doc.getDocumentElement().normalize();
-        final Node reader = doc.getElementsByTagName("csv:reader").item(0);
+        final Node reader = doc.getElementsByTagNameNS(CSV_NAMESPACE, "reader").item(0);
         final Optional<String> separator = getAttributeValue(reader, "separator");
         final Optional<String> skipLines = getAttributeValue(reader, "skipLines");
 
@@ -426,7 +447,7 @@ public class ConfigParser {
         final Optional<String> quotingBehaviour = getAttributeValue(reader, "quotingBehaviour");
         final Optional<String> charset = getAttributeValue(reader, "charset");
 
-        final Node config = doc.getElementsByTagName("bean:config").item(0);
+        final Node config = doc.getElementsByTagNameNS(BEAN_NAMESPACE, "config").item(0);
         final Optional<String> className = getAttributeValue(config, "class");
         final Optional<String> nullString = getAttributeValue(config, "nullString");
         this.globalNullString = nullString.orElse(DEFAULT_NULL_STRING);
@@ -534,6 +555,7 @@ public class ConfigParser {
 //        final Class<? extends T> builderType = builder.getStrategy().getType();
         for (int i = 0; i < fields.getLength(); ++i) {
             final Node field = fields.item(i);
+            final String fieldNs = field.getNamespaceURI();
             if (field.getNodeType() != ELEMENT_NODE)
                 continue;
             // presence of "name" attribute is enforced by xsd
@@ -570,7 +592,7 @@ public class ConfigParser {
             }
             final Optional<String> type = getAttributeValue(field, "type");
             if (type.isPresent() && !type.get().equals("String")) {
-                defineType(builder, column, type.get());
+                defineType(builder, column, fieldNs, type.get());
             }
             final Optional<String> ref = getAttributeValue(field, "ref");
             if (ref.isPresent()) {
@@ -589,14 +611,16 @@ public class ConfigParser {
                             if (type.isPresent()) {
                                 final String decoderType = String.format("%s%sDecoder",
                                         type.get().substring(0, 1).toUpperCase(), type.get().substring(1));
-                                final Class<? extends Decoder<?>> decoderClass = getProcessorClass(decoderType, BEAN_DECODER);
+                                final Class<? extends Decoder<?>> decoderClass =
+                                        getProcessorClass(decoderType, fieldNs, BEAN_DECODER);
                                 final Decoder<?> decoder = decoderClass.newInstance();
                                 final ResultWrapper<?> wrapper = decoder.decode(data);
                                 if (wrapper.success()) {
                                     decodedRefData = wrapper.get();
                                 }
                                 else {
-                                    final String msg = String.format("could not decode refData '%s' as type %s", data, type);
+                                    final String msg = String.format("could not decode refData '%s' as type %s",
+                                            data, type);
                                     log.error(msg);
                                     throw new InstantiationError(msg);
                                 }
@@ -632,9 +656,12 @@ public class ConfigParser {
      * @throws ClassNotFoundException if the decoder class cannot be found
      * @throws InstantiationException if the decoder cannot be instantiated
      */
-    private <T> void defineType(final Builder<T> builder, final String columnName, final String type) throws ClassNotFoundException, InstantiationException {
+    private <T> void defineType(final Builder<T> builder,
+                                final String columnName,
+                                final String ns,
+                                final String type) throws ClassNotFoundException, InstantiationException {
         final String decoderType = String.format("%s%sDecoder", type.substring(0, 1).toUpperCase(), type.substring(1));
-        builder.registerDecoder(columnName, getProcessorClass(decoderType, BEAN_DECODER));
+        builder.registerDecoder(columnName, getProcessorClass(decoderType, ns, BEAN_DECODER));
     }
 
     /**
@@ -653,20 +680,21 @@ public class ConfigParser {
     private <T, R> void registerProcessor(final String column,
                                        final Builder<T> builder,
                                        final Node processor) throws InstantiationException, ClassNotFoundException {
-        final String processorNodeName = processor.getNodeName();
+        final String processorNodeName = processor.getLocalName();
         // present of attribute "type" is enforced by xsd
         final String type = getAttributeValue(processor, "type").get();
+        final String processorNs = processor.getNamespaceURI();
         switch (processorNodeName) {
             case BEAN_DECODER:
-                final Class<? extends Decoder<R>> decoderClass = getProcessorClass(type, BEAN_DECODER);
+                final Class<? extends Decoder<R>> decoderClass = getProcessorClass(type, processorNs, BEAN_DECODER);
                 builder.registerDecoder(column, decoderClass);
                 break;
             case BEAN_POSTPROCESSOR:
-                final Class<? extends PostProcessor<R>> postProcessorClass = getProcessorClass(type, BEAN_POSTPROCESSOR);
+                final Class<? extends PostProcessor<R>> postProcessorClass = getProcessorClass(type, processorNs, BEAN_POSTPROCESSOR);
                 builder.registerPostProcessor(column, postProcessorClass);
                 break;
             case BEAN_POSTVALIDATOR:
-                final Class<? extends PostValidator<R>> postValidatorClass = getProcessorClass(type, BEAN_POSTVALIDATOR);
+                final Class<? extends PostValidator<R>> postValidatorClass = getProcessorClass(type, processorNs, BEAN_POSTVALIDATOR);
                 builder.registerPostValidator(column, postValidatorClass);
                 break;
             case BEAN_ENUM:
@@ -693,7 +721,11 @@ public class ConfigParser {
         decoder.setType(enumClass);
         for (int i = 0; i < maps.getLength(); ++i) {
             final Node node = maps.item(i);
-            if (node.getNodeType() == ELEMENT_NODE && BEAN_ENUM_MAP.equals(node.getNodeName())) {
+            final String ns = node.getNamespaceURI();
+            final String localName = node.getLocalName();
+            if (node.getNodeType() == ELEMENT_NODE
+                    && BEAN_NAMESPACE.equals(ns)
+                    && BEAN_ENUM_MAP.equals(localName)) {
                 // presence of attributes "key", "value" is enforced by xsd
                 final String key = getAttributeValue(node, "key").get();
                 final String value = getAttributeValue(node, "value").get();
@@ -714,25 +746,29 @@ public class ConfigParser {
      * @return the processor class
      * @throws ClassNotFoundException if no corresponding class can be found
      */
-    private <T> Class<T> getProcessorClass(final String className, final String processorType)
+    private <T> Class<T> getProcessorClass(final String className,
+                                           final String ns,
+                                           final String processorType)
             throws ClassNotFoundException {
         String subPackage = null;
-        switch (processorType) {
-            case BEAN_DECODER:
-                subPackage = "decoders";
-                break;
-            case BEAN_POSTPROCESSOR:
-                subPackage = "postprocessors";
-                break;
-            case BEAN_POSTVALIDATOR:
-                subPackage = "postvalidators";
-                break;
+        if (BEAN_NAMESPACE.equals(ns)) {
+            switch (processorType) {
+                case BEAN_DECODER:
+                    subPackage = "decoders";
+                    break;
+                case BEAN_POSTPROCESSOR:
+                    subPackage = "postprocessors";
+                    break;
+                case BEAN_POSTVALIDATOR:
+                    subPackage = "postvalidators";
+                    break;
+            }
         }
         Class<T> processorClass;
         try {
             processorClass = (Class<T>) Class.forName(className);
         } catch (ClassNotFoundException e) {
-            final String qName = String.format("%s.%s.%s", DEFAULT_NAME_SPACE, subPackage, className);
+            final String qName = String.format("%s.%s.%s", DEFAULT_PROCESSING_PACKAGE, subPackage, className);
             try {
                 processorClass = (Class<T>) Class.forName(qName);
             } catch (ClassNotFoundException e1) {
@@ -756,14 +792,17 @@ public class ConfigParser {
         for (int i = 0; i < csvFields.getLength(); ++i) {
             final Node item = csvFields.item(i);
             if (item.getNodeType() == ELEMENT_NODE) {
-                switch (item.getNodeName()) {
-                    case CSV_COLUMN:
+                final String localName = item.getLocalName();
+                final String ns = item.getNamespaceURI();
+                if (CSV_NAMESPACE.equals(ns)) {
+                    if (CSV_COLUMN.equals(localName)) {
                         fieldList.add(getAttributeValue(item, "name").get());
-                        break;
-                    case CSV_IGNORE:
+                    }
+                    if (CSV_IGNORE.equals(localName)) {
                         final String count = getAttributeValue(item, "count").orElse("1");
                         fieldList.add(String.format("$ignore%s$", count));
-                        break;
+
+                    }
                 }
             }
         }
