@@ -29,7 +29,7 @@
     </csv:reader>
 
     <bean:config class="com.github.kahalemakai.opencsv.examples.Person">
-        <bean:field name="age" nullable="true" type="int" ref="parameter" refData="test:age" />
+        <bean:field name="age" nullable="true" type="int" ref="value" refData="${test:age}" />
         <bean:field name="givenName" ref="column" refData="surName" />
         <bean:field name="surName" />
         <bean:field name="address" />

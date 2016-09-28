@@ -250,6 +250,8 @@ public class ConfigParserTest {
         configParser = ConfigParser.ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
         mapper = configParser.parse();
         it = mapper.iterator();
+        picard.setAddress("nowhere");
+        drObvious.setAddress("nowhere");
         assertEquals(picard, it.next());
         assertEquals(drObvious, it.next());
     }
@@ -294,6 +296,7 @@ public class ConfigParserTest {
         final ConfigParser configParser = ConfigParser.ofInputStream(resource, inputStream);
         final CsvToBeanMapper<Person> mapper = configParser.parse();
         final Iterator<Person> it = mapper.iterator();
+        fraenkie.setAddress(fraenkie.getAddress().toUpperCase());
         assertEquals(fraenkie, it.next());
     }
 
@@ -307,6 +310,7 @@ public class ConfigParserTest {
         final CsvToBeanMapper<Person> mapper = configParser.parse();
         final Iterator<Person> it = mapper.iterator();
         final Person person = it.next();
+        fraenkie.setAddress(fraenkie.getAddress().toUpperCase());
         assertEquals(fraenkie.getAge(), person.getAge());
         Assert.assertNotEquals(fraenkie, person);
     }

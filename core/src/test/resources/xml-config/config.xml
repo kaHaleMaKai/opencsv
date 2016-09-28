@@ -41,7 +41,10 @@
         </bean:field>
         <bean:field name="givenName" />
         <bean:field name="surName" />
-        <bean:field name="address" />
+        <bean:field name="address">
+            <bean:postProcessor type="com.github.kahalemakai.opencsv.config.ToUpper" />
+            <bean:postValidator type="com.github.kahalemakai.opencsv.config.IsUpper" />
+        </bean:field>
     </bean:config>
 
 </opencsv:resources>

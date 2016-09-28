@@ -604,11 +604,9 @@ public class ConfigParser {
                         case "column":
                             builder.setColumnRef(data, column);
                             break;
-                        case "parameter":
-                            data = resolveParameter(data);
                         case "value":
                             Object decodedRefData = data;
-                            if (type.isPresent()) {
+                            if (type.isPresent() && !type.get().equals("String")) {
                                 final String decoderType = String.format("%s%sDecoder",
                                         type.get().substring(0, 1).toUpperCase(), type.get().substring(1));
                                 final Class<? extends Decoder<?>> decoderClass =
@@ -632,16 +630,22 @@ public class ConfigParser {
 
             }
 
-            boolean anyProcessor = false;
+            boolean anyDecoder = false;
             final NodeList processors = field.getChildNodes();
             for (int j = 0; j < processors.getLength(); ++j) {
                 final Node processor = processors.item(j);
                 if (processor.getNodeType() == ELEMENT_NODE) {
                     registerProcessor(column, builder, processor);
-                    anyProcessor = true;
+                    if (processor.getLocalName().equals(BEAN_DECODER)) {
+                        anyDecoder = true;
+                    }
                 }
             }
-            if (isNullable && !anyProcessor) {
+            // if isNullable, then a null decoder has been registered
+            // but the null decoder only decodes null-valued Strings to null.
+            // if no additional decoder has been registered, we have to assume the
+            // target type to be string and thus add the identity decoder t -> t
+            if (isNullable && !anyDecoder) {
                 builder.registerDecoder(column, Decoder.IDENTITY);
             }
         }

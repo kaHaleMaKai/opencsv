@@ -16,7 +16,7 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.3.4/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.2/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
@@ -32,7 +32,7 @@
         <bean:field name="age" nullable="true" type="int" ref="value" refData="8000" />
         <bean:field name="givenName" ref="column" refData="surName" />
         <bean:field name="surName" />
-        <bean:field name="address" />
+        <bean:field name="address" ref="value" refData="nowhere" />
     </bean:config>
 
 </opencsv:resources>

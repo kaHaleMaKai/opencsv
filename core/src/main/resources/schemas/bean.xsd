@@ -64,7 +64,6 @@
         <xs:restriction base="xs:string">
             <xs:enumeration value="column" />
             <xs:enumeration value="value" />
-            <xs:enumeration value="parameter" />
         </xs:restriction>
     </xs:simpleType>
 
