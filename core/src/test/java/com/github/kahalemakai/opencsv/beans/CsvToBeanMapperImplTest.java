@@ -44,12 +44,14 @@ public class CsvToBeanMapperImplTest {
     String[] linesWithIgnore;
     String[] lines;
     String[] linesWithSpaces;
+    String[] linesWithSpacesAndNewline;
     Person picard;
     BigPerson PICARD;
     Person drObvious;
     BigPerson DROBVIOUS;
     Iterator<String[]> iterator;
     Iterator<String> unparsedIteratorWithSpaces;
+    Iterator<String> unparsedIteratorWithSpacesAndNewline;
     Iterator<String[]> iteratorWithIgnore;
     Iterator<String> unparsedIterator;
     Iterator<String> unparsedIteratorWithIgnore;
@@ -142,6 +144,26 @@ public class CsvToBeanMapperImplTest {
                 .trim("surName")
                 .trim("address")
                 .build();
+        final Iterator<Person> it = beanMapper.iterator();
+        assertEquals(picard, it.next());
+    }
+
+    @Test
+    public void testMultiLine() throws Exception {
+        final String[] header = {"age","givenName","surName","address"};
+        builder.setHeader(header);
+        final CsvToBeanMapper<Person> beanMapper = builder
+                .withLines(() -> unparsedIteratorWithSpacesAndNewline)
+                .nonStrictQuotes()
+                .quoteChar('\'')
+                .registerDecoder("age", NullDecoder.class)
+                .registerDecoder("age", IntDecoder.class)
+                .trim("age")
+                .trim("givenName")
+                .trim("surName")
+                .trim("address")
+                .build();
+        picard.setAddress("Captain's room,\n Enterprise");
         final Iterator<Person> it = beanMapper.iterator();
         assertEquals(picard, it.next());
     }
@@ -392,6 +414,11 @@ public class CsvToBeanMapperImplTest {
                 "    50 ,Jean-Luc,   Picard, 'Captain\\'s room, Enterprise' ",
                 " null   ,Dr. ,  Obvious  , Somewhere "
         };
+        linesWithSpacesAndNewline = new String[] {
+                "    50 ,Jean-Luc,   Picard, 'Captain\\'s room,",
+                " Enterprise'",
+                " null   ,Dr. ,  Obvious  , Somewhere "
+        };
         linesWithIgnore = new String[] {
                 "X,X,50,X,Jean-Luc,Picard,'Captain\\'s room, Enterprise',X,X,X,X",
                 "X,X,33,X,Dr.,Obvious,Somewhere,X,X,X,X"
@@ -422,6 +449,7 @@ public class CsvToBeanMapperImplTest {
 
         iterator = toParsedIterator(lines);
         unparsedIteratorWithSpaces = toUnparsedIterator(linesWithSpaces);
+        unparsedIteratorWithSpacesAndNewline = toUnparsedIterator(linesWithSpacesAndNewline);
         iteratorWithIgnore = toParsedIterator(linesWithIgnore);
         unparsedIterator = toUnparsedIterator(lines);
         unparsedIteratorWithIgnore = toUnparsedIterator(linesWithIgnore);

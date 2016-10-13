@@ -49,7 +49,7 @@ public class Builder<T> {
      * public static final members
      * *****************************/
     /**
-     * default escape character
+     * default escapeChar character
      */
     public static final char DEFAULT_ESCAPE_CHAR = '\\';
     /**
@@ -83,6 +83,10 @@ public class Builder<T> {
      * default charset it utf-8, or if unavailable, platform default
      */
     public static final Charset DEFAULT_CHAR_SET;
+    /**
+     * expect multi line csv data per default
+     */
+    public static final boolean DEFAULT_MULTI_LINE = true;
 
     static {
         if (Charset.isSupported("UTF-8")) {
@@ -125,7 +129,7 @@ public class Builder<T> {
      * Escape character in parsed csvs.
      *
      * @param escapeChar character
-     * @return escape character
+     * @return escapeChar character
      */
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private char escapeChar = DEFAULT_ESCAPE_CHAR;
@@ -156,7 +160,7 @@ public class Builder<T> {
     /**
      * Interpretation of quoting characters in a csv.
      * <p>
-     * Permissable modes are:
+     * Permissible modes are:
      * <ul>
      *     <li>strict quotes: only accept quoted fields</li>
      *     <li>non-strict quotes: quoting is optional</li>
@@ -168,6 +172,9 @@ public class Builder<T> {
      */
     @Accessors(chain = true, fluent = true) @Getter @Setter
     private QuotingMode quotingMode = DEFAULT_QUOTING_MODE;
+
+    @Accessors(chain = true, fluent = true) @Getter @Setter
+    private boolean multiLine = DEFAULT_MULTI_LINE;
 
     /* ***********************************
      * boolean members and custom setters
@@ -315,6 +322,10 @@ public class Builder<T> {
         // so the character set will have been set before
         if (this.inputStream != null) {
             this.reader = new InputStreamReader(this.inputStream, this.charset);
+        }
+        if (this.multiLine() && QuotingMode.IGNORE_QUOTES.equals(this.quotingMode())) {
+            final String msg = "when ignoring quotes, multi-line data cannot be parsed";
+            log.debug(msg);
         }
         return new CsvToBeanMapperImpl<>(this);
     }

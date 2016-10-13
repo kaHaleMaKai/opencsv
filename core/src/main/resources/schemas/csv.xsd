@@ -79,6 +79,7 @@
         <xs:attribute name="quotingBehaviour" type="csv:QuotingMode" default="non-strict" />
         <xs:attribute name="charset" type="xs:string" default="UTF-8" />
         <xs:attribute name="escapeChar" type="xs:string" default="\\" />
+        <xs:attribute name="multiLine" type="xs:boolean" default="true" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="ColumnAttributes">

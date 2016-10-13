@@ -442,6 +442,7 @@ public class ConfigParser {
 
         final Optional<String> quoteChar = getAttributeValue(reader, "quoteChar");
         final Optional<String> escapeChar = getAttributeValue(reader, "escapeChar");
+        final Optional<String> multiLine = getAttributeValue(reader, "mutliLine");
         final Optional<String> ignoreLeadingWhiteSpace = getAttributeValue(reader, "ignoreLeadingWhiteSpace");
         final Optional<String> onErrorSkipLine = getAttributeValue(reader, "onErrorSkipLine");
         final Optional<String> quotingBehaviour = getAttributeValue(reader, "quotingBehaviour");
@@ -471,6 +472,7 @@ public class ConfigParser {
 
         if (quoteChar.isPresent()) builder.quoteChar(quoteChar.get().charAt(0));
         if (escapeChar.isPresent()) builder.escapeChar(escapeChar.get().charAt(0));
+        if (multiLine.isPresent()) builder.multiLine(Boolean.valueOf(multiLine.get()));
         if (separator.isPresent()) builder.separator(separator.get().charAt(0));
         if (ignoreLeadingWhiteSpace.isPresent()) {
             final boolean b = Boolean.parseBoolean(ignoreLeadingWhiteSpace.get());

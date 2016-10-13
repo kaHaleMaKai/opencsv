@@ -67,6 +67,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     @Getter(AccessLevel.PRIVATE) @Setter
     private boolean errorOnClosingReader;
     @Getter private final boolean onErrorSkipLine;
+    @Getter private final boolean multiLine;
     @Getter private final int skipLines;
     @Getter private final char escapeChar;
     @Getter private final char quoteChar;
@@ -98,13 +99,14 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         this.ignoreQuotes = builder.quotingMode().isIgnoreQuotes();
         this.ignoreLeadingWhiteSpace = builder.isIgnoreLeadingWhiteSpace();
         this.strictQuotes = builder.quotingMode().isStrictQuotes();
-        this.source = defineSource(builder.source(), builder.getReader(), builder.getLineIterator());
         this.setterMethods = new HashMap<>();
         this.columnRefs = builder.getColumnRefs();
         this.columnData = builder.getColumnData();
         this.columnsForIteration = TupleList.of(String.class, Integer.class);
         this.sink = builder.sink();
         this.finalizer = builder.finalizer();
+        this.multiLine = builder.multiLine();
+        this.source = defineSource(builder.source(), builder.getReader(), builder.getLineIterator());
         log.debug(String.format("new CsvToBeanMapper instance built:\n%s", this.toString()));
     }
 
@@ -125,13 +127,14 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             return parsedIterable;
         }
 
-        final CsvParser csvParser = new CsvParser(
-                        this.separator,
-                        this.quoteChar,
-                        this.escapeChar,
-                        this.strictQuotes,
-                        this.ignoreLeadingWhiteSpace,
-                        this.ignoreQuotes);
+        final CsvParser csvParser = CsvParser.of(
+                this.separator,
+                this.quoteChar,
+                this.escapeChar,
+                this.strictQuotes,
+                this.ignoreLeadingWhiteSpace,
+                this.ignoreQuotes,
+                this.multiLine);
         if (reader != null) {
             final CSVReader csvReader = new CSVReaderBuilder(reader)
                     .withSkipLines(this.skipLines)
@@ -152,26 +155,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             return csvReader;
         }
         // lineIterator != null if we reach this line
-        return () -> new Iterator<String[]>() {
-            @Override
-            public boolean hasNext() {
-                return lineIterator.hasNext();
-            }
-
-            @Override
-            public String[] next() {
-                if (!hasNext()) {
-                    throw new NoSuchElementException();
-                }
-                try {
-                    return csvParser.parseLine(lineIterator.next());
-                } catch (IOException e) {
-                    final String msg = "could not parse line";
-                    log.error(msg);
-                    throw new CsvToBeanException(msg, e);
-                }
-            }
-        };
+        return () -> csvParser.wrapIterator(lineIterator);
     }
 
     /**

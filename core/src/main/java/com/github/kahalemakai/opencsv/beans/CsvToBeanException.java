@@ -41,7 +41,16 @@ public class CsvToBeanException extends RuntimeException {
     }
 
     /**
-     * Re-throw the last caught exception explicitely.
+     * Create a new {@code CsvToBeanException}.
+     * @param cause the re-thrown cause
+     */
+    CsvToBeanException(Throwable cause) {
+        super(cause);
+        lastException = cause;
+    }
+
+    /**
+     * Re-throw the last caught exception explicitly.
      * @throws Throwable the last exception that was caught
      */
     public void rethrow() throws Throwable {

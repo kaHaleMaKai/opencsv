@@ -2,47 +2,98 @@ package com.github.kahalemakai.opencsv.beans;
 
 import com.opencsv.CSVParser;
 import com.opencsv.enums.CSVReaderNullFieldIndicator;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.extern.log4j.Log4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
- * Copy of opencsv.CSVParser.
+ * Partially tuned copy of opencsv.CSVParser.
  * <p>
  * Remove the last quote character from a field, even if followed by whitespace.
  */
-class CsvParser extends CSVParser {
+@Log4j
+final class CsvParser extends CSVParser {
     @Getter
-    final char separator;
+    private final char separator;
     @Getter
-    final char quotechar;
+    private final char quotechar;
     @Getter
-    final char escape;
+    private final char escape;
     @Getter
-    final boolean strictQuotes;
+    private final boolean strictQuotes;
     @Getter
-    final boolean ignoreLeadingWhiteSpace;
+    private final boolean ignoreLeadingWhiteSpace;
     @Getter
-    final boolean ignoreQuotations;
+    private final boolean ignoreQuotations;
+    @Getter
+    private final boolean multiLine;
     private final CSVReaderNullFieldIndicator nullFieldIndicator;
     @Getter
-    private String pending;
+    private String pendingLine;
     @Getter
     private boolean inField;
+    @Getter
+    private long currentLineNr = 1;
+    @Getter
+    private long currentRecordNr = 1;
 
-    @Override
+    public Iterator<String[]> wrapIterator(@NonNull final Iterator<String> iterator) {
+        return new Iterator<String[]>() {
+            private Iterator<String> lineIterator = iterator;
+
+            @Override
+            public boolean hasNext() {
+                return lineIterator.hasNext();
+            }
+
+            /**
+             * Reads the next line from the buffer and converts to a string array.
+             *
+             * @return A string array with each comma-separated element as a separate
+             * entry.
+             */
+            public String[] next() {
+                String[] result = null;
+                do {
+                    String[] r;
+                    final String nextLine = lineIterator.next();
+                    try {
+                        r = parseLine(nextLine, isMultiLine());
+                        currentLineNr++;
+                    } catch (IOException e) {
+                        final String msg = String.format("could not parse line %d, record %d ['%s']",
+                                getCurrentLineNr(), getCurrentRecordNr(), nextLine);
+                        log.error(msg);
+                        throw new CsvToBeanException(e);
+                    }
+                    if (r.length > 0) {
+                        if (result == null) {
+                            result = r;
+                        } else {
+                            result = combineResults(result, r);
+                        }
+                    }
+                } while (lineIterator.hasNext() && isPending());
+                currentRecordNr++;
+                return result;
+            }
+        };
+    }
+
     protected String[] parseLine(String nextLine, boolean multi) throws IOException {
-        if (!multi && pending != null) {
-            pending = null;
+        if (!multi && isPending()) {
+            popPendingLine();
         }
 
         if (nextLine == null) {
-            if (pending != null) {
-                String s = pending;
-                pending = null;
+            if (isPending()) {
+                String s = popPendingLine();
                 return new String[]{s};
             }
             return null;
@@ -52,10 +103,9 @@ class CsvParser extends CSVParser {
         StringBuilder sb = new StringBuilder(nextLine.length() + READ_BUFFER_SIZE);
         boolean inQuotes = false;
         boolean fromQuotedField = false;
-        if (pending != null) {
-            sb.append(pending);
-            pending = null;
-            inQuotes = !this.isIgnoreQuotations();//true;
+        if (isPending()) {
+            sb.append(popPendingLine());
+            inQuotes = !this.isIgnoreQuotations(); //true;
         }
         for (int i = 0; i < nextLine.length(); i++) {
 
@@ -110,10 +160,10 @@ class CsvParser extends CSVParser {
             if (multi) {
                 // continuing a quoted section, re-append newline
                 sb.append('\n');
-                pending = sb.toString();
+                setPendingLine(sb.toString());
                 sb = null; // this partial content is not to be added to field list yet
             } else {
-                throw new IOException("Un-terminated quoted field at end of CSV line");
+                throw new IOException("un-terminated quoted field at end of csv line");
             }
             if (inField) {
                 fromQuotedField = true;
@@ -184,7 +234,30 @@ class CsvParser extends CSVParser {
         }
     }
 
-    CsvParser(char separator, char quotechar, char escape, boolean strictQuotes, boolean ignoreLeadingWhiteSpace, boolean ignoreQuotations) {
+    static CsvParser of(char separator,
+              char quoteChar,
+              char escapeChar,
+              boolean strictQuotes,
+              boolean ignoreLeadingWhiteSpace,
+              boolean ignoreQuotations,
+              boolean multiLine) {
+        return new CsvParser(
+                separator,
+                quoteChar,
+                escapeChar,
+                strictQuotes,
+                ignoreLeadingWhiteSpace,
+                ignoreQuotations,
+                multiLine);
+    }
+
+    private CsvParser(char separator,
+              char quotechar,
+              char escape,
+              boolean strictQuotes,
+              boolean ignoreLeadingWhiteSpace,
+              boolean ignoreQuotations,
+              boolean multiLine) {
         super(separator, quotechar, escape, strictQuotes, ignoreLeadingWhiteSpace, ignoreQuotations);
         this.separator = separator;
         this.quotechar = quotechar;
@@ -193,6 +266,33 @@ class CsvParser extends CSVParser {
         this.ignoreLeadingWhiteSpace = ignoreLeadingWhiteSpace;
         this.ignoreQuotations = ignoreQuotations;
         this.nullFieldIndicator = CSVReaderNullFieldIndicator.NEITHER;
+        this.multiLine = multiLine;
     }
 
+    public boolean isPending() {
+        return this.pendingLine != null;
+    }
+
+    /**
+     * For multi-line records this method combines the current result with the result from previous read(s).
+     * @param buffer Previous data read for this record
+     * @param lastRead Latest data read for this record.
+     * @return String array with union of the buffer and lastRead arrays.
+     */
+    private String[] combineResults(String[] buffer, String[] lastRead) {
+        String[] combinedLine = new String[buffer.length + lastRead.length];
+        System.arraycopy(buffer, 0, combinedLine, 0, buffer.length);
+        System.arraycopy(lastRead, 0, combinedLine, buffer.length, lastRead.length);
+        return combinedLine;
+    }
+
+    private String popPendingLine() {
+        final String tmp = this.pendingLine;
+        this.pendingLine = null;
+        return tmp;
+    }
+
+    private void setPendingLine(final String pendingLine) {
+        this.pendingLine = pendingLine;
+    }
 }
