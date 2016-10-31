@@ -19,7 +19,7 @@ plugins {
 }
 
 group 'com.github.kahalemakai'
-version '0.4.4'
+version '0.4.5'
 
 apply plugin: 'idea'
 
@@ -139,6 +139,5 @@ subprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.0'
+    gradleVersion = '3.1'
 }
-
