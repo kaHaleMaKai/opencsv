@@ -135,6 +135,11 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
                 cols.add(CsvColumn.mandatory(col, i));
             }
         }
+        if (foundOpeningParens != foundClosingParens) {
+            final String msg = "found opening parenthesis for optional columns with matching opening one";
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
         columnsToParse = cols.isEmpty() ?
                 Collections.emptyList() : Collections.unmodifiableList(cols);
     }

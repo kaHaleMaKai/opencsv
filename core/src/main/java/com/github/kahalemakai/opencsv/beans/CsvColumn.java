@@ -1,13 +1,13 @@
 package com.github.kahalemakai.opencsv.beans;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.experimental.Accessors;
 
 /**
  * Represent a csv column.
  */
+@EqualsAndHashCode
+@ToString
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @Accessors(fluent = true)
 class CsvColumn {
