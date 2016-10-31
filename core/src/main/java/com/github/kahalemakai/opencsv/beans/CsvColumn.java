@@ -60,4 +60,15 @@ class CsvColumn {
         return OptionalCsvColumn.of(name, index);
     }
 
+    /**
+     * Create a new optional csv column instance.
+     * @param name name mandatory the csv column
+     * @param index numerical index mandatory the csv column
+     * @param defaultValue the default value to assign to this column instance
+     * @return a new optional csv column instance
+     */
+    public static CsvColumn optional(final String name, final int index, final String defaultValue) {
+        return OptionalCsvColumn.of(name, index, defaultValue);
+    }
+
 }

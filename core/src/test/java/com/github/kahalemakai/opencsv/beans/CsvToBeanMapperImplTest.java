@@ -23,6 +23,7 @@ import com.github.kahalemakai.opencsv.beans.processing.decoders.IntDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.IntToBooleanDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import com.github.kahalemakai.opencsv.examples.BigPerson;
+import com.github.kahalemakai.opencsv.examples.EnlaredPerson;
 import com.github.kahalemakai.opencsv.examples.Person;
 import com.github.kahalemakai.opencsv.examples.WithBoolean;
 import com.opencsv.CSVParser;
@@ -43,6 +44,7 @@ public class CsvToBeanMapperImplTest {
     CSVParser parser;
     String[] linesWithIgnore;
     String[] lines;
+    String[] linesWithOptionals;
     String[] linesWithSpaces;
     String[] linesWithSpacesAndNewline;
     Person picard;
@@ -50,6 +52,7 @@ public class CsvToBeanMapperImplTest {
     Person drObvious;
     BigPerson DROBVIOUS;
     Iterator<String[]> iterator;
+    Iterator<String[]> iteratorWithOptionals;
     Iterator<String> unparsedIteratorWithSpaces;
     Iterator<String> unparsedIteratorWithSpacesAndNewline;
     Iterator<String[]> iteratorWithIgnore;
@@ -331,6 +334,38 @@ public class CsvToBeanMapperImplTest {
         assertEquals(drObvious, person2);
     }
 
+    @Test
+    public void testOptionalColumns() throws Exception {
+        final CsvToBeanMapper<EnlaredPerson> mapper = CsvToBeanMapper
+                .builder(EnlaredPerson.class)
+                .quoteChar('\'')
+                .nonStrictQuotes()
+                .registerDecoder("age", NullDecoder.class)
+                .registerDecoder("age", (s) -> ResultWrapper.of(Integer.parseInt(s)))
+                .registerDecoder("favoriteNumber", NullDecoder.class)
+                .registerDecoder("favoriteNumber", (s) -> ResultWrapper.of(Integer.parseInt(s)))
+                .withParsedLines(() -> iteratorWithOptionals)
+                .build();
+        final Iterator<EnlaredPerson> it = mapper.iterator();
+
+        final EnlaredPerson ePicard = new EnlaredPerson();
+        ePicard.setAge(50);
+        ePicard.setGivenName("Jean-Luc");
+        ePicard.setSurName("Picard");
+        ePicard.setAddress("Captain's room, Enterprise");
+        ePicard.setDrink("black coffee");
+        final EnlaredPerson eDrObvious = new EnlaredPerson();
+        eDrObvious.setAge(null);
+        eDrObvious.setGivenName("Dr.");
+        eDrObvious.setSurName("Obvious");
+        eDrObvious.setAddress("Somewhere");
+
+        final EnlaredPerson person1 = it.next();
+        final EnlaredPerson person2 = it.next();
+        assertEquals(ePicard, person1);
+        assertEquals(eDrObvious, person2);
+    }
+
     @Test(expected = CsvToBeanException.class)
     public void testPostValidationThrows() throws Exception {
         final Iterator<Person> it = builder
@@ -411,11 +446,11 @@ public class CsvToBeanMapperImplTest {
                 "null,Dr.,Obvious,Somewhere"
         };
 
-//        lines = new String[] {
-//                "age,givenName,surName,address,(drink)",
-//                "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise'",
-//                "null,Dr.,Obvious,Somewhere"
-//        };
+        linesWithOptionals = new String[] {
+                "age,givenName,surName,address,(drink,favoriteNumber:null)",
+                "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise',black coffee",
+                "null,Dr.,Obvious,Somewhere"
+        };
         linesWithSpaces = new String[] {
                 "    50 ,Jean-Luc,   Picard, 'Captain\\'s room, Enterprise' ",
                 " null   ,Dr. ,  Obvious  , Somewhere "
@@ -454,6 +489,7 @@ public class CsvToBeanMapperImplTest {
         DROBVIOUS.setAddress("Somewhere");
 
         iterator = toParsedIterator(lines);
+        iteratorWithOptionals = toParsedIterator(linesWithOptionals);
         unparsedIteratorWithSpaces = toUnparsedIterator(linesWithSpaces);
         unparsedIteratorWithSpacesAndNewline = toUnparsedIterator(linesWithSpacesAndNewline);
         iteratorWithIgnore = toParsedIterator(linesWithIgnore);

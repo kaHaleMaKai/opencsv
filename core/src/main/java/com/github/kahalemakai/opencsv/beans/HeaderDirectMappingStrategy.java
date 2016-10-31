@@ -96,7 +96,7 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
         boolean foundClosingParens = false;
 
         for (int i = 0; i < this.header.length; ++i) {
-            final String col = this.header[i];
+            String col = this.header[i];
             if (foundClosingParens) {
                 final String msg = "found mandatory csv column after optional column specification";
                 log.error(msg);
@@ -107,6 +107,7 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
             }
             if (col.startsWith("(")) {
                 foundOpeningParens = true;
+                col = col.substring(1);
             }
             if (col.endsWith(")")) {
                 if (!foundOpeningParens) {
@@ -115,9 +116,20 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
                     throw new IllegalStateException(msg);
                 }
                 foundClosingParens = true;
+                col = col.substring(0, col.length() - 1);
             }
             if (foundOpeningParens) {
-                cols.add(CsvColumn.optional(col, i));
+                CsvColumn csvColumn;
+                if (col.contains(":")) {
+                    final int colonPos = col.indexOf(':');
+                    final String columnName = col.substring(0, colonPos);
+                    final String defaultValue = col.substring(colonPos + 1);
+                    csvColumn = CsvColumn.optional(columnName, i, defaultValue);
+                }
+                else {
+                    csvColumn = CsvColumn.optional(col, i);
+                }
+                cols.add(csvColumn);
             }
             else {
                 cols.add(CsvColumn.mandatory(col, i));
