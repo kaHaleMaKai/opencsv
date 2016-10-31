@@ -23,7 +23,7 @@ import com.github.kahalemakai.opencsv.beans.processing.decoders.IntDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.IntToBooleanDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import com.github.kahalemakai.opencsv.examples.BigPerson;
-import com.github.kahalemakai.opencsv.examples.EnlaredPerson;
+import com.github.kahalemakai.opencsv.examples.EnlargedPerson;
 import com.github.kahalemakai.opencsv.examples.Person;
 import com.github.kahalemakai.opencsv.examples.WithBoolean;
 import com.opencsv.CSVParser;
@@ -336,8 +336,8 @@ public class CsvToBeanMapperImplTest {
 
     @Test
     public void testOptionalColumns() throws Exception {
-        final CsvToBeanMapper<EnlaredPerson> mapper = CsvToBeanMapper
-                .builder(EnlaredPerson.class)
+        final CsvToBeanMapper<EnlargedPerson> mapper = CsvToBeanMapper
+                .builder(EnlargedPerson.class)
                 .quoteChar('\'')
                 .nonStrictQuotes()
                 .registerDecoder("age", NullDecoder.class)
@@ -346,22 +346,14 @@ public class CsvToBeanMapperImplTest {
                 .registerDecoder("favoriteNumber", (s) -> ResultWrapper.of(Integer.parseInt(s)))
                 .withParsedLines(() -> iteratorWithOptionals)
                 .build();
-        final Iterator<EnlaredPerson> it = mapper.iterator();
+        final Iterator<EnlargedPerson> it = mapper.iterator();
 
-        final EnlaredPerson ePicard = new EnlaredPerson();
-        ePicard.setAge(50);
-        ePicard.setGivenName("Jean-Luc");
-        ePicard.setSurName("Picard");
-        ePicard.setAddress("Captain's room, Enterprise");
+        final EnlargedPerson ePicard = EnlargedPerson.of(picard);
         ePicard.setDrink("black coffee");
-        final EnlaredPerson eDrObvious = new EnlaredPerson();
-        eDrObvious.setAge(null);
-        eDrObvious.setGivenName("Dr.");
-        eDrObvious.setSurName("Obvious");
-        eDrObvious.setAddress("Somewhere");
+        final EnlargedPerson eDrObvious = EnlargedPerson.of(drObvious);
 
-        final EnlaredPerson person1 = it.next();
-        final EnlaredPerson person2 = it.next();
+        final EnlargedPerson person1 = it.next();
+        final EnlargedPerson person2 = it.next();
         assertEquals(ePicard, person1);
         assertEquals(eDrObvious, person2);
     }

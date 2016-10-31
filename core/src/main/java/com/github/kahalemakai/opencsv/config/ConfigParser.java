@@ -794,7 +794,8 @@ public class ConfigParser {
     private String[] getHeader(final Node reader) {
         final NodeList csvFields = reader.getChildNodes();
         final List<String> fieldList = new LinkedList<>();
-
+        boolean foundOpeningParenthesis = false;
+        
         for (int i = 0; i < csvFields.getLength(); ++i) {
             final Node item = csvFields.item(i);
             if (item.getNodeType() == ELEMENT_NODE) {
@@ -802,7 +803,24 @@ public class ConfigParser {
                 final String ns = item.getNamespaceURI();
                 if (CSV_NAMESPACE.equals(ns)) {
                     if (CSV_COLUMN.equals(localName)) {
-                        fieldList.add(getAttributeValue(item, "name").get());
+                        String columnName = getAttributeValue(item, "name").get();
+                        final boolean columnIsOptional = Boolean.valueOf(getAttributeValue(item, "optional").get());
+                        final Optional<String> defaultValue = getAttributeValue(item, "defaultValue");
+                        if (columnIsOptional || defaultValue.isPresent()) {
+                            if (!foundOpeningParenthesis) {
+                                columnName = "(" + columnName;
+                                foundOpeningParenthesis = true;
+                            }
+                            if (defaultValue.isPresent()) {
+                                columnName = String.format("%s:%s", columnName, defaultValue.get());
+                            }
+                        }
+                        else if (foundOpeningParenthesis) {
+                            final String msg = "found mandatory column after optional one";
+                            log.error(msg);
+                            throw new IllegalStateException(msg);
+                        }
+                        fieldList.add(columnName);
                     }
                     if (CSV_IGNORE.equals(localName)) {
                         final String count = getAttributeValue(item, "count").orElse("1");
@@ -812,6 +830,12 @@ public class ConfigParser {
                 }
             }
         }
+        if (foundOpeningParenthesis) {
+            final int lastIndex = fieldList.size() - 1;
+            final String lastColumn = fieldList.get(lastIndex);
+            fieldList.set(lastIndex, lastColumn + ")");
+        }
+        
         return fieldList.toArray(new String[fieldList.size()]);
     }
 

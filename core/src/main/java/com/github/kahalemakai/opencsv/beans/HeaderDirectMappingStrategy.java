@@ -23,10 +23,9 @@ import lombok.extern.log4j.Log4j;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Strategy for mapping csv header columns to bean fields.
@@ -42,6 +41,11 @@ import java.util.List;
  */
 @Log4j
 public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrategy<T> {
+
+    private final static Pattern IGNORE_PATTERN = Pattern.compile("^\\(?\\$ignore[0-9]+\\$\\)?$");
+    private final static Pattern NUMBER_PATTERN = Pattern.compile("^[^\\d]+(\\d+)\\$\\)?$");
+    private final static Pattern ACCEPTED_NAMES = Pattern.compile("\\(?[_a-zA-Z][_a-zA-Z0-9]*(:[^)(]*)?\\)?");
+    private final static Pattern ELLIPSIS = Pattern.compile("\\(?\\.\\.\\.\\)?");
     /**
      * Column alias indicating that a csv column should not be parsed, but ignored.
      */
@@ -64,8 +68,46 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
      * @param headerLine the csv column header
      */
     void captureHeader(final String...headerLine) {
+        if (headerLine.length == 0) {
+            final String msg = "expected: header.length > 0, got: header.length = 0";
+            log.error(msg);
+            throw new IllegalArgumentException(msg);
+        }
+        List<String> headerList = new LinkedList<>();
+        for (final String column : headerLine) {
+            final Matcher matcher = IGNORE_PATTERN.matcher(column);
+            if (matcher.matches()) {
+                final Matcher numberMatcher = NUMBER_PATTERN.matcher(column);
+                int number = 1;
+                if (numberMatcher.matches()) {
+                    final String numberAsString = numberMatcher.group(1);
+                    number = Integer.parseInt(numberAsString);
+                    if (number == 0) {
+                        final String msg = "using column name $ignore0$ is not permitted";
+                        log.error(msg);
+                        throw new IllegalArgumentException(msg);
+                    }
+                }
+                for (int i = 0; i < number; ++i) {
+                    headerList.add(IGNORE_COLUMN);
+                }
+            } else {
+                final Matcher acceptedNamesMatcher = ACCEPTED_NAMES.matcher(column);
+                final Matcher ellipsisMatcher = ELLIPSIS.matcher(column);
+                if (acceptedNamesMatcher.matches() || IGNORE_COLUMN.equals(column)) {
+                    headerList.add(column);
+                } else if (ellipsisMatcher.matches()) {
+                    headerList.add(IGNORE_COLUMN);
+                } else {
+                    final String msg = String.format("invalid column name specified: '%s'", column);
+                    log.error(msg);
+                    throw new IllegalArgumentException(msg);
+                }
+            }
+        }
+        final String[] completeHeader = headerList.toArray(new String[headerList.size()]);
         log.info(String.format("set header to %s", Arrays.toString(headerLine)));
-        this.header = headerLine;
+        this.header = completeHeader;
         setHeaderDefined(true);
         setColumnsToParse();
     }

@@ -26,13 +26,12 @@ import lombok.extern.log4j.Log4j;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.github.kahalemakai.opencsv.beans.HeaderDirectMappingStrategy.IGNORE_COLUMN;
 
 /**
  * Build a mapper that converts csvs into java beans.
@@ -96,13 +95,6 @@ public class Builder<T> {
             DEFAULT_CHAR_SET = Charset.defaultCharset();
         }
     }
-    /* ******************************
-     * private static final members
-     ** *****************************/
-    private final static Pattern IGNORE_PATTERN = Pattern.compile("^\\$ignore[0-9]+\\$$");
-    private final static Pattern NUMBER_PATTERN = Pattern.compile("^[^\\d]+(\\d+)\\$$");
-    private final static Pattern ACCEPTED_NAMES = Pattern.compile("[_a-zA-Z][_a-zA-Z0-9]*");
-    private final static String ELLIPSIS = "...";
 
     /* ********************************
      * members with chainable setters
@@ -786,45 +778,45 @@ public class Builder<T> {
      * @throws IllegalArgumentException if the header is malformed
      */
     public static <S> void setHeader(HeaderDirectMappingStrategy<S> strategy, String[] header) throws IllegalArgumentException {
-        if (header.length == 0) {
-            final String msg = "expected: header.length > 0, got: header.length = 0";
-            log.error(msg);
-            throw new IllegalArgumentException(msg);
-        }
-        log.debug("setting header manually");
-        List<String> headerList = new LinkedList<>();
-        for (final String column : header) {
-            final Matcher matcher = IGNORE_PATTERN.matcher(column);
-            if (matcher.matches()) {
-                final Matcher numberMatcher = NUMBER_PATTERN.matcher(column);
-                int number = 1;
-                if (numberMatcher.matches()) {
-                    final String numberAsString = numberMatcher.group(1);
-                    number = Integer.parseInt(numberAsString);
-                    if (number == 0) {
-                        final String msg = "using column name $ignore0$ is not permitted";
-                        log.error(msg);
-                        throw new IllegalArgumentException(msg);
-                    }
-                }
-                for (int i = 0; i < number; ++i) {
-                    headerList.add(IGNORE_COLUMN);
-                }
-            } else {
-                final Matcher acceptedNamesMatcher = ACCEPTED_NAMES.matcher(column);
-                if (acceptedNamesMatcher.matches() || IGNORE_COLUMN.equals(column)) {
-                    headerList.add(column);
-                } else if (ELLIPSIS.equals(column)) {
-                    headerList.add(IGNORE_COLUMN);
-                } else {
-                    final String msg = String.format("invalid column name specified: '%s'", column);
-                    log.error(msg);
-                    throw new IllegalArgumentException(msg);
-                }
-            }
-        }
-        final String[] completeHeader = headerList.toArray(new String[headerList.size()]);
-        strategy.captureHeader(completeHeader);
+//        if (header.length == 0) {
+//            final String msg = "expected: header.length > 0, got: header.length = 0";
+//            log.error(msg);
+//            throw new IllegalArgumentException(msg);
+//        }
+//        log.debug("setting header manually");
+//        List<String> headerList = new LinkedList<>();
+//        for (final String column : header) {
+//            final Matcher matcher = IGNORE_PATTERN.matcher(column);
+//            if (matcher.matches()) {
+//                final Matcher numberMatcher = NUMBER_PATTERN.matcher(column);
+//                int number = 1;
+//                if (numberMatcher.matches()) {
+//                    final String numberAsString = numberMatcher.group(1);
+//                    number = Integer.parseInt(numberAsString);
+//                    if (number == 0) {
+//                        final String msg = "using column name $ignore0$ is not permitted";
+//                        log.error(msg);
+//                        throw new IllegalArgumentException(msg);
+//                    }
+//                }
+//                for (int i = 0; i < number; ++i) {
+//                    headerList.add(IGNORE_COLUMN);
+//                }
+//            } else {
+//                final Matcher acceptedNamesMatcher = ACCEPTED_NAMES.matcher(column);
+//                if (acceptedNamesMatcher.matches() || IGNORE_COLUMN.equals(column)) {
+//                    headerList.add(column);
+//                } else if (ELLIPSIS.equals(column)) {
+//                    headerList.add(IGNORE_COLUMN);
+//                } else {
+//                    final String msg = String.format("invalid column name specified: '%s'", column);
+//                    log.error(msg);
+//                    throw new IllegalArgumentException(msg);
+//                }
+//            }
+//        }
+//        final String[] completeHeader = headerList.toArray(new String[headerList.size()]);
+        strategy.captureHeader(header);
     }
 
     /**

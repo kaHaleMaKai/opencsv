@@ -85,6 +85,7 @@
     <xs:attributeGroup name="ColumnAttributes">
         <xs:attribute name="name" type="xs:string" use="required" />
         <xs:attribute name="optional" type="xs:boolean" use="optional" default="false" />
+        <xs:attribute name="defaultValue" type="xs:string" use="optional" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="IgnoreAttributes">

@@ -19,6 +19,7 @@ package com.github.kahalemakai.opencsv.config;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanException;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
+import com.github.kahalemakai.opencsv.examples.EnlargedPerson;
 import com.github.kahalemakai.opencsv.examples.EnumWrapper;
 import com.github.kahalemakai.opencsv.examples.Person;
 import com.opencsv.CSVParser;
@@ -40,11 +41,14 @@ public class ConfigParserTest {
     String linesWithEscape;
     String[] linesWithIgnore;
     String[] linesWithSpaces;
+    String[] linesWithOptionalColumns;
     String[] lines;
     String[] linesWithEnum;
     Person picard;
     Person drObvious;
     Person fraenkie;
+    EnlargedPerson ePicard;
+    EnlargedPerson eDrObvious;
     EnumWrapper enumWrapper;
     Iterator<String[]> iterator;
     Iterator<String[]> iteratorWithIgnore;
@@ -333,6 +337,22 @@ public class ConfigParserTest {
     }
 
     @Test
+    public void testOptionalCsvColumns() throws Exception {
+        final InputStream resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResourceAsStream("xml-config/config-with-optional-csv-column.xml");
+        assert resource != null;
+        final ConfigParser configParser = ConfigParser
+                .ofUnparsedLines(resource, () -> toUnparsedIterator(linesWithOptionalColumns));
+        final CsvToBeanMapper<EnlargedPerson> mapper = configParser.parse();
+        final Iterator<EnlargedPerson> it = mapper.iterator();
+        assertEquals(ePicard, it.next());
+        assertEquals(eDrObvious, it.next());
+    }
+
+
+    @Test
     public void testTrim() throws Exception {
         final InputStream resource = ConfigParserTest
                 .class
@@ -381,6 +401,11 @@ public class ConfigParserTest {
                 "    50 ,Jean-Luc,   Picard  , 'Captain\\'s room, Enterprise' ",
                 " null   ,Dr. ,  Obvious  , Somewhere "
         };
+
+        linesWithOptionalColumns = new String[] {
+                "    50 ,Jean-Luc,   Picard  , 'Captain\\'s room, Enterprise' ,black coffee, 90000",
+                " null   ,Dr. ,  Obvious  , Somewhere "
+        };
         linesWithEscape = "50xJean-LucxPicardxCaptain9's room, Enterprise";
 
         linesWithEnum = new String[] {"n", "x"};
@@ -401,6 +426,9 @@ public class ConfigParserTest {
         fraenkie.setGivenName("Fränkie");
         fraenkie.setSurName("Fœrchterlich");
         fraenkie.setAddress("Österreich");
+
+        ePicard = EnlargedPerson.of(picard);
+        eDrObvious = EnlargedPerson.of(drObvious);
 
         enumWrapper = new EnumWrapper();
         enumWrapper.setQuotingMode(QuotingMode.NON_STRICT_QUOTES);
