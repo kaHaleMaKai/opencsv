@@ -143,7 +143,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             this.setReaderIsSetup();
             if (!isHeaderDefined()) {
                 try {
-                    strategy.captureHeader(csvReader);
+                    strategy.captureHeader(csvReader.readNext());
                 } catch (IOException e) {
                     final String msg = "could not obtain header from Reader instance";
                     log.error(msg);
@@ -306,7 +306,16 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             }
             if (null != prop) {
                 Object obj = null;
-                final String value = line[col];
+                String text;
+                try {
+                    text = line[col];
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    if (!csvColumn.isOptional()) {
+                        throw e;
+                    }
+                    text = csvColumn.defaultValue();
+                }
+                final String value = text;
                 try {
                     obj = convertValue(value, prop);
                 } catch (InstantiationException | IllegalAccessException | CsvToBeanException e) {

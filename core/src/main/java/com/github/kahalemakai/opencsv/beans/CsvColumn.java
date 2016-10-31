@@ -36,6 +36,10 @@ class CsvColumn {
         return false;
     }
 
+    public String defaultValue() {
+        throw new UnsupportedOperationException("column does not have a default value");
+    }
+
     /**
      * Create a new mandatory csv column instance.
      * @param name name mandatory the csv column

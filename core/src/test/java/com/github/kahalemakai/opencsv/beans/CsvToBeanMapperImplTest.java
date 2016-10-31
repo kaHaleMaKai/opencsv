@@ -411,11 +411,11 @@ public class CsvToBeanMapperImplTest {
                 "null,Dr.,Obvious,Somewhere"
         };
 
-        lines = new String[] {
-                "age,givenName,surName,address,(drink)",
-                "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise'",
-                "null,Dr.,Obvious,Somewhere"
-        };
+//        lines = new String[] {
+//                "age,givenName,surName,address,(drink)",
+//                "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise'",
+//                "null,Dr.,Obvious,Somewhere"
+//        };
         linesWithSpaces = new String[] {
                 "    50 ,Jean-Luc,   Picard, 'Captain\\'s room, Enterprise' ",
                 " null   ,Dr. ,  Obvious  , Somewhere "
