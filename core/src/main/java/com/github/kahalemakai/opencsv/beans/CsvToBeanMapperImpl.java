@@ -19,8 +19,6 @@ package com.github.kahalemakai.opencsv.beans;
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
 import com.github.kahalemakai.opencsv.config.PluginException;
 import com.github.kahalemakai.opencsv.config.Sink;
-import com.github.kahalemakai.tuples.Tuple;
-import com.github.kahalemakai.tuples.TupleList;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.bean.AbstractCSVToBean;
@@ -60,7 +58,8 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final Map<String, Method> setterMethods;
     private final Map<String, String> columnRefs;
     private final Map<String, Object> columnData;
-    private final TupleList<String, Integer> columnsForIteration;
+    @Getter(AccessLevel.PRIVATE)
+    private final List<CsvColumn> columnsForIteration;
     private final Sink sink;
     private final ExceptionalAction<IOException> finalizer;
 
@@ -102,7 +101,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         this.setterMethods = new HashMap<>();
         this.columnRefs = builder.getColumnRefs();
         this.columnData = builder.getColumnData();
-        this.columnsForIteration = TupleList.of(String.class, Integer.class);
+        this.columnsForIteration = new ArrayList<>();
         this.sink = builder.sink();
         this.finalizer = builder.finalizer();
         this.multiLine = builder.multiLine();
@@ -293,12 +292,9 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             log.error(msg);
             throw new CsvToBeanException(msg, e);
         }
-        if (this.columnsForIteration.isEmpty()) {
-            setupColumnsForIteration(mapper);
-        }
-        for (Tuple<String, Integer> tuple : this.columnsForIteration) {
-            final String columnName = tuple.first();
-            int col = tuple.last();
+        for (CsvColumn csvColumn: this.columnsForIteration) {
+            final String columnName = csvColumn.name();
+            int col = csvColumn.index();
             PropertyDescriptor prop = null;
             try {
                 prop = mapper.findDescriptor(columnName);
@@ -424,9 +420,12 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      * @param mapper the mapper strategy instance
      */
     private void setupColumnsForIteration(final HeaderDirectMappingStrategy<T> mapper) {
-        final TupleList<String, Integer> columnsToParse = mapper.getColumnsToParse();
+        final List<CsvColumn> columnsToParse = mapper.getColumnsToParse();
         this.columnsForIteration.addAll(columnsToParse);
-        final Map<String, Integer> idxLookup = columnsToParse.asMap();
+        final Map<String, Integer> idxLookup = new HashMap<>();
+        for (CsvColumn col : this.columnsForIteration) {
+            idxLookup.put(col.name(), col.index());
+        }
         for (Map.Entry<String, String> entry : this.columnRefs.entrySet()) {
             final String to = entry.getKey();
             final String from = entry.getValue();
@@ -435,7 +434,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                 final String msg = String.format("column %s is not defined, but referenced from column %s", to, from);
                 throw new IllegalStateException(msg);
             }
-            columnsForIteration.add(Tuple.of(to, idx));
+            columnsForIteration.add(CsvColumn.mandatory(to, idx));
         }
     }
 
@@ -487,6 +486,9 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             } catch (CsvToBeanException e) {
                 final String msg = "caught exception when trying to skip lines on iterator invocation";
                 log.warn(msg, e);
+            }
+            if (getColumnsForIteration().isEmpty()) {
+                setupColumnsForIteration(getStrategy());
             }
         }
 

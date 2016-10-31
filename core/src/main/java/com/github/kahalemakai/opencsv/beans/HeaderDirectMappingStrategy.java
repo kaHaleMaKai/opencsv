@@ -16,8 +16,6 @@
 
 package com.github.kahalemakai.opencsv.beans;
 
-import com.github.kahalemakai.tuples.Tuple;
-import com.github.kahalemakai.tuples.TupleList;
 import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 import lombok.Getter;
 import lombok.Setter;
@@ -58,6 +56,9 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
     @Getter @Setter
     private boolean headerDefined;
 
+    @Getter
+    private List<CsvColumn> columnsToParse;
+
     /**
      * Set the csv column header.
      * @param headerLine the csv column header
@@ -66,6 +67,7 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
         log.info(String.format("set header to %s", Arrays.toString(headerLine)));
         this.header = headerLine;
         setHeaderDefined(true);
+        setColumnsToParse();
     }
 
     /**
@@ -88,15 +90,41 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
      * Return the headers of columns that require parsing.
      * @return the headers of columns that require parsing
      */
-    TupleList<String, Integer> getColumnsToParse() {
-        TupleList<String, Integer> cols = TupleList.of(String.class, Integer.class);
+    private void setColumnsToParse() {
+        List<CsvColumn> cols = new ArrayList<>();
+        boolean foundOpeningParens = false;
+        boolean foundClosingParens = false;
+
         for (int i = 0; i < this.header.length; ++i) {
             final String col = this.header[i];
-            if (!col.equals(IGNORE_COLUMN)) {
-                cols.add(Tuple.of(col, i));
+            if (foundClosingParens) {
+                final String msg = "found mandatory csv column after optional column specification";
+                log.error(msg);
+                throw new IllegalStateException(msg);
+            }
+            if (col.equals(IGNORE_COLUMN)) {
+                continue;
+            }
+            if (col.startsWith("(")) {
+                foundOpeningParens = true;
+            }
+            if (col.endsWith(")")) {
+                if (!foundOpeningParens) {
+                    final String msg = "found closing parenthesis for optional columns with matching opening one";
+                    log.error(msg);
+                    throw new IllegalStateException(msg);
+                }
+                foundClosingParens = true;
+            }
+            if (foundOpeningParens) {
+                cols.add(CsvColumn.optional(col, i));
+            }
+            else {
+                cols.add(CsvColumn.mandatory(col, i));
             }
         }
-        return TupleList.unmodifiableTupleList(cols);
+        columnsToParse = cols.isEmpty() ?
+                Collections.emptyList() : Collections.unmodifiableList(cols);
     }
 
     /**
