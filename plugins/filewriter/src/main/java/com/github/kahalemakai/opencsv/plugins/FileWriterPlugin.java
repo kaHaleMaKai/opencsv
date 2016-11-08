@@ -8,7 +8,7 @@ import com.github.kahalemakai.opencsv.config.SinkPlugin;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Node;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ import static java.nio.file.StandardOpenOption.*;
  * associated xsd file.
  */
 @RequiredArgsConstructor
-@Log4j
+@Slf4j
 public class FileWriterPlugin implements SinkPlugin {
     /**
      * The file writer xml namespace.

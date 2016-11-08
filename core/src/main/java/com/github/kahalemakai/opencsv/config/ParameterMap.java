@@ -1,7 +1,7 @@
 package com.github.kahalemakai.opencsv.config;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  * Bookkeeping of parameters to inject into xml configuration.
  */
-@Log4j
+@Slf4j
 @RequiredArgsConstructor(staticName = "init")
 public class ParameterMap {
 

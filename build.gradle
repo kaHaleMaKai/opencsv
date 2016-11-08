@@ -19,7 +19,7 @@ plugins {
 }
 
 group 'com.github.kahalemakai'
-version '0.4.5'
+version '0.4.6'
 
 apply plugin: 'idea'
 
@@ -58,7 +58,7 @@ idea {
 subprojects {
     def fullName = "${rootProject.name}.${project.name}".replace("_", ".")
     def delombokedDir = "${buildDir}/${fullName}/src-delomboked"
-    def log4jVersion = "1.2.17"
+    def logbackVersion = "1.1.7"
 
     apply plugin: 'java'
     apply plugin: 'jacoco'
@@ -69,6 +69,19 @@ subprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
+    sourceSets {
+        main {
+            resources {
+                srcDirs = ["src/main/resources", "${rootProject.rootDir}/common/main/resources"]
+            }
+        }
+        test {
+            resources {
+                srcDirs = ["src/test/resources", "${rootProject.rootDir}/common/test/resources"]
+            }
+        }
+    }
+
     repositories {
         jcenter()
         maven { url "file://${System.getProperty("user.home")}/.m2/repository" }
@@ -77,9 +90,10 @@ subprojects {
     }
 
     dependencies {
+        compile "org.slf4j:slf4j-api:1.7.20"
         compile "org.projectlombok:lombok:1.16.10"
-        compile "log4j:log4j:${log4jVersion}"
-        compile "log4j:apache-log4j-extras:${log4jVersion}"
+        compile "ch.qos.logback:logback-core:${logbackVersion}"
+        compile "ch.qos.logback:logback-classic:${logbackVersion}"
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 

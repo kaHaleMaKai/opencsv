@@ -2,7 +2,7 @@ package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -16,7 +16,7 @@ import java.time.format.DateTimeParseException;
  * {@code LocalDateTime} instance into any arbitrary object.
  *
  */
-@Log4j
+@Slf4j
 public class TimestampDecoder implements Decoder<Long> {
     public static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -39,7 +39,11 @@ public class TimestampDecoder implements Decoder<Long> {
             final LocalDateTime dateTime = LocalDateTime.parse(data, FORMAT);
             return success(convert(dateTime));
         } catch (DateTimeParseException e) {
-            log.debug(String.format("cannot parse date '%s'", data));
+            if (log.isDebugEnabled()) {
+                // we need to pre-construct the error message to be able
+                // to use Logger#debug(String, Throwable)
+                log.debug(String.format("cannot parse date '%s'", data), e);
+            }
             return decodingFailed();
         }
     }

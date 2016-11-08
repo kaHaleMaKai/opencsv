@@ -22,7 +22,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -41,7 +41,7 @@ import java.util.function.Supplier;
  *
  * @param <T> type of bean for conversion
  */
-@Log4j
+@Slf4j
 public class Builder<T> {
 
     /* *****************************

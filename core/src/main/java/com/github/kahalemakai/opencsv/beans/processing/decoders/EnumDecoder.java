@@ -4,7 +4,7 @@ import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.AccessLevel;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +13,7 @@ import java.util.Map;
  * Decode textual data into an enumeration of custom type.
  * @param <E> type of the target enumeration
  */
-@Log4j
+@Slf4j
 public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
 
     /**

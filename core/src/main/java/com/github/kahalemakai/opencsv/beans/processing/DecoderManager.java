@@ -18,7 +18,7 @@ package com.github.kahalemakai.opencsv.beans.processing;
 
 import lombok.NonNull;
 import lombok.ToString;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 import java.beans.PropertyEditor;
 import java.util.Collections;
@@ -37,7 +37,7 @@ import java.util.function.Supplier;
  *
  * @see DecoderPropertyEditor
  */
-@Log4j
+@Slf4j
 @ToString
 public class DecoderManager {
     private final Map<String, DecoderPropertyEditor<?>> propertyEditorMap;

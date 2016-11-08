@@ -2,7 +2,8 @@ package com.github.kahalemakai.opencsv.config;
 
 import com.github.kahalemakai.opencsv.beans.Builder;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -39,7 +40,7 @@ public interface SinkPlugin extends Plugin {
      * @param builder the {@link Builder} to be configured
      * @param sink the corresponding sink {@link Node}
      * @param <T> type of the target bean emitted by {@link CsvToBeanMapper}
-     * @throws PluginConfigurationException if the plugin cannot be used for cofiguration
+     * @throws PluginConfigurationException if the plugin cannot be used for configuration
      * of the {@link CsvToBeanMapper}
      */
     <T> void configure(Builder<T> builder, Node sink) throws PluginConfigurationException;
@@ -52,7 +53,7 @@ public interface SinkPlugin extends Plugin {
      */
     @Override
     default <T> void configure(Builder<T> builder, Document doc) throws PluginConfigurationException {
-        final Logger log = Logger.getLogger(SinkPlugin.class);
+        final Logger log = LoggerFactory.getLogger(SinkPlugin.class);
         final NodeList nodeList = doc.getElementsByTagNameNS(getNameSpace(), "config");
         if (nodeList.getLength() == 0) {
             final String msg = String.format("no config-tag found for namespace %s", getNameSpace());

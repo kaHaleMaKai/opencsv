@@ -19,13 +19,13 @@ package com.github.kahalemakai.opencsv.beans.processing.decoders;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.NoArgsConstructor;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Decode textual data into a {@code double}.
  */
 @NoArgsConstructor
-@Log4j
+@Slf4j
 public class DoubleDecoder implements Decoder<Double> {
     /**
      * {@inheritDoc}
@@ -35,7 +35,11 @@ public class DoubleDecoder implements Decoder<Double> {
         try {
             return success(Double.parseDouble(value));
         } catch (NumberFormatException e) {
-            log.debug(String.format("could not decode '%s' as double", value), e);
+            if (log.isDebugEnabled()) {
+                // we need to pre-construct the error message to be able
+                // to use Logger#debug(String, Throwable)
+                log.debug(String.format("could not decode '%s' as double", value), e);
+            }
             return decodingFailed();
         }
     }

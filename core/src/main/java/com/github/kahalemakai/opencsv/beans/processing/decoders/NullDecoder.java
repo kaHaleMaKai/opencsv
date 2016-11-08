@@ -17,13 +17,13 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Decode a {@code String} to {@code null}.
  */
 @RequiredArgsConstructor
-@Log4j
+@Slf4j
 public class NullDecoder extends AbstractNullDecoder {
     /**
      * The default null value.

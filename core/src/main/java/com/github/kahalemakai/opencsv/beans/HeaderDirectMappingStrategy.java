@@ -19,7 +19,7 @@ package com.github.kahalemakai.opencsv.beans;
 import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  * where {@code N > 0} is the number of columns to ignore.
  * @param <T> type of bean to map to
  */
-@Log4j
+@Slf4j
 public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrategy<T> {
 
     private final static Pattern IGNORE_PATTERN = Pattern.compile("^\\(?\\$ignore[0-9]+\\$\\)?$");

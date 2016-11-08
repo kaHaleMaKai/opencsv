@@ -23,7 +23,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.bean.AbstractCSVToBean;
 import lombok.*;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @param <T> type of bean to be emitted
  */
 @RequiredArgsConstructor
-@Log4j
+@Slf4j
 @ToString
 class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMapper<T> {
     @Getter(AccessLevel.PACKAGE)
@@ -106,7 +106,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         this.finalizer = builder.finalizer();
         this.multiLine = builder.multiLine();
         this.source = defineSource(builder.source(), builder.getReader(), builder.getLineIterator());
-        log.debug(String.format("new CsvToBeanMapper instance built:\n%s", this.toString()));
+        log.debug("new CsvToBeanMapper instance built:\n{}", this);
     }
 
     /**
@@ -529,9 +529,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             final String[] nextLine = getIterator().next();
             counter++;
             try {
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format("processing line %d", counter));
-                }
+                log.debug("processing line {}", counter);
                 return processLine(getStrategy(), nextLine);
             } catch (Throwable e) {
                 final String msg = String.format(
@@ -621,17 +619,13 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             final String[] nextLine = getIterator().next();
             counter++;
             try {
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format("processing line %d", counter));
-                }
+                log.debug("processing line {}", counter);
                 final T t = processLine(getStrategy(), nextLine);
                 nextElementIsEmpty = false;
                 return t;
             } catch (Throwable e) {
                 if (isOnErrorSkipLine()) {
-                    if (log.isDebugEnabled()) {
-                        log.debug(String.format("found error on line %d\n%s", counter, e));
-                    }
+                    log.debug("found error on line {}\n{}", counter, e);
                     return next();
                 }
                 else {

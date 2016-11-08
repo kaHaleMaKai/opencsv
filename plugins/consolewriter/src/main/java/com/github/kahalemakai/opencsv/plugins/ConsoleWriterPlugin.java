@@ -6,7 +6,7 @@ import com.github.kahalemakai.opencsv.config.Sink;
 import com.github.kahalemakai.opencsv.config.SinkPlugin;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Node;
 
 import java.net.URL;
@@ -20,7 +20,7 @@ import java.util.Optional;
  * value will be prefixed to every line of output; it defaults to the empty string.
  */
 @RequiredArgsConstructor
-@Log4j
+@Slf4j
 public class ConsoleWriterPlugin implements SinkPlugin {
     /**
      * The associated xml namespace.

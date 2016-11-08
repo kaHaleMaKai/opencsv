@@ -18,7 +18,7 @@ package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for decoding String data to the {@code null} reference.
@@ -27,7 +27,7 @@ import lombok.extern.log4j.Log4j;
  * method needs to be overriden. In this case, override the
  * {@link #isNullValued(String)} method instead.
  */
-@Log4j
+@Slf4j
 abstract class AbstractNullDecoder implements Decoder<Object> {
     /**
      * Decode string data to the {@code null} reference.
@@ -51,7 +51,7 @@ abstract class AbstractNullDecoder implements Decoder<Object> {
             return Decoder.returnNull();
         }
         else {
-            log.debug(String.format("cannot decode value '%s' to null", value));
+            log.debug("cannot decode value '{}' to null", value);
             return decodingFailed();
         }
     }

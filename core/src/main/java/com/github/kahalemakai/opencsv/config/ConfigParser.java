@@ -26,7 +26,7 @@ import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.EnumDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import lombok.NonNull;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -65,7 +65,7 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
  * to the README.md file or to the overview page of
  * com/github/kahalemakai/opencsv/config.
  */
-@Log4j
+@Slf4j
 public class ConfigParser {
 
     /**
@@ -465,7 +465,7 @@ public class ConfigParser {
         try {
             type = (Class<? extends T>) Class.forName(className.get());
         } catch (ClassNotFoundException e) {
-            log.error(e);
+            log.error(String.format("no class found for target bean type %s", className.get()), e);
             throw new IllegalStateException(e);
         }
         final Builder<T> builder = CsvToBeanMapper.builder(type);

@@ -17,7 +17,7 @@
 package com.github.kahalemakai.opencsv.beans.processing;
 
 import lombok.*;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 import java.beans.PropertyEditorSupport;
 import java.util.LinkedList;
@@ -36,7 +36,7 @@ import java.util.List;
  * @param <T> class, the csv column should be converted to
  */
 @RequiredArgsConstructor(staticName = "forColumn")
-@Log4j
+@Slf4j
 public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     private static final String ANY_COLUMN = "*";
     private final List<Decoder<? extends T>> decoders = new LinkedList<>();
@@ -231,13 +231,9 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     }
 
     private T decodeValue() throws DataDecodingException {
-        if (log.isDebugEnabled()) {
-            log.debug(String.format("decoding value '%s' using decoder chain of length %d", data, decoders.size()));
-        }
+        log.debug("decoding value '{}' using decoder chain of length {}", data, decoders.size());
         for (int i = 0; i < decoders.size(); ++i) {
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("trying decoder nr. %d", i + 1));
-            }
+            log.debug("trying decoder nr. {}", i + 1);
             final Decoder<? extends T> decoder = decoders.get(i);
             try {
                 final ResultWrapper<? extends T> wrapper = decoder.decode(data);
@@ -246,10 +242,10 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
                 }
                 final T decodedValue = wrapper.get();
                 if (log.isDebugEnabled()) {
-                    log.debug(String.format("successfully decoded value %s -> %s : <%s>",
+                    log.debug("successfully decoded value {} -> {} : <{}>",
                             data,
                             decodedValue,
-                            decodedValue == null ? "null" : decodedValue.getClass().getCanonicalName()));
+                            decodedValue == null ? "null" : decodedValue.getClass().getCanonicalName());
                 }
                 return decodedValue;
             } catch (Throwable e) {
@@ -265,19 +261,15 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
 
     private T postProcess(final T value) throws PostProcessingException {
         if (postProcessor == PostProcessor.IDENTITY) {
-            if (log.isDebugEnabled()) {
-                log.debug("no postprocessor setup, returning identical value");
-            }
+            log.debug("no postprocessor setup, returning identical value");
             return value;
         }
         if (!isNullFallthroughForPostProcessors() || value != null) {
             try {
                 final T postProcessedValue = postProcessor.process(value);
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format("postprocessing value %s -> %s",
-                            value,
-                            postProcessedValue));
-                }
+                log.debug("postprocessing value {} -> {}",
+                        value,
+                        postProcessedValue);
                 return postProcessedValue;
             } catch (Exception e) {
                 final String msg = String.format("[col: %s] error while trying to postprocess value %s", getColumnName(), value);
@@ -285,7 +277,7 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
                 throw new PostProcessingException(msg, e);
             }
         }
-        else if (log.isDebugEnabled()) {
+        else {
             log.debug("null falls through on postprocessing");
         }
         return null;
@@ -303,7 +295,7 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
                 counter++;
             }
         }
-        else if (log.isDebugEnabled()) {
+        else {
             log.debug("null falls through on validation");
         }
     }

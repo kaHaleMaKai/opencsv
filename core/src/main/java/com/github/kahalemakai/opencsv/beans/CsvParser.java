@@ -4,7 +4,7 @@ import com.opencsv.CSVParser;
 import com.opencsv.enums.CSVReaderNullFieldIndicator;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -17,7 +17,7 @@ import java.util.List;
  * <p>
  * Remove the last quote character from a field, even if followed by whitespace.
  */
-@Log4j
+@Slf4j
 final class CsvParser extends CSVParser {
     @Getter
     private final char separator;

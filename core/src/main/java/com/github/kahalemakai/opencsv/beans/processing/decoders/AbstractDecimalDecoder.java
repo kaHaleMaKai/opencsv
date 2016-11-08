@@ -6,7 +6,7 @@ import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -20,13 +20,14 @@ import java.util.regex.Pattern;
  * <p>
  * Subclasses need to set {@code precision} and {@code scale} on instance creation.
  */
-@Log4j
+@Slf4j
 abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
     @Getter(value = AccessLevel.PRIVATE, lazy = true)
     private final DecimalFormat format = determineFormat();
     private final static Pattern pattern = Pattern.compile("[-.]");
 
     // subclasses have to set these values by defining the respective methods
+    // thus precision and scale shall be used as effectively final
     @Setter(AccessLevel.PROTECTED)
     private int precision;
     @Setter(AccessLevel.PROTECTED)
@@ -88,16 +89,21 @@ abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
             return success(bytes);
         } catch (ParseException e) {
             if (log.isDebugEnabled()) {
+                // we need to pre-construct the error message to be able
+                // to use Logger#debug(String, Throwable)
                 final String msg = String.format("cannot decode input '%s' as decimal", data);
-                log.debug(msg);
+                log.debug(msg, e);
             }
             return decodingFailed();
         } catch (ArithmeticException e) {
             // rounding mode set to NOT_NECESSARY
             // those DecimalFormat.parse() throws on too large scale for input (this is what we want)
+
+            // we need to pre-construct the error message to be able
+            // to use Logger#debug(String, Throwable)
             if (log.isDebugEnabled()) {
                 final String msg = String.format("too small scale for decimal input. expected: scale = %d, got input: '%s'", scale, data);
-                log.debug(msg);
+                log.debug(msg, e);
             }
             return decodingFailed();
         }

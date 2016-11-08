@@ -1,15 +1,15 @@
 package com.github.kahalemakai.opencsv.beans;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.github.kahalemakai.opencsv.categories.PerformanceTests;
 import com.github.kahalemakai.opencsv.config.ConfigParser;
 import com.github.kahalemakai.opencsv.examples.WideCsv;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -89,9 +89,8 @@ public class ThreadingTest {
 
     @Before
     public void setUp() throws Exception {
-        final Logger logger = Logger.getLogger("com.github.kahalemakai.opencsv");
-        final ConsoleAppender appender = (ConsoleAppender) logger.getAppender("console");
-        appender.setThreshold(Level.INFO);
+        final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+        context.getLoggerList().forEach(logger -> logger.setLevel(Level.INFO));
         maxNumberOfLines =
                 Long.parseLong(System.getProperty("opencsv.tests.performance.count", "10000"));
         if (maxNumberOfLines < 0) {
