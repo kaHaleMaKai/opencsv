@@ -24,6 +24,7 @@ import com.github.kahalemakai.opencsv.beans.processing.PostProcessor;
 import com.github.kahalemakai.opencsv.beans.processing.PostValidator;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.EnumDecoder;
+import com.github.kahalemakai.opencsv.beans.processing.decoders.NullChoicesDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -137,6 +138,11 @@ public class ConfigParser {
      * The namespaced post validator element name.
      */
     public static final String BEAN_POSTVALIDATOR = "postValidator";
+
+    /**
+     * The namespaced null element name.
+     */
+    public static final String BEAN_NULL = "null";
 
     /**
      * The default processing package.
@@ -581,16 +587,41 @@ public class ConfigParser {
             final boolean doTrim = Boolean.valueOf(trim.orElse(globalTrimmingMode));
             builder.trim(column, doTrim);
 
+            final NodeList processors = field.getChildNodes();
+            final SortedSet<String> nullValues = new TreeSet<>();
+            for (int j = 0; j < processors.getLength(); ++j) {
+                final Node nullItem = processors.item(j);
+                if (nullItem.getNodeType() != ELEMENT_NODE
+                        || !BEAN_NAMESPACE.equals(nullItem.getNamespaceURI())
+                        || !BEAN_NULL.equals(nullItem.getLocalName())) {
+                    continue;
+                }
+                getAttributeValue(nullItem, "value").ifPresent(nullValues::add);
+            }
+
             final Optional<String> nullable = getAttributeValue(field, "nullable");
             final Optional<String> maybeNullString = getAttributeValue(field, "nullString");
+            maybeNullString.ifPresent(nullValues::add);
             final boolean isNullable = Boolean.valueOf(nullable.orElse("false"))
-                    || maybeNullString.isPresent();
+                    || !nullValues.isEmpty();
             if (isNullable) {
-                final String nullString = maybeNullString.orElse(this.globalNullString);
-                builder.registerDecoder(
-                       column,
-                        () -> new NullDecoder(nullString),
-                        String.format("%s#%s", NullDecoder.class.getCanonicalName(), nullString));
+                if (nullValues.isEmpty()) {
+                    final String nullString = maybeNullString.orElse(this.globalNullString);
+                    nullValues.add(nullString);
+                }
+                if (nullValues.size() == 1) {
+                    final String nullString = nullValues.first();
+                    builder.registerDecoder(
+                            column,
+                            () -> new NullDecoder(nullString),
+                            String.format("%s#%s", NullDecoder.class.getCanonicalName(), nullString));
+                }
+                else {
+                    builder.registerDecoder(
+                            column,
+                            () -> new NullChoicesDecoder(nullValues),
+                            String.format("%s#%s", NullChoicesDecoder.class.getCanonicalName(), nullValues));
+                }
             }
             final Optional<String> type = getAttributeValue(field, "type");
             if (type.isPresent() && !type.get().equals("String")) {
@@ -633,10 +664,9 @@ public class ConfigParser {
             }
 
             boolean anyDecoder = false;
-            final NodeList processors = field.getChildNodes();
             for (int j = 0; j < processors.getLength(); ++j) {
                 final Node processor = processors.item(j);
-                if (processor.getNodeType() == ELEMENT_NODE) {
+                if (processor.getNodeType() == ELEMENT_NODE && !"null".equals(processor.getLocalName())) {
                     registerProcessor(column, builder, processor);
                     if (processor.getLocalName().equals(BEAN_DECODER)) {
                         anyDecoder = true;

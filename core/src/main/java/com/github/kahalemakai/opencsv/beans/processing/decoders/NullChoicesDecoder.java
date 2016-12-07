@@ -50,7 +50,7 @@ public class NullChoicesDecoder extends AbstractNullDecoder {
      * Create a new {@code Decoder} instance.
      * @param nullValues the set of text data that maps to {@code null}
      */
-    public NullChoicesDecoder(Set<String> nullValues) {
+    public NullChoicesDecoder(final Set<String> nullValues) {
         this.nullValues.addAll(nullValues);
     }
 

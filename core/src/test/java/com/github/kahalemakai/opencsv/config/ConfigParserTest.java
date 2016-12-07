@@ -74,6 +74,35 @@ public class ConfigParserTest {
     }
 
     @Test
+    public void testLocalNullchoices() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-nullchoices.xml");
+        assert resource != null;
+        final CsvToBeanMapper<Person> beanMapper = ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> toUnparsedIterator(new String[]{
+                        "null,Mr.,Bean,xxxx",
+                        "n/a,Mrs.,Doubtfire,NULL"
+                }))
+                .parse();
+        final Iterator<Person> iterator = beanMapper.iterator();
+        final Person mrBean = new Person();
+        final Person mrsDoubtfire = new Person();
+        mrBean.setAge(null)
+                .setGivenName("Mr.")
+                .setSurName("Bean")
+                .setAddress(null);
+        mrsDoubtfire.setAge(null)
+                .setGivenName("Mrs.")
+                .setSurName("Doubtfire")
+                .setAddress(null);
+        assertEquals(mrBean, iterator.next());
+        assertEquals(mrsDoubtfire, iterator.next());
+
+    }
+
+    @Test
     public void testLocalNullString() throws Exception {
         final URL resource = ConfigParserTest
                 .class
