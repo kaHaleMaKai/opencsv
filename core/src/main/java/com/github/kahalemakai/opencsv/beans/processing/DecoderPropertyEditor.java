@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.beans.PropertyEditorSupport;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *The {@code DecoderPropertyEditor} contains all the logic of processing csv column values into bean field values.
@@ -101,6 +102,26 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
      */
     @Getter @Setter
     private boolean nullFallthroughForPostValidators;
+
+    /**
+     * The default value to return if decoding fails.
+     */
+    private T defaultValue;
+    private AtomicBoolean defaultValueWasSet = new AtomicBoolean(false);
+
+    /**
+     * Define a default value that will be used if no decoder can decode a given value.
+     * <p>
+     * This method throws on repeated invocation.
+     * @param value the default value to use
+     * @return the {@code DecoderPropertyEditor} instance
+     */
+    public DecoderPropertyEditor<T> withDefault(final T value) {
+        if (defaultValueWasSet.compareAndSet(false, true)) {
+            this.defaultValue = value;
+        }
+        return this;
+    }
 
     /**
      * Add a new decoder to the decoding chain.
@@ -253,6 +274,9 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
                 log.error(msg);
                 throw new DataDecodingException(msg, e);
             }
+        }
+        if (defaultValueWasSet.get()) {
+            return this.defaultValue;
         }
         final String msg = String.format("[col: %s] could not decode value '%s'", getColumnName(), data);
         log.error(msg);
