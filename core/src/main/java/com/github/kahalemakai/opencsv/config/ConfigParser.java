@@ -666,7 +666,7 @@ public class ConfigParser {
             boolean anyDecoder = false;
             for (int j = 0; j < processors.getLength(); ++j) {
                 final Node processor = processors.item(j);
-                if (processor.getNodeType() == ELEMENT_NODE && !"null".equals(processor.getLocalName())) {
+                if (processor.getNodeType() == ELEMENT_NODE && !BEAN_NULL.equals(processor.getLocalName())) {
                     registerProcessor(column, builder, processor);
                     if (processor.getLocalName().equals(BEAN_DECODER)) {
                         anyDecoder = true;
@@ -680,6 +680,9 @@ public class ConfigParser {
             if (isNullable && !anyDecoder) {
                 builder.registerDecoder(column, Decoder.IDENTITY);
             }
+
+            final Optional<String> defaultValue = getAttributeValue(field, "default");
+            defaultValue.ifPresent(s -> builder.defaultValueFromString(column, s));
         }
     }
 

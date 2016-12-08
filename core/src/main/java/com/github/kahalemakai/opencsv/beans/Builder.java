@@ -274,6 +274,20 @@ public class Builder<T> {
     @Accessors(chain = true, fluent = true) @Getter
     private final Object[] $sinkLock = new Object[0];
 
+    /**
+     * Book-keep default values per column.
+     * The default values are applied last to the
+     * decoder manager.
+     */
+    private final Map<String, Object> defaultValues = new HashMap<>();
+
+    /**
+     * Book-keep default values (as String data) per column.
+     * The default values are applied last to the
+     * decoder manager.
+     */
+    private final Map<String, String> defaultValueStringData = new HashMap<>();
+
     /* *************************
      * constructor and builder
      * *************************/
@@ -319,6 +333,8 @@ public class Builder<T> {
             final String msg = "when ignoring quotes, multi-line data cannot be parsed";
             log.debug(msg);
         }
+        this.defaultValues.forEach(this.decoderManager::setDefaultValue);
+        this.defaultValueStringData.forEach(this.decoderManager::decodeAndSetDefaultValue);
         return new CsvToBeanMapperImpl<>(this);
     }
 
@@ -769,6 +785,44 @@ public class Builder<T> {
         throw new IllegalStateException(msg);
     }
 
+    /**
+     * Define a default value for a column.
+     * @param column name of the column
+     * @param value the default value to use
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> defaultValue(final String column, final Object value) {
+        if (this.columnHasDefaultValue(column)) {
+            final String msg = String.format("trying to set default value for column %s repeatedly", column);
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
+        this.defaultValues.put(column, value);
+        return this;
+    }
+
+    /**
+     * Define a default value (as String data) for a column.
+     * <p>
+     * The data will be decoded by the {@link DecoderPropertyEditor#decodeValue()} method.
+     * @param column name of the column
+     * @param value the default value to use
+     * @return the {@code Builder} instance
+     */
+    public Builder<T> defaultValueFromString(final String column, final String value) {
+        if (this.columnHasDefaultValue(column)) {
+            final String msg = String.format("trying to set default value for column %s repeatedly", column);
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
+        this.defaultValueStringData.put(column, value);
+        return this;
+    }
+
+    private boolean columnHasDefaultValue(final String column) {
+        return this.defaultValues.containsKey(column)
+                || this.defaultValueStringData.containsKey(column);
+    }
 
     /**
      * Helper method for setting the header of a mapping strategy.

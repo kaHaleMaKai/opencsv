@@ -304,6 +304,34 @@ public class DecoderManager {
     }
 
     /**
+     * Set a default value for a column.
+     * <p>
+     * This method throws on repeated invocation for the same column.
+     * @param column name of column
+     * @param value the default value to use
+     * @param <S> type of the default value
+     * @return the {@code DecoderManager} instance
+     */
+    public <S> DecoderManager setDefaultValue(final String column, final S value) {
+        getPropertyEditor(column).withDefault(value);
+        return this;
+    }
+
+    /**
+     * Set a default value for a column by decoding string data.
+     * <p>
+     * The data are handled by the {@link DecoderPropertyEditor#decodeValue()} method.
+     * This method throws on repeated invocation for the same column.
+     * @param column name of column
+     * @param value String data for the default value to use
+     * @return the {@code DecoderManager} instance
+     */
+    public DecoderManager decodeAndSetDefaultValue(final String column, final String value) {
+        getPropertyEditor(column).withDefaultFromString(value);
+        return this;
+    }
+
+    /**
      * Get an immutable view of teh map of columns to propertyEditors.
      * @return the map of columns to propertyEditors
      */

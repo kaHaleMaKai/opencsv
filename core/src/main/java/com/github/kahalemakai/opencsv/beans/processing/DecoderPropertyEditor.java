@@ -120,6 +120,32 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
         if (defaultValueWasSet.compareAndSet(false, true)) {
             this.defaultValue = value;
         }
+        else {
+            final String msg = String.format("trying to set default value on column %s repeatedly", this.columnName);
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
+        return this;
+    }
+
+    /**
+     * Define a default value (by decoding String data) that will be used if no decoder can decode a given value.
+     * <p>
+     * The data will be decoded by the method {@link #decodeValue()}.
+     * This method throws on repeated invocation.
+     * @param value the default value to use
+     * @return the {@code DecoderPropertyEditor} instance
+     */
+    public DecoderPropertyEditor<T> withDefaultFromString(final String value) {
+        if (defaultValueWasSet.compareAndSet(false, true)) {
+            this.setAsText(value);
+            this.defaultValue = decodeValue();
+        }
+        else {
+            final String msg = String.format("trying to set default value on column %s repeatedly", this.columnName);
+            log.error(msg);
+            throw new IllegalStateException(msg);
+        }
         return this;
     }
 
