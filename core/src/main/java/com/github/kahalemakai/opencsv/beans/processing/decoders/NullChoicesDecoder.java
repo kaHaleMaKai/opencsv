@@ -19,6 +19,7 @@ package com.github.kahalemakai.opencsv.beans.processing.decoders;
 import lombok.AccessLevel;
 import lombok.Setter;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,6 +53,10 @@ public class NullChoicesDecoder extends AbstractNullDecoder {
      */
     public NullChoicesDecoder(final Set<String> nullValues) {
         this.nullValues.addAll(nullValues);
+    }
+
+    public NullChoicesDecoder(final String...nullValues) {
+        Collections.addAll(this.nullValues, nullValues);
     }
 
     /**

@@ -42,6 +42,9 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import java.io.*;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -419,7 +422,7 @@ public class ConfigParser {
      * @throws IllegalAccessException if instance creation of decoder/processor/validator is forbidden
      */
     public <T> CsvToBeanMapper<T> parse()
-            throws ParserConfigurationException, IOException, SAXException, InstantiationException, ClassNotFoundException, IllegalAccessException {
+            throws ParserConfigurationException, IOException, SAXException, InstantiationException, ClassNotFoundException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 
         // check wellformedness
         final boolean wellFormed = isWellFormed(getXmlInputStream());
@@ -558,7 +561,7 @@ public class ConfigParser {
      * @throws InstantiationException if decoder/... cannot be instantiated, or column ref data cannot be decoded
      * @throws IllegalAccessException if decoder/... default constructor is inaccessible
      */
-    private <T> void configureFields(final Node config, Builder<T> builder) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    private <T> void configureFields(final Node config, Builder<T> builder) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         final NodeList fields = config.getChildNodes();
 //        final Class<? extends T> builderType = builder.getStrategy().getType();
         for (int i = 0; i < fields.getLength(); ++i) {
@@ -718,7 +721,7 @@ public class ConfigParser {
      */
     private <T, R> void registerProcessor(final String column,
                                        final Builder<T> builder,
-                                       final Node processor) throws InstantiationException, ClassNotFoundException {
+                                       final Node processor) throws InstantiationException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         final String processorNodeName = processor.getLocalName();
         // present of attribute "type" is enforced by xsd
         final String type = getAttributeValue(processor, "type").get();
@@ -726,7 +729,7 @@ public class ConfigParser {
         switch (processorNodeName) {
             case BEAN_DECODER:
                 final Class<? extends Decoder<R>> decoderClass = getProcessorClass(type, processorNs, BEAN_DECODER);
-                builder.registerDecoder(column, decoderClass);
+                registerDecoder(builder, column, decoderClass, processor.getChildNodes());
                 break;
             case BEAN_POSTPROCESSOR:
                 final Class<? extends PostProcessor<R>> postProcessorClass = getProcessorClass(type, processorNs, BEAN_POSTPROCESSOR);
@@ -742,6 +745,128 @@ public class ConfigParser {
                 break;
         }
 
+    }
+
+    private <R, T> void registerDecoder(final Builder<R> builder,
+                                     final String column,
+                                     final Class<? extends Decoder<T>> decoderClass,
+                                     final NodeList arguments) throws InstantiationException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        final List<Object> constructorArgumentValues = new ArrayList<>();
+        final List<Class<?>> constructorArgumentTypes = new ArrayList<>();
+        final StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < arguments.getLength(); i++) {
+            final Node arg = arguments.item(i);
+            if (arg.getNodeType() != ELEMENT_NODE) {
+                continue;
+            }
+            // presence enforced by xsd schema
+            final String value = getAttributeValue(arg, "value").get();
+            final String type = getAttributeValue(arg, "type").get();
+            final Optional<String> name = getAttributeValue(arg, "name");
+            try {
+                sb.append(type);
+                sb.append(':');
+                sb.append(value);
+                sb.append(',');
+                sb.append(' ');
+                switch (type) {
+                    case "int":
+                        constructorArgumentTypes.add(int.class);
+                        constructorArgumentValues.add(Integer.valueOf(value));
+                        break;
+                    case "short":
+                        constructorArgumentTypes.add(short.class);
+                        constructorArgumentValues.add(Short.valueOf(value));
+                        break;
+                    case "long":
+                        constructorArgumentTypes.add(long.class);
+                        constructorArgumentValues.add(Long.valueOf(value));
+                        break;
+                    case "float":
+                        constructorArgumentTypes.add(float.class);
+                        constructorArgumentValues.add(Float.valueOf(value));
+                        break;
+                    case "double":
+                        constructorArgumentTypes.add(double.class);
+                        constructorArgumentValues.add(Double.valueOf(value));
+                        break;
+                    case "boolean":
+                        constructorArgumentTypes.add(boolean.class);
+                        constructorArgumentValues.add(Boolean.valueOf(value));
+                        break;
+                    case "String":
+                        constructorArgumentTypes.add(String.class);
+                        constructorArgumentValues.add(value);
+                        break;
+                    default:
+                }
+            } catch (Throwable e) {
+                final String msg = String.format("could not parse decoder argument '%s' to type '%s'",
+                        value, type) + (name.isPresent() ? " " + name : "");
+                log.error(msg);
+                throw new IllegalArgumentException(msg, e);
+            }
+        }
+        if (constructorArgumentTypes.isEmpty()) {
+            builder.registerDecoder(column, decoderClass);
+        }
+        else {
+            sb.delete(sb.length() - 2, sb.length());
+            final Class<?>[] argTypes = constructorArgumentTypes.stream().toArray(Class<?>[]::new);
+            final Object[] argValues = constructorArgumentValues.stream().toArray(Object[]::new);
+            final String constructorArgsRepr = sb.toString();
+            final String repr = String.format("%s#%s", decoderClass.getCanonicalName(), constructorArgsRepr);
+            builder.registerDecoder(column, () -> {
+                try {
+                    return newDecoder(decoderClass, argTypes, argValues);
+                } catch (IllegalAccessException
+                         | InvocationTargetException
+                         | InstantiationException
+                         | NoSuchMethodException e) {
+                    final String msg = String.format("cannot create new decoder of type %s with arguments (%s)",
+                            decoderClass.getCanonicalName(), constructorArgsRepr);
+                    log.error(msg);
+                    // FIXME: use appropriate exception type
+                    throw new RuntimeException(msg);
+                }
+            }, repr);
+        }
+    }
+
+    private static <T> Decoder<T> newDecoder(final Class<? extends Decoder<T>> decoderClass,
+                                                                    final Class<?>[] argTypes,
+                                                                    final Object[] argValues)
+            throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+        Constructor<? extends Decoder<T>> constructor;
+        try {
+            constructor = decoderClass.getConstructor(argTypes);
+            return constructor.newInstance(argValues);
+        } catch (NoSuchMethodException e) {
+            final boolean allTheSame = Arrays.stream(argTypes)
+                    .distinct()
+                    .count() == 1;
+            if (allTheSame) {
+                final Class<?> arrayType = Array.newInstance(argTypes[0], 0).getClass();
+                constructor = decoderClass.getConstructor(arrayType);
+                return constructor.newInstance(getArrayArguments(argTypes[0], argValues));
+            }
+            throw e;
+        }
+    }
+
+    private static <T> T[][] getArrayArguments(final Class<? extends T> parameterType, Object[] args) {
+        @SuppressWarnings("unchecked")
+        final T[] array = (T[]) Array.newInstance(parameterType, args.length);
+        for (int i = 0; i < args.length; ++i) {
+            @SuppressWarnings("unchecked")
+            final T arg = (T) args[i];
+            array[i] = arg;
+        }
+        @SuppressWarnings("unchecked")
+        final T[][] outerArray = (T[][]) Array.newInstance(array.getClass(), 1);
+        outerArray[0] = array;
+        return outerArray;
     }
 
     /**

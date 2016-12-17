@@ -5,6 +5,7 @@ import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,10 +22,16 @@ import java.util.regex.Pattern;
  * Subclasses need to set {@code precision} and {@code scale} on instance creation.
  */
 @Slf4j
-abstract public class AbstractDecimalDecoder implements Decoder<ByteBuffer> {
+@NoArgsConstructor
+ public class DecimalDecoder implements Decoder<ByteBuffer> {
     @Getter(value = AccessLevel.PRIVATE, lazy = true)
     private final DecimalFormat format = determineFormat();
     private final static Pattern pattern = Pattern.compile("[-.]");
+
+    public DecimalDecoder(final int precision, final int scale) {
+        this.precision = precision;
+        this.scale = scale;
+    }
 
     // subclasses have to set these values by defining the respective methods
     // thus precision and scale shall be used as effectively final

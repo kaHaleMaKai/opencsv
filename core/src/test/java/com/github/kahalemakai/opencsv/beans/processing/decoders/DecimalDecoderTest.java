@@ -8,11 +8,11 @@ import java.nio.ByteBuffer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-public class AbstractDecimalDecoderTest {
+public class DecimalDecoderTest {
 
     @Test
     public void testDecode() throws Exception {
-        final AbstractDecimalDecoder decoder9_6 = new AbstractDecimalDecoder() {
+        final DecimalDecoder decoder9_6 = new DecimalDecoder() {
             {
                 setPrecision(9);
                 setScale(6);

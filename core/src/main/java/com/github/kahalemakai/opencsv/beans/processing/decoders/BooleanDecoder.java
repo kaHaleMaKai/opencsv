@@ -47,6 +47,11 @@ public class BooleanDecoder extends AbstractBooleanDecoder {
         falseValue = "false";
     }
 
+    public BooleanDecoder(final String trueValue, final String falseValue) {
+        this.trueValue = trueValue;
+        this.falseValue = falseValue;
+    }
+
     /**
      * {@inheritDoc}
      */

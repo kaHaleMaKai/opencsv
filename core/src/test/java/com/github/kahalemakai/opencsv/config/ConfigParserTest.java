@@ -19,6 +19,7 @@ package com.github.kahalemakai.opencsv.config;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanException;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
+import com.github.kahalemakai.opencsv.examples.DecoderArgsTester;
 import com.github.kahalemakai.opencsv.examples.EnlargedPerson;
 import com.github.kahalemakai.opencsv.examples.EnumWrapper;
 import com.github.kahalemakai.opencsv.examples.Person;
@@ -28,7 +29,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -44,6 +47,7 @@ public class ConfigParserTest {
     String[] linesWithOptionalColumns;
     String[] lines;
     String[] linesWithEnum;
+    String[] linesForConstructorArgs;
     Person picard;
     Person drObvious;
     Person fraenkie;
@@ -56,6 +60,7 @@ public class ConfigParserTest {
     Iterator<String> unparsedIterator;
     Iterator<String> unparsedIteratorWithIgnore;
     Iterator<String> unparsedLinesWithEnum;
+    Iterator<String> unparsedLinesForConstructorArgs;
     Reader reader;
 
     @Test(expected = CsvToBeanException.class)
@@ -71,6 +76,28 @@ public class ConfigParserTest {
         final Iterator<EnumWrapper> iterator = beanMapper.iterator();
         iterator.next();
         iterator.next();
+    }
+
+    @Test
+    public void testConstructorArguments() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-constructor-arguments.xml");
+        assert resource != null;
+        final CsvToBeanMapper<DecoderArgsTester> beanMapper = ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedLinesForConstructorArgs)
+                .parse();
+        final Iterator<DecoderArgsTester> iterator = beanMapper.iterator();
+        final DecoderArgsTester line1 = DecoderArgsTester.of(null, true, newDecimal("11.500000"));
+        final DecoderArgsTester line2 = DecoderArgsTester.of(1, null, newDecimal("23.000000"));
+        final DecoderArgsTester line3 = DecoderArgsTester.of(11, false, newDecimal("123.456000"));
+        final DecoderArgsTester line4 = DecoderArgsTester.of(-498, null, newDecimal("123456.123456"));
+        final DecoderArgsTester result1 = iterator.next();
+        assertEquals(line1, result1);
+        assertEquals(line2, iterator.next());
+        assertEquals(line3, iterator.next());
+        assertEquals(line4, iterator.next());
     }
 
     @Test
@@ -465,6 +492,13 @@ public class ConfigParserTest {
         };
         linesWithEscape = "50xJean-LucxPicardxCaptain9's room, Enterprise";
 
+        linesForConstructorArgs = new String[] {
+                "this is null!!!,yes,11.5",
+                "1,pas de valoir,23",
+                "11,no,123.456",
+                "-498,null,123456.123456"
+        };
+
         linesWithEnum = new String[] {"n", "x"};
         picard = new Person();
         picard.setAge(50);
@@ -496,6 +530,7 @@ public class ConfigParserTest {
         unparsedIterator = toUnparsedIterator(lines);
         unparsedIteratorWithIgnore = toUnparsedIterator(linesWithIgnore);
         unparsedLinesWithEnum = toUnparsedIterator(linesWithEnum);
+        unparsedLinesForConstructorArgs = toUnparsedIterator(linesForConstructorArgs);
         final StringBuilder sb = new StringBuilder();
         for (String line : lines) {
             sb.append(line).append("\n");
@@ -545,5 +580,10 @@ public class ConfigParserTest {
             }
         };
     }
+
+    private static ByteBuffer newDecimal(final String value) {
+        return ByteBuffer.wrap(new BigDecimal(value).unscaledValue().toByteArray());
+    }
+
 
 }

@@ -50,4 +50,9 @@ public class BooleanChoicesDecoder extends AbstractBooleanDecoder {
         truthyValues.add("false");
     }
 
+    public BooleanChoicesDecoder(final Set<String> truthyValues, final Set<String> falsyValues) {
+        this.truthyValues = truthyValues;
+        this.falsyValues = falsyValues;
+    }
+
 }

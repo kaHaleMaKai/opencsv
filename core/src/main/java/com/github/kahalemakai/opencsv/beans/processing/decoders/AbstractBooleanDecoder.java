@@ -7,7 +7,7 @@ import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
  * Base class for boolean decoders.
  * <p>
  * Usually when implementing the {@link Decoder} interface, the
- * {@link Decoder#decode(String)} method has to be overriden.
+ * {@link Decoder#decode(String)} method has to be overridden.
  * When extending this class, however, override {@link #isTrue(String)}
  * and {@link #isFalse(String)} instead.
  */

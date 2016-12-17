@@ -29,7 +29,21 @@
     <xs:complexType name="Processor">
         <xs:attributeGroup ref="bean:ProcessorAttributes" />
     </xs:complexType>
-    
+
+    <xs:complexType name="Decoder">
+      <xs:complexContent>
+          <xs:extension base="bean:Processor">
+              <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="arg" type="bean:Argument" minOccurs="0" maxOccurs="unbounded" />
+              </xs:sequence>
+          </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="Argument">
+        <xs:attributeGroup ref="bean:ArgumentAttributes" />
+    </xs:complexType>
+
     <xs:complexType name="EnumDecoder">
         <xs:complexContent>
             <xs:extension base="bean:Processor">
@@ -50,7 +64,7 @@
             <xs:element name="null" type="bean:NullChoices" minOccurs="0" maxOccurs="unbounded" />
         </xs:sequence>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="decoder"       type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="decoder"       type="bean:Decoder"   minOccurs="0" maxOccurs="unbounded" />
             <xs:element name="enum"          type="bean:EnumDecoder" minOccurs="0" maxOccurs="unbounded" />
             <xs:element name="postProcessor" type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
             <xs:element name="postValidator" type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
@@ -76,7 +90,7 @@
         </xs:restriction>
     </xs:simpleType>
 
-    <xs:simpleType name="ColumnType">
+    <xs:simpleType name="ParameterType">
         <xs:restriction base="xs:string">
             <xs:enumeration value="int" />
             <xs:enumeration value="short" />
@@ -84,11 +98,10 @@
             <xs:enumeration value="boolean" />
             <xs:enumeration value="float" />
             <xs:enumeration value="double" />
-            <xs:enumeration value="double" />
             <xs:enumeration value="String" />
         </xs:restriction>
     </xs:simpleType>
-    
+
     <!--attribute definitions-->
 
     <xs:attributeGroup name="EnumMapAttributes">
@@ -106,7 +119,7 @@
         <xs:attribute name="name" type="xs:string" use="required" />
         <xs:attribute name="ref" type="bean:ColumnDataSource" use="optional" />
         <xs:attribute name="refData" type="xs:string" use="optional" />
-        <xs:attribute name="type" type="bean:ColumnType" use="optional" default="String" />
+        <xs:attribute name="type" type="bean:ParameterType" use="optional" default="String" />
         <xs:attribute name="nullFallsThrough" type="bean:NullFallsThrough" />
         <xs:attribute name="nullString" type="xs:string" use="optional" />
         <xs:attribute name="nullable" type="xs:boolean" use="optional" />
@@ -117,6 +130,12 @@
     <xs:attributeGroup name="ProcessorAttributes">
         <xs:attribute name="type" use="required" />
     </xs:attributeGroup>
+
+  <xs:attributeGroup name="ArgumentAttributes">
+      <xs:attribute name="value" type="xs:string" use="required" />
+      <xs:attribute name="type" type="bean:ParameterType" use="required" />
+      <xs:attribute name="name" type="xs:string" use="optional" />
+  </xs:attributeGroup>
 
     <!--element definitions-->
 
