@@ -16,27 +16,27 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.2.1/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-    <csv:reader quoteChar="&apos;">
+    <opencsv:reader quoteChar="&apos;">
         <csv:column name="age" />
         <csv:column name="givenName" />
         <csv:column name="surName" />
         <csv:column name="address" />
         <csv:column name="drink" optional="true" />
         <csv:column name="favoriteNumber" defaultValue="NULL" />
-    </csv:reader>
+    </opencsv:reader>
 
-    <bean:config class="com.github.kahalemakai.opencsv.examples.EnlargedPerson" trim="true">
+    <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.EnlargedPerson" trim="true">
         <bean:field name="age" nullable="true" type="int" />
         <bean:field name="givenName" />
         <bean:field name="surName" />
         <bean:field name="address" />
         <bean:field name="drink" />
         <bean:field name="favoriteNumber" nullable="true" type="int" nullString="NULL" />
-    </bean:config>
+    </opencsv:beanConfig>
 
 </opencsv:resources>

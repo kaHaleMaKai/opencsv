@@ -16,19 +16,19 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.7/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-  <csv:reader quoteChar="&apos;">
+  <opencsv:reader quoteChar="&apos;">
     <csv:column name="age" />
     <csv:column name="givenName" />
     <csv:column name="surName" />
     <csv:column name="address" />
-  </csv:reader>
+  </opencsv:reader>
 
-  <bean:config class="com.github.kahalemakai.opencsv.examples.Person">
+  <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.Person">
     <bean:field name="age" nullable="true" type="int" nullString="null">
       <bean:null value="n/a" />
     </bean:field>
@@ -38,6 +38,6 @@
       <bean:null value="xxxx" />
       <bean:null value="NULL" />
     </bean:field>
-  </bean:config>
+  </opencsv:beanConfig>
 
 </opencsv:resources>

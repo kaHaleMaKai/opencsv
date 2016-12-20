@@ -1,10 +1,10 @@
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.2.1/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-    <csv:reader quoteChar="&apos;">
+    <opencsv:reader quoteChar="&apos;">
         <csv:column name="field1" />
         <csv:column name="field2" />
         <csv:column name="field3" />
@@ -205,9 +205,9 @@
         <csv:column name="field198" />
         <csv:column name="field199" />
         <csv:column name="field200" />
-    </csv:reader>
+    </opencsv:reader>
 
-    <bean:config class="com.github.kahalemakai.opencsv.examples.WideCsv">
+    <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.WideCsv">
         <bean:field name="field1">
         <bean:decoder type="NullDecoder" />
             <bean:decoder type="NullOrStringDecoder" />
@@ -1008,6 +1008,6 @@
         <bean:decoder type="NullDecoder" />
         <bean:decoder type="IntDecoder" />
         </bean:field>
-    </bean:config>
+    </opencsv:beanConfig>
 
 </opencsv:resources>

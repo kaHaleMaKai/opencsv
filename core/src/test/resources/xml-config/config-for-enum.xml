@@ -16,16 +16,16 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.2.3/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-    <csv:reader quoteChar="&apos;">
+    <opencsv:reader quoteChar="&apos;">
         <csv:column name="quotingMode" />
-    </csv:reader>
+    </opencsv:reader>
 
-    <bean:config class="com.github.kahalemakai.opencsv.examples.EnumWrapper">
+    <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.EnumWrapper">
         <bean:field name="quotingMode">
             <bean:enum type="com.github.kahalemakai.opencsv.beans.QuotingMode">
                 <bean:map key="s" value="STRICT_QUOTES" />
@@ -33,6 +33,6 @@
                 <bean:map key="i" value="IGNORE_QUOTES" />
             </bean:enum>
         </bean:field>
-    </bean:config>
+    </opencsv:beanConfig>
 
 </opencsv:resources>

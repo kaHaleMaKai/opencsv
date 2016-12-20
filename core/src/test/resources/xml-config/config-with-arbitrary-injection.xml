@@ -16,23 +16,23 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.0/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-    <csv:reader quoteChar="&apos;">
+    <opencsv:reader quoteChar="&apos;">
         <csv:ignore count="5"/>
         <csv:column name="surName" />
         <csv:column name="address" />
         <csv:ignore count="${test:ignoreFour}"/>
-    </csv:reader>
+    </opencsv:reader>
 
-    <bean:config class="com.github.kahalemakai.opencsv.examples.Person">
+    <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.Person">
         <bean:field name="${test:ageColumnName}" nullable="t${test:nullable}e" type="int" ref="value" refData="${test:age}" />
         <bean:field name="givenName" ref="column" refData="surName" />
         <bean:field name="surName" />
         <bean:field name="address" />
-    </bean:config>
+    </opencsv:beanConfig>
 
 </opencsv:resources>

@@ -16,18 +16,18 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.8/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-  <csv:reader quoteChar="&apos;">
+  <opencsv:reader quoteChar="&apos;">
     <csv:column name="number" />
     <csv:column name="flag" />
     <csv:column name="decimal" />
-  </csv:reader>
+  </opencsv:reader>
 
-  <bean:config class="com.github.kahalemakai.opencsv.examples.DecoderArgsTester">
+  <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.DecoderArgsTester">
     <bean:field name="number" type="int">
       <bean:decoder type="NullDecoder">
         <bean:arg value="this is null!!!" type="String" />
@@ -57,6 +57,6 @@
         <bean:arg value="6" type="int" name="scale" />
       </bean:decoder>
     </bean:field>
-  </bean:config>
+  </opencsv:beanConfig>
 
 </opencsv:resources>

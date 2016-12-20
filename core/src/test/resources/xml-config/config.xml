@@ -16,12 +16,12 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.2.1/opencsv.xsd"
+                   xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-    <csv:reader quoteChar="&apos;" charset="WINDOWS-1252">
+    <opencsv:reader quoteChar="&apos;" charset="WINDOWS-1252">
         <csv:ignore count="2"/>
         <csv:column name="age" />
         <csv:ignore />
@@ -30,9 +30,9 @@
         <csv:column name="address" />
         <csv:ignore count="4"/>
         <csv:ignore count="4"/>
-    </csv:reader>
+    </opencsv:reader>
 
-    <bean:config class="com.github.kahalemakai.opencsv.examples.Person">
+    <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.Person">
         <bean:field name="age">
             <bean:decoder type="NullDecoder" />
             <bean:decoder type="IntDecoder" />
@@ -45,6 +45,6 @@
             <bean:postProcessor type="com.github.kahalemakai.opencsv.config.ToUpper" />
             <bean:postValidator type="com.github.kahalemakai.opencsv.config.IsUpper" />
         </bean:field>
-    </bean:config>
+    </opencsv:beanConfig>
 
 </opencsv:resources>
