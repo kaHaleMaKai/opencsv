@@ -20,7 +20,7 @@
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-    <csv:reader quoteChar="&apos;">
+    <opencsv:reader quoteChar="&apos;">
         <csv:ignore count="2"/>
         <csv:column name="age" />
         <csv:ignore />
@@ -28,9 +28,9 @@
         <csv:column name="surName" />
         <csv:column name="address" />
         <csv:ignore count="4"/>
-    </csv:reader>
+    </opencsv:reader>
 
-    <bean:config class="com.github.kahalemakai.opencsv.plugins.Person">
+    <opencsv:beanConfig class="com.github.kahalemakai.opencsv.plugins.Person">
         <bean:field name="age" nullFallsThrough="both">
             <bean:decoder type="NullDecoder" />
             <bean:decoder type="IntDecoder" />
@@ -39,7 +39,7 @@
         <bean:field name="givenName" />
         <bean:field name="surName" />
         <bean:field name="address" />
-    </bean:config>
+    </opencsv:beanConfig>
 
     <console:badElement prefix="ignore it" />
     <console:badElement prefix="ignore it" />

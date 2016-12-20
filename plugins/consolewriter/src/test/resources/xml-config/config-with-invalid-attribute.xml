@@ -16,14 +16,14 @@
 -->
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.3.7/opencsv.xsd"
+                   xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
                    xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
                    xmlns:console="http://github.com/kaHaleMaKai/opencsv/plugins/console-writer"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 
-    <csv:reader quoteChar="&apos;">
+    <opencsv:reader quoteChar="&apos;">
         <csv:ignore count="2"/>
         <csv:column name="age" />
         <csv:ignore />
@@ -31,9 +31,9 @@
         <csv:column name="surName" />
         <csv:column name="address" />
         <csv:ignore count="4"/>
-    </csv:reader>
+    </opencsv:reader>
 
-    <bean:config class="com.github.kahalemakai.opencsv.plugins.Person">
+    <opencsv:beanConfig class="com.github.kahalemakai.opencsv.plugins.Person">
         <bean:field name="age" nullFallsThrough="both">
             <bean:decoder type="NullDecoder" />
             <bean:decoder type="IntDecoder" />
@@ -42,7 +42,7 @@
         <bean:field name="givenName" />
         <bean:field name="surName" />
         <bean:field name="address" />
-    </bean:config>
+    </opencsv:beanConfig>
 
     <console:config badAttribute="bad value" />
 
