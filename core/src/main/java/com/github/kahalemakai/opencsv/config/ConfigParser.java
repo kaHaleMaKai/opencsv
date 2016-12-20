@@ -483,12 +483,8 @@ public class ConfigParser {
         globalTrimming.ifPresent(s -> this.globalTrimmingMode = s);
 
         final NodeList defNodes = doc.getElementsByTagNameNS(OPENCSV_NAMESPACE, "defs");
-        for (int i = 0; i < defNodes.getLength(); ++i) {
-            final Node defContainerNode = defNodes.item(i);
-            if (defContainerNode.getNodeType() != ELEMENT_NODE) {
-                continue;
-            }
-            final NodeList childNodes = defContainerNode.getChildNodes();
+        if (defNodes.getLength() > 0) {
+            final NodeList childNodes = defNodes.item(0).getChildNodes();
             for (int j = 0; j < childNodes.getLength(); ++j) {
                 final Node node = childNodes.item(j);
                 if (node.getNodeType() != ELEMENT_NODE) {

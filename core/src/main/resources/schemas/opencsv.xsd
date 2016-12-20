@@ -34,12 +34,12 @@
 
     <xs:element name="resources">
         <xs:complexType>
-            <xs:sequence>
-                <xs:element name="reader"     type="csv:Reader" />
-                <xs:element name="beanConfig" type="bean:Config" />
-                <xs:element ref="sink:config" minOccurs="0" />
-                <xs:element name="defs"       type="def:ProcessorDefContainer" />
-            </xs:sequence>
+            <xs:all>
+                <xs:element name="reader"     type="csv:Reader"                minOccurs="1" />
+                <xs:element name="beanConfig" type="bean:Config"               minOccurs="1" />
+                <xs:element name="sinkConfig" type="sink:AbstractSinkConfig"   minOccurs="0" />
+                <xs:element name="defs"       type="def:ProcessorDefContainer" minOccurs="0" />
+            </xs:all>
         </xs:complexType>
     </xs:element>
 

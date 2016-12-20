@@ -17,10 +17,8 @@
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="http://github.com/kaHaleMaKai/opencsv/sink"
-           xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
            elementFormDefault="qualified">
 
     <xs:complexType name="AbstractSinkConfig" abstract="true" />
-    <xs:element name="config" type="sink:AbstractSinkConfig" abstract="true" />
 
 </xs:schema>
