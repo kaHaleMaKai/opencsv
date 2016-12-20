@@ -18,6 +18,7 @@
 <xs:schema targetNamespace="http://github.com/kaHaleMaKai/opencsv"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
+           xmlns:def="http://github.com/kaHaleMaKai/opencsv/def"
            xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
            xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
            elementFormDefault="qualified">
@@ -32,8 +33,9 @@
     <xs:element name="resources">
         <xs:complexType>
             <xs:sequence>
-                <xs:element ref="csv:reader" />
-                <xs:element ref="bean:config" />
+                <xs:element name="reader"     type="csv:Reader" />
+                <xs:element name="defs"       type="def:ProcessorDefContainer" />
+                <xs:element name="beanConfig" type="bean:Config" />
                 <xs:element ref="sink:config" minOccurs="0" />
             </xs:sequence>
         </xs:complexType>

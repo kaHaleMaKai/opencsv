@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2016, Lars Winderling
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://github.com/kaHaleMaKai/opencsv/def"
+           xmlns:def="http://github.com/kaHaleMaKai/opencsv/def"
+           xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
+           elementFormDefault="qualified">
+
+    <xs:complexType name="ProcessorDefContainer">
+        <xs:sequence minOccurs="1" maxOccurs="unbounded">
+            <xs:element name="def" type="def:ProcessorDef" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ProcessorDef">
+        <xs:complexContent>
+            <xs:extension base="bean:ProcessorContainer"
+        </xs:complexContent>
+        <xs:attributeGroup ref="def:ProcessorDefAttributes" />
+    </xs:complexType>
+
+    <xs:complexType name="ProcessorRef">
+        <xs:attributeGroup ref="def:ProcessorRefAttributes" />
+    </xs:complexType>
+
+    <xs:attributeGroup name="ProcessorDefAttributes">
+        <xs:attribute name="name" type="xs:string" use="required" />
+    </xs:attributeGroup>
+
+    <xs:attributeGroup name="ProcessorRefAttributes">
+        <xs:attribute name="name" type="xs:string" use="required" />
+    </xs:attributeGroup>
+
+

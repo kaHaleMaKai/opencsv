@@ -18,6 +18,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="http://github.com/kaHaleMaKai/opencsv/bean"
            xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
+           xmlns:def="http://github.com/kaHaleMaKai/opencsv/def"
            elementFormDefault="qualified">
 
     <!--type definitions-->
@@ -64,14 +65,24 @@
             <xs:element name="null" type="bean:NullChoices" minOccurs="0" maxOccurs="unbounded" />
         </xs:sequence>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="decoder"       type="bean:Decoder"   minOccurs="0" maxOccurs="unbounded" />
-            <xs:element name="enum"          type="bean:EnumDecoder" minOccurs="0" maxOccurs="unbounded" />
-            <xs:element name="postProcessor" type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
-            <xs:element name="postValidator" type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="decoder"       type="bean:Decoder"      minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="enum"          type="bean:EnumDecoder"  minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="postProcessor" type="bean:Processor"    minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="postValidator" type="bean:Processor"    minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="ref"           type="def:ProcessorRef"  minOccurs="0" maxOccurs="unbounded" />
         </xs:choice>
        </xs:sequence>
 
         <xs:attributeGroup ref="bean:FieldAttributes" />
+    </xs:complexType>
+
+    <xs:complexType name="ProcessorContainer">
+        <xs:choice>
+            <xs:element name="decoder"       type="bean:Decoder"     minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="enum"          type="bean:EnumDecoder" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="postProcessor" type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="postValidator" type="bean:Processor"   minOccurs="0" maxOccurs="unbounded" />
+        </xs:choice>
     </xs:complexType>
 
     <xs:simpleType name="NullFallsThrough">
@@ -101,6 +112,14 @@
             <xs:enumeration value="String" />
         </xs:restriction>
     </xs:simpleType>
+    
+    <xs:complexType name="Config">
+        <xs:sequence maxOccurs="unbounded">
+            <xs:element name="field" type="bean:Field" />
+        </xs:sequence>
+
+        <xs:attributeGroup ref="bean:BeanAttributes" />
+    </xs:complexType>
 
     <!--attribute definitions-->
 
@@ -137,18 +156,5 @@
       <xs:attribute name="name" type="xs:string" use="optional" />
   </xs:attributeGroup>
 
-    <!--element definitions-->
-
-    <xs:element name="config">
-        <xs:complexType>
-
-            <xs:sequence maxOccurs="unbounded">
-                <xs:element name="field" type="bean:Field" />
-            </xs:sequence>
-
-            <xs:attributeGroup ref="bean:BeanAttributes" />
-
-        </xs:complexType>
-    </xs:element>
 
 </xs:schema>

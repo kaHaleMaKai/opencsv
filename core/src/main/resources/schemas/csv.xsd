@@ -94,8 +94,7 @@
 
     <!--element definitions-->
 
-    <xs:element name="reader">
-        <xs:complexType>
+        <xs:complexType name="Reader">
             <xs:choice minOccurs="1" maxOccurs="unbounded">
 
                 <xs:element name="column">
@@ -113,6 +112,5 @@
             </xs:choice>
             <xs:attributeGroup ref="csv:ReaderAttributes" />
         </xs:complexType>
-    </xs:element>
 
 </xs:schema>
