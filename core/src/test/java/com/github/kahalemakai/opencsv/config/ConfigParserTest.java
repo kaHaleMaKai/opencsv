@@ -79,6 +79,28 @@ public class ConfigParserTest {
     }
 
     @Test
+    public void testDefs() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-defs.xml");
+        assert resource != null;
+        final CsvToBeanMapper<DecoderArgsTester> beanMapper = ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedLinesForConstructorArgs)
+                .parse();
+        final Iterator<DecoderArgsTester> iterator = beanMapper.iterator();
+        final DecoderArgsTester line1 = DecoderArgsTester.of(null, true, newDecimal("11.500000"));
+        final DecoderArgsTester line2 = DecoderArgsTester.of(1, null, newDecimal("23.000000"));
+        final DecoderArgsTester line3 = DecoderArgsTester.of(11, false, newDecimal("123.456000"));
+        final DecoderArgsTester line4 = DecoderArgsTester.of(-498, null, newDecimal("123456.123456"));
+        final DecoderArgsTester result1 = iterator.next();
+        assertEquals(line1, result1);
+        assertEquals(line2, iterator.next());
+        assertEquals(line3, iterator.next());
+        assertEquals(line4, iterator.next());
+    }
+
+    @Test
     public void testConstructorArguments() throws Exception {
         final URL resource = ConfigParserTest
                 .class

@@ -21,6 +21,9 @@
            xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean"
            elementFormDefault="qualified">
 
+    <xs:import schemaLocation="bean.xsd"
+               namespace="http://github.com/kaHaleMaKai/opencsv/bean" />
+
     <xs:complexType name="ProcessorDefContainer">
         <xs:sequence minOccurs="1" maxOccurs="unbounded">
             <xs:element name="def" type="def:ProcessorDef" />
@@ -29,9 +32,10 @@
 
     <xs:complexType name="ProcessorDef">
         <xs:complexContent>
-            <xs:extension base="bean:ProcessorContainer"
+            <xs:extension base="bean:ProcessorContainer">
+                <xs:attributeGroup ref="def:ProcessorDefAttributes" />
+            </xs:extension>
         </xs:complexContent>
-        <xs:attributeGroup ref="def:ProcessorDefAttributes" />
     </xs:complexType>
 
     <xs:complexType name="ProcessorRef">
@@ -46,4 +50,4 @@
         <xs:attribute name="name" type="xs:string" use="required" />
     </xs:attributeGroup>
 
-
+</xs:schema>

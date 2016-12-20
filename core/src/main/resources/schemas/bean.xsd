@@ -21,6 +21,9 @@
            xmlns:def="http://github.com/kaHaleMaKai/opencsv/def"
            elementFormDefault="qualified">
 
+    <xs:import schemaLocation="def.xsd"
+               namespace="http://github.com/kaHaleMaKai/opencsv/def" />
+
     <!--type definitions-->
 
     <xs:complexType name="NullChoices">

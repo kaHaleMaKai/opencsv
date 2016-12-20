@@ -88,6 +88,11 @@ public class ConfigParser {
     public static final String BEAN_NAMESPACE = "http://github.com/kaHaleMaKai/opencsv/bean";
 
     /**
+     * Xml namespace of def mapper config.
+     */
+    public static final String DEF_NAMESPACE = "http://github.com/kaHaleMaKai/opencsv/def";
+
+    /**
      * Xml namespace of sink config.
      */
     public static final String SINK_NAMESPACE = "http://github.com/kaHaleMaKai/opencsv/sink";
@@ -148,6 +153,16 @@ public class ConfigParser {
     public static final String BEAN_NULL = "null";
 
     /**
+     * The namespaced null element name.
+     */
+    public static final String BEAN_REF = "ref";
+
+    /**
+     * The namespaced def element name.
+     */
+    public static final String DEF_DEF = "def";
+
+    /**
      * The default processing package.
      */
     public static final String DEFAULT_PROCESSING_PACKAGE = "com.github.kahalemakai.opencsv.beans.processing";
@@ -166,6 +181,7 @@ public class ConfigParser {
     private final Iterable<String[]> parsedLines;
     private final InputStream inputStream;
     private final ParameterMap parameters;
+    private final Map<String, NodeList> defs;
 
     /**
      * Setup the {@code ConfigParser} with the state defined in the calling class.
@@ -187,6 +203,7 @@ public class ConfigParser {
         this.parsedLines = parsedLines;
         this.inputStream = inputStream;
         this.parameters = ParameterMap.init();
+        this.defs = new HashMap<>();
         try {
             this.sinkPlugins = getSinkPlugins();
         } catch (IllegalAccessException | InstantiationException e) {
@@ -219,6 +236,7 @@ public class ConfigParser {
         this.parsedLines = parsedLines;
         this.inputStream = inputStream;
         this.parameters = ParameterMap.init();
+        this.defs = new HashMap<>();
         try {
             this.sinkPlugins = getSinkPlugins();
         } catch (IllegalAccessException | InstantiationException e) {
@@ -441,7 +459,7 @@ public class ConfigParser {
         final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
         final Document doc = documentBuilder.parse(new ByteArrayInputStream(bytes));
         doc.getDocumentElement().normalize();
-        final Node reader = doc.getElementsByTagNameNS(CSV_NAMESPACE, "reader").item(0);
+        final Node reader = doc.getElementsByTagNameNS(OPENCSV_NAMESPACE, "reader").item(0);
         final Optional<String> separator = getAttributeValue(reader, "separator");
         final Optional<String> skipLines = getAttributeValue(reader, "skipLines");
 
@@ -457,13 +475,37 @@ public class ConfigParser {
         final Optional<String> quotingBehaviour = getAttributeValue(reader, "quotingBehaviour");
         final Optional<String> charset = getAttributeValue(reader, "charset");
 
-        final Node config = doc.getElementsByTagNameNS(BEAN_NAMESPACE, "config").item(0);
+        final Node config = doc.getElementsByTagNameNS(OPENCSV_NAMESPACE, "beanConfig").item(0);
         final Optional<String> className = getAttributeValue(config, "class");
         final Optional<String> nullString = getAttributeValue(config, "nullString");
         this.globalNullString = nullString.orElse(DEFAULT_NULL_STRING);
         final Optional<String> globalTrimming = getAttributeValue(config, "trim");
-        if (globalTrimming.isPresent()) {
-            this.globalTrimmingMode = globalTrimming.get();
+        globalTrimming.ifPresent(s -> this.globalTrimmingMode = s);
+
+        final NodeList defNodes = doc.getElementsByTagNameNS(OPENCSV_NAMESPACE, "defs");
+        for (int i = 0; i < defNodes.getLength(); ++i) {
+            final Node defContainerNode = defNodes.item(i);
+            if (defContainerNode.getNodeType() != ELEMENT_NODE) {
+                continue;
+            }
+            final NodeList childNodes = defContainerNode.getChildNodes();
+            for (int j = 0; j < childNodes.getLength(); ++j) {
+                final Node node = childNodes.item(j);
+                if (node.getNodeType() != ELEMENT_NODE) {
+                    continue;
+                }
+                if (DEF_NAMESPACE.equals(node.getNamespaceURI()) && DEF_DEF.equals(node.getLocalName())) {
+                    final NodeList defChildNodes = node.getChildNodes();
+                    // presence enforced by xsd
+                    final String name = getAttributeValue(node, "name").get();
+                    if (this.defs.containsKey(name)) {
+                        final String msg = String.format("xml entity of name '%s' is already defined", name);
+                        log.error(msg);
+                        throw new IllegalStateException(msg);
+                    }
+                    this.defs.put(name, defChildNodes);
+                }
+            }
         }
 
         /* **********************
@@ -479,10 +521,10 @@ public class ConfigParser {
         }
         final Builder<T> builder = CsvToBeanMapper.builder(type);
 
-        if (quoteChar.isPresent()) builder.quoteChar(quoteChar.get().charAt(0));
-        if (escapeChar.isPresent()) builder.escapeChar(escapeChar.get().charAt(0));
-        if (multiLine.isPresent()) builder.multiLine(Boolean.valueOf(multiLine.get()));
-        if (separator.isPresent()) builder.separator(separator.get().charAt(0));
+        quoteChar.ifPresent(s -> builder.quoteChar(s.charAt(0)));
+        escapeChar.ifPresent(s -> builder.escapeChar(s.charAt(0)));
+        multiLine.ifPresent(s -> builder.multiLine(Boolean.valueOf(s)));
+        separator.ifPresent(s -> builder.separator(s.charAt(0)));
         if (ignoreLeadingWhiteSpace.isPresent()) {
             final boolean b = Boolean.parseBoolean(ignoreLeadingWhiteSpace.get());
             if (!b) builder.dontIgnoreLeadingWhiteSpace();
@@ -666,16 +708,7 @@ public class ConfigParser {
 
             }
 
-            boolean anyDecoder = false;
-            for (int j = 0; j < processors.getLength(); ++j) {
-                final Node processor = processors.item(j);
-                if (processor.getNodeType() == ELEMENT_NODE && !BEAN_NULL.equals(processor.getLocalName())) {
-                    registerProcessor(column, builder, processor);
-                    if (processor.getLocalName().equals(BEAN_DECODER)) {
-                        anyDecoder = true;
-                    }
-                }
-            }
+            final boolean anyDecoder = registerDecoders(builder, column, processors);
             // if isNullable, then a null decoder has been registered
             // but the null decoder only decodes null-valued Strings to null.
             // if no additional decoder has been registered, we have to assume the
@@ -687,6 +720,35 @@ public class ConfigParser {
             final Optional<String> defaultValue = getAttributeValue(field, "default");
             defaultValue.ifPresent(s -> builder.defaultValueFromString(column, s));
         }
+    }
+
+    private <T> boolean registerDecoders(final Builder<T> builder, final String column, final NodeList processors) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        boolean anyDecoder = false;
+        for (int j = 0; j < processors.getLength(); ++j) {
+            final Node processor = processors.item(j);
+            final String localName = processor.getLocalName();
+            if (processor.getNodeType() == ELEMENT_NODE) {
+                if (BEAN_NULL.equals(localName)) {
+                    continue;
+                }
+                if (BEAN_REF.equals(localName)) {
+                    final String name = getAttributeValue(processor, "name").get();
+                    if (!this.defs.containsKey(name)) {
+                        final String msg = String.format("missing xml entity definition of name '%s'", name);
+                        log.error(msg);
+                        throw new IllegalStateException(msg);
+                    }
+                    anyDecoder |= registerDecoders(builder, column, this.defs.get(name));
+                }
+                else {
+                    registerProcessor(column, builder, processor);
+                    if (localName.equals(BEAN_DECODER)) {
+                        anyDecoder = true;
+                    }
+                }
+            }
+        }
+        return anyDecoder;
     }
 
     /**
