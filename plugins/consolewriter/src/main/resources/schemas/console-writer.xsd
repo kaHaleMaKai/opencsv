@@ -21,7 +21,7 @@
            xmlns:console="http://github.com/kaHaleMaKai/opencsv/plugins/console-writer"
            elementFormDefault="qualified">
 
-    <xs:import schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
+    <xs:import schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.5.0/opencsv.xsd"
                namespace="http://github.com/kaHaleMaKai/opencsv"/>
 
     <xs:complexType name="ConsoleWriterConfig">

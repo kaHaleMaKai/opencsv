@@ -18,7 +18,7 @@
 
 <opencsv:resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema"
                    xsi:schemaLocation="http://github.com/kaHaleMaKai/opencsv
-                                           http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd
+                                           http://kahalemakai.github.io/schemas/opencsv/0.5.0/opencsv.xsd
                                        http://github.com/kaHaleMaKai/opencsv/plugins/console-writer
                                            http://kahalemakai.github.io/schemas/opencsv/plugins/0.4.0-0/console-writer.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
