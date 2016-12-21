@@ -93,11 +93,6 @@ public class ConfigParser {
     public static final String DEF_NAMESPACE = "http://github.com/kaHaleMaKai/opencsv/def";
 
     /**
-     * Xml namespace of sink config.
-     */
-    public static final String SINK_NAMESPACE = "http://github.com/kaHaleMaKai/opencsv/sink";
-
-    /**
      * The default null string.
      */
     public static final String DEFAULT_NULL_STRING = "null";
@@ -568,7 +563,7 @@ public class ConfigParser {
     }
 
     /**
-     * Configure a {@code <sink:configure>} tag.
+     * Configure a {@code <opencsv:sinkConfig>} tag.
      * <p>
      * A plugin {@link Plugin#configure(Builder, Document)} method
      * is only invoked, if a corresponding tag is found. At most, one
@@ -1011,7 +1006,7 @@ public class ConfigParser {
         final NodeList csvFields = reader.getChildNodes();
         final List<String> fieldList = new LinkedList<>();
         boolean foundOpeningParenthesis = false;
-        
+
         for (int i = 0; i < csvFields.getLength(); ++i) {
             final Node item = csvFields.item(i);
             if (item.getNodeType() == ELEMENT_NODE) {
@@ -1051,7 +1046,7 @@ public class ConfigParser {
             final String lastColumn = fieldList.get(lastIndex);
             fieldList.set(lastIndex, lastColumn + ")");
         }
-        
+
         return fieldList.toArray(new String[fieldList.size()]);
     }
 

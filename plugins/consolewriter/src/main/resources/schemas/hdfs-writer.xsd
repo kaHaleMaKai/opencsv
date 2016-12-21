@@ -18,11 +18,10 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="http://github.com/kaHaleMaKai/opencsv/plugins/hdfs-writer"
            xmlns:hdfs="http://github.com/kaHaleMaKai/opencsv/plugins/hdfs-writer"
-           xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
            elementFormDefault="qualified">
 
-    <xs:import schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.4.0/sink.xsd"
-               namespace="http://github.com/kaHaleMaKai/opencsv/sink"/>
+    <xs:import schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
+               namespace="http://github.com/kaHaleMaKai/opencsv" />
 
 <!--TODO: move into separate plugin-->
 
@@ -37,7 +36,7 @@
 
     <xs:complexType name="HdfsWriterConfig">
         <xs:complexContent>
-            <xs:extension base="sink:AbstractSinkConfig">
+            <xs:extension base="opencsv:AbstractSinkConfig">
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>

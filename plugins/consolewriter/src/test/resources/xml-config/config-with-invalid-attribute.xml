@@ -19,7 +19,6 @@
                    xsi:schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
                    xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
                    xmlns:csv="http://github.com/kaHaleMaKai/opencsv/csv"
-                   xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
                    xmlns:console="http://github.com/kaHaleMaKai/opencsv/plugins/console-writer"
                    xmlns:bean="http://github.com/kaHaleMaKai/opencsv/bean">
 

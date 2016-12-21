@@ -19,7 +19,6 @@
            targetNamespace="http://github.com/kaHaleMaKai/opencsv/plugins/console-writer"
            xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
            xmlns:console="http://github.com/kaHaleMaKai/opencsv/plugins/console-writer"
-           xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
            elementFormDefault="qualified">
 
     <xs:import schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
