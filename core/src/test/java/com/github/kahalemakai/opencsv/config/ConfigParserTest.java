@@ -78,6 +78,31 @@ public class ConfigParserTest {
         iterator.next();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testReoccurringDefs() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-reoccurring-defs.xml");
+        assert resource != null;
+        ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedLinesForConstructorArgs)
+                .parse();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMissingDef() throws Exception {
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-missing-def.xml");
+        assert resource != null;
+        ConfigParser
+                .ofUnparsedLines(new File(resource.getFile()), () -> unparsedLinesForConstructorArgs)
+                .parse();
+    }
+
+
     @Test
     public void testDefs() throws Exception {
         final URL resource = ConfigParserTest
