@@ -18,11 +18,11 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="http://github.com/kaHaleMaKai/opencsv/plugins/file-writer"
            xmlns:file="http://github.com/kaHaleMaKai/opencsv/plugins/file-writer"
-           xmlns:sink="http://github.com/kaHaleMaKai/opencsv/sink"
+           xmlns:opencsv="http://github.com/kaHaleMaKai/opencsv"
            elementFormDefault="qualified">
 
-    <xs:import schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.4.0/sink.xsd"
-               namespace="http://github.com/kaHaleMaKai/opencsv/sink"/>
+    <xs:import schemaLocation="http://kahalemakai.github.io/schemas/opencsv/0.4.10/opencsv.xsd"
+               namespace="http://github.com/kaHaleMaKai/opencsv" />
 
     <xs:attributeGroup name="FileWriterAttributes">
         <xs:attribute name="path" type="file:LocalFilePath" />
@@ -72,7 +72,7 @@
 
     <xs:complexType name="FileWriterConfig">
         <xs:complexContent>
-            <xs:extension base="sink:AbstractSinkConfig">
+            <xs:extension base="opencsv:AbstractSinkConfig">
                 <xs:attributeGroup ref="file:FileWriterAttributes" />
             </xs:extension>
         </xs:complexContent>
@@ -80,6 +80,6 @@
 
     <xs:element name="config"
                 type="file:FileWriterConfig"
-                substitutionGroup="sink:config"/>
+                substitutionGroup="opencsv:sinkConfig"/>
 
 </xs:schema>

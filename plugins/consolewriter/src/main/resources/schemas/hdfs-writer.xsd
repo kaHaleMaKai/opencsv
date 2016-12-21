@@ -44,6 +44,6 @@
 
     <xs:element name="config"
                 type="hdfs:HdfsWriterConfig"
-                substitutionGroup="sink:config"/>
+                substitutionGroup="opencsv:sinkConfig"/>
 
 </xs:schema>
