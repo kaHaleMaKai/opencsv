@@ -13,12 +13,12 @@ import java.time.format.DateTimeParseException;
 @NoArgsConstructor
 public class DateTimeDecoder extends DateTimeConverter implements Decoder<ZonedDateTime> {
 
-    public DateTimeDecoder(String formatOrTimezone) {
-        super(formatOrTimezone);
+    public DateTimeDecoder(String formatZoneOrOffset) {
+        super(formatZoneOrOffset);
     }
 
-    public DateTimeDecoder(String formatSpec, String timezone) {
-        super(formatSpec, timezone);
+    public DateTimeDecoder(String formatSpec, String zoneOrOffset) {
+        super(formatSpec, zoneOrOffset);
     }
 
     @Override

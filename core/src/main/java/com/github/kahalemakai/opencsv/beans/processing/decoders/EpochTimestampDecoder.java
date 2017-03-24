@@ -18,12 +18,12 @@ import java.time.format.DateTimeParseException;
 @NoArgsConstructor
 public class EpochTimestampDecoder extends DateTimeConverter implements Decoder<Long> {
 
-    public EpochTimestampDecoder(String formatOrTimezone) {
-        super(formatOrTimezone);
+    public EpochTimestampDecoder(String formatZoneOrOffset) {
+        super(formatZoneOrOffset);
     }
 
-    public EpochTimestampDecoder(String formatSpec, String timezone) {
-        super(formatSpec, timezone);
+    public EpochTimestampDecoder(String formatSpec, String zoneOrOffset) {
+        super(formatSpec, zoneOrOffset);
     }
 
     @Override

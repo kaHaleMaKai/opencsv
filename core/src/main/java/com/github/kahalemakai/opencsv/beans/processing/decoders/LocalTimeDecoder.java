@@ -7,30 +7,30 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class LocalDateTimeDecoder implements Decoder<LocalDateTime> {
+public class LocalTimeDecoder implements Decoder<LocalTime> {
 
-    public static final DateTimeFormatter DEFAULT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public static final DateTimeFormatter DEFAULT_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final DateTimeFormatter format;
 
-    public LocalDateTimeDecoder() {
+    public LocalTimeDecoder() {
         this(DEFAULT_FORMAT);
     }
 
-    public LocalDateTimeDecoder(String formatSpec) {
+    public LocalTimeDecoder(String formatSpec) {
         this(DateTimeFormatter.ofPattern(formatSpec));
     }
 
     @Override
-    public ResultWrapper<? extends LocalDateTime> decode(String value) throws DataDecodingException {
+    public ResultWrapper<? extends LocalTime> decode(String value) throws DataDecodingException {
         try {
-            return success(LocalDateTime.parse(value, this.format));
+            return success(LocalTime.parse(value, this.format));
         } catch (DateTimeParseException e) {
             if (log.isDebugEnabled()) {
                 // we need to pre-construct the error message to be able
@@ -40,5 +40,4 @@ public class LocalDateTimeDecoder implements Decoder<LocalDateTime> {
             return decodingFailed();
         }
     }
-
 }
