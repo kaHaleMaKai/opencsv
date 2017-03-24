@@ -35,12 +35,12 @@ class DateTimeConverter {
         return LocalDateTime.parse(value, format).atZone(timezone);
     }
 
-    private static DateTimeFormatter parseFormat(String formatSpec) {
+    static DateTimeFormatter parseFormat(String formatSpec) {
         try {
             return DateTimeFormatter.ofPattern(formatSpec);
         } catch (IllegalArgumentException e) {
             try {
-                ZoneOffset.of(formatSpec);
+                ZoneId.of(formatSpec);
                 return DEFAULT_FORMAT;
             }
             catch (DateTimeException e1) {
@@ -51,7 +51,7 @@ class DateTimeConverter {
         }
     }
 
-    private static ZoneId parseTimezone(String zoneId) {
+    static ZoneId parseTimezone(String zoneId) {
         try {
             return ZoneId.of(zoneId);
         } catch (DateTimeException e) {

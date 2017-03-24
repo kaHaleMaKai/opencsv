@@ -30,7 +30,7 @@ public class LocalDateTimeDecoder implements Decoder<LocalDateTime> {
     @Override
     public ResultWrapper<? extends LocalDateTime> decode(String value) throws DataDecodingException {
         try {
-            return success(LocalDateTime.parse(value));
+            return success(LocalDateTime.parse(value, this.format));
         } catch (DateTimeParseException e) {
             if (log.isDebugEnabled()) {
                 // we need to pre-construct the error message to be able
