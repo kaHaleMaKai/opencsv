@@ -33,4 +33,5 @@ public class EpochTimestampDecoderTest {
         val decoder2 = new EpochTimestampDecoder(format);
         assertEquals(epoch - offset.getTotalSeconds(), (long) decoder2.decode(date2).get());
     }
+
 }

@@ -1,6 +1,7 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
 import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -17,54 +18,104 @@ class DateTimeConverter {
     public static final ZoneId DEFAULT_TIME_ZONE = ZoneId.systemDefault();
 
     private final DateTimeFormatter format;
-    private final ZoneId timezone;
+    private final ZoneId zoneId;
+    private final ZoneOffset zoneOffset;
 
-    DateTimeConverter(String formatSpec, String timezone) {
-        this(DateTimeFormatter.ofPattern(formatSpec), ZoneId.of(timezone));
+    DateTimeConverter(String formatSpec, String zoneIdOrOffset) {
+        val holder = ArgumentHolder.init()
+                .parseFormat(formatSpec)
+                .parseZoneOrOffset(zoneIdOrOffset);
+        if (!holder.hasFormatter()) {
+            val msg = "wrong argument. expected DateTimeFormatter pattern, got: " + formatSpec;
+            log.error(msg);
+            throw new IllegalArgumentException(msg);
+        }
+        if (!holder.hasZoneOrOffset()) {
+            val msg = "wrong argument. expected ZoneId or ZoneOffset, got: " + zoneIdOrOffset;
+            log.error(msg);
+            throw new IllegalArgumentException(msg);
+        }
+        this.format = holder.formatter;
+        this.zoneId = holder.zoneId;
+        this.zoneOffset = holder.zoneOffset;
     }
 
-    DateTimeConverter(String formatOrTimezone) {
-        this(parseFormat(formatOrTimezone), parseTimezone(formatOrTimezone));
+    DateTimeConverter(String formatZoneOrOffset) {
+        val holder = ArgumentHolder.init()
+                .parseFormat(formatZoneOrOffset)
+                .parseZoneOrOffset(formatZoneOrOffset);
+        if (holder.isEmpty()) {
+            val msg = "wrong argument. expeceted DateTimeFormatter pattern, ZoneId or ZoneOffset, got: " + formatZoneOrOffset;
+            log.error(msg);
+            throw new IllegalArgumentException(msg);
+        }
+        if (holder.formatter != null) {
+            this.format = holder.formatter;
+            this.zoneId = DEFAULT_TIME_ZONE;
+            this.zoneOffset = null;
+        }
+        else {
+            this.format = DEFAULT_FORMAT;
+            this.zoneId = holder.zoneId;
+            this.zoneOffset = holder.zoneOffset;
+        }
     }
 
     DateTimeConverter() {
-        this(DEFAULT_FORMAT, DEFAULT_TIME_ZONE);
+        this(DEFAULT_FORMAT, DEFAULT_TIME_ZONE, null);
     }
 
     ZonedDateTime convert(String value) throws DateTimeParseException {
-        return LocalDateTime.parse(value, format).atZone(timezone);
-    }
-
-    static DateTimeFormatter parseFormat(String formatSpec) {
-        try {
-            return DateTimeFormatter.ofPattern(formatSpec);
-        } catch (IllegalArgumentException e) {
-            try {
-                ZoneId.of(formatSpec);
-                return DEFAULT_FORMAT;
-            }
-            catch (DateTimeException e1) {
-                val msg = "cannot parse argument. expected: DateTimeFormatter pattern or ZoneOffsetId, got: " + formatSpec;
-                log.error(msg, e);
-                throw new IllegalArgumentException(msg, e);
-            }
+        val dt = LocalDateTime.parse(value, format);
+        if (this.zoneId != null) {
+            return dt.atZone(zoneId);
+        }
+        else {
+            return dt.atOffset(zoneOffset).toZonedDateTime();
         }
     }
 
-    static ZoneId parseTimezone(String zoneId) {
-        try {
-            return ZoneId.of(zoneId);
-        } catch (DateTimeException e) {
+    @NoArgsConstructor(staticName = "init")
+    private static class ArgumentHolder {
+
+        private DateTimeFormatter formatter;
+        private ZoneId zoneId;
+        private ZoneOffset zoneOffset;
+
+        public ArgumentHolder parseFormat(String format) {
             try {
-                DateTimeFormatter.ofPattern(zoneId);
-                return DEFAULT_TIME_ZONE;
+                this.formatter = DateTimeFormatter.ofPattern(format);
             }
-            catch (IllegalArgumentException e1) {
-                val msg = "cannot parse argument. expected: DateTimeFormatter pattern or timezone name, got: " + zoneId;
-                log.error(msg, e);
-                throw new IllegalArgumentException(msg, e);
-            }
+            catch (Exception ignore) { }
+            return this;
         }
+
+        public ArgumentHolder parseZoneOrOffset(String zoneOrOffset) {
+            try {
+                this.zoneId = ZoneId.of(zoneOrOffset);
+                return this;
+            }
+            catch (Exception ignore) { }
+            try {
+                this.zoneOffset = ZoneOffset.of(zoneOrOffset);
+            }
+            catch (Exception ignore) { }
+            return this;
+        }
+
+        public boolean hasFormatter() {
+            return this.formatter != null;
+        }
+
+        public boolean hasZoneOrOffset() {
+            return this.zoneId != null || this.zoneOffset != null;
+        }
+
+        public boolean isEmpty() {
+            return formatter == null && zoneId == null && zoneOffset == null;
+        }
+
+
     }
 
 }
