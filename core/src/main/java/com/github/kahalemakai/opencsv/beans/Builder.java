@@ -340,6 +340,7 @@ public class Builder<T> {
         this.defaultValues.forEach(this.decoderManager::setDefaultValue);
         this.defaultValueStringData.forEach(this.decoderManager::decodeAndSetDefaultValue);
         this.strategy.setColumnRefs(columnRefs);
+        this.strategy.setFieldMapping(this.fieldMappings);
         if (!isHeaderDefined() && source != null) {
             if (!source.iterator().hasNext()) {
                 final String msg = "the iterable's iterator is empty, thus no column headers can be retrieved from it";
@@ -353,7 +354,7 @@ public class Builder<T> {
         }
         if (isHeaderDefined()) {
             this.strategy.captureHeader(this.header.toArray(new String[this.header.size()]));
-            this.strategy.setupColumnsForIteration();
+            this.strategy.setupColumnMapping();
         }
         return new CsvToBeanMapperImpl<>(this);
     }

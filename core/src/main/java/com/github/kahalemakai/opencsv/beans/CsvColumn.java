@@ -10,25 +10,23 @@ import lombok.experimental.Accessors;
 @ToString
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @Accessors(fluent = true)
-class CsvColumn {
+class CsvColumn implements Column {
+
     /**
-     * name mandatory the csv column
-     *
-     * @return name mandatory the csv column
+     * {@inheritDoc}
      */
-    @Getter
+    @Getter(onMethod = @__({@Override}))
     private final String name;
 
     /**
-     * numerical index mandatory the csv column
-     *
-     * @return numerical index mandatory the csv column
+     * {@inheritDoc}
      */
-    @Getter
+    @Getter(onMethod = @__({@Override}))
     private final int index;
 
     @Accessors(fluent = true) @Getter
     private final boolean useUnprocessed;
+
     /**
      * Check whether a column is optional.
      *
@@ -38,8 +36,9 @@ class CsvColumn {
         return false;
     }
 
-    public String defaultValue() {
-        throw new UnsupportedOperationException("column does not have a default value");
+    @Override
+    public CsvColumn reference() {
+        return this;
     }
 
     /**

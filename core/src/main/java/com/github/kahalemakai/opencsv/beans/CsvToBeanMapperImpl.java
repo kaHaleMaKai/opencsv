@@ -284,8 +284,8 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             log.error(msg);
             throw new CsvToBeanException(msg, e);
         }
-        for (CsvColumn csvColumn: strategy.getColumnsForIteration()) {
-            processColumn(bean, mapper, csvColumn, line);
+        for (Column column : strategy.getColumnsForIteration()) {
+            processColumn(bean, mapper, column, line);
         }
         for (val entry : columnData.entrySet()) {
             final String column = entry.getKey();
@@ -300,10 +300,10 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
 
     private void processColumn(final T bean,
                                final ColumnMapping<T> mapper,
-                               final CsvColumn csvColumn,
+                               final Column column,
                                final String[] line) {
-        val columnName = csvColumn.name();
-        val columnIndex = csvColumn.index();
+        val columnName = column.name();
+        val columnIndex = column.index();
         PropertyDescriptor prop = null;
         try {
             prop = mapper.findDescriptor(columnName);
@@ -319,10 +319,10 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             try {
                 text = line[columnIndex];
             } catch (ArrayIndexOutOfBoundsException e) {
-                if (!csvColumn.isOptional()) {
+                if (!column.reference().isOptional()) {
                     throw e;
                 }
-                text = csvColumn.defaultValue();
+                text = column.defaultValue();
             }
             final String value = text;
             try {
@@ -368,8 +368,8 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         }
     }
 
-    private void processListMapping(final T bean, final CsvColumn column, final String[] line) {
-        for (CsvColumn mappedColumn : strategy.getListMapping().get(column)) {
+    private void processListMapping(final T bean, final Field column, final String[] line) {
+        for (Column mappedColumn : strategy.getListMapping().get(column)) {
             val index = mappedColumn.index();
             val text = line[index];
             // TODO finish this method
@@ -599,7 +599,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                 final String msg = "caught exception when trying to skip lines on iterator invocation";
                 log.warn(msg, e);
             }
-            strategy.setupColumnsForIteration();
+            strategy.setupColumnMapping();
         }
 
     }

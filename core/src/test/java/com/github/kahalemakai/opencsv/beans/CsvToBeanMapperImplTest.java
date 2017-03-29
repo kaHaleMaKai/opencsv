@@ -22,12 +22,10 @@ import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.IntDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.IntToBooleanDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
-import com.github.kahalemakai.opencsv.examples.BigPerson;
-import com.github.kahalemakai.opencsv.examples.EnlargedPerson;
-import com.github.kahalemakai.opencsv.examples.Person;
-import com.github.kahalemakai.opencsv.examples.WithBoolean;
+import com.github.kahalemakai.opencsv.examples.*;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
+import lombok.val;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,6 +36,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static com.github.kahalemakai.opencsv.examples.PersonWithGender.Gender.MALE;
+import static com.github.kahalemakai.opencsv.examples.PersonWithGender.Gender.UNKNOWN;
 import static org.junit.Assert.assertEquals;
 
 public class CsvToBeanMapperImplTest {
@@ -213,6 +213,55 @@ public class CsvToBeanMapperImplTest {
         @SuppressWarnings("unchecked")
         final Map<String, Decoder<?>> decoderClassMap = (Map<String, Decoder<?>>) f.get(decoderManager);
         assertEquals(decoderClassMap.size(), 2);
+    }
+
+    @Test
+    public void testAdditionalFieldMapping() throws Exception {
+        final Iterator<PersonWithGender> it = CsvToBeanMapper
+                .builder(PersonWithGender.class)
+                .quoteChar('\'')
+                .nonStrictQuotes()
+                .registerDecoder("age", IntDecoder.class)
+                .registerDecoder("surName", (data) -> ResultWrapper.of("Mr. "+data))
+                .registerDecoder("gender", (data) -> {
+                    val gender = "Jean-Luc".equals(data)
+                            ? MALE
+                            : UNKNOWN;
+                    return ResultWrapper.of(gender);
+                })
+                .setHeader("a1", "a2", "a3", "a4")
+                .mapField("age", "a1")
+                .mapField("givenName", "a2")
+                .mapField("gender", "a2")
+                .mapField("surName", "a3")
+                .mapField("address", "a4")
+                .withParsedLines(() -> iterator)
+                .skipLines(1)
+                .build()
+                .iterator();
+        val picardWithGender = PersonWithGender.ofPerson(picard);
+        picardWithGender.setSurName("Mr. Picard");
+        picardWithGender.setGender(MALE);
+        assertEquals(picardWithGender, it.next());
+    }
+
+    @Test
+    public void testFieldMapping() throws Exception {
+        final Iterator<Person> it = builder
+                .registerDecoder("age", IntDecoder.class)
+                .registerDecoder("surName", (data) -> ResultWrapper.of("Mr. "+data))
+                .setHeader("a1", "a2", "a3", "a4")
+                .mapField("age", "a1")
+                .mapField("givenName", "a2")
+                .mapField("surName", "a3")
+                .mapField("address", "a4")
+                .withParsedLines(() -> iterator)
+                .skipLines(1)
+                .build()
+                .iterator();
+        final Person person = it.next();
+        picard.setSurName("Mr. Picard");
+        assertEquals(picard, person);
     }
 
     @Test

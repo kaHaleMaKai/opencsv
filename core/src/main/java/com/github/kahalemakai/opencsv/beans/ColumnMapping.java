@@ -63,38 +63,54 @@ public class ColumnMapping<T> extends HeaderColumnNameMappingStrategy<T> {
     private List<CsvColumn> columnsToParse;
 
     private final Map<String, String> columnRefs;
+
+    private final Map<String, String> fieldMappaing;
+    
     @Getter(AccessLevel.PACKAGE)
-    private final List<CsvColumn> columnsForIteration;
+    private final List<Column> columnsForIteration;
 
     @Getter(AccessLevel.PACKAGE)
     private final List<Field> fields;
     @Getter(AccessLevel.PACKAGE)
-    private final Map<CsvColumn, List<CsvColumn>> listMapping;
+    private final Map<Field, List<Column>> listMapping;
 
     private ColumnMapping() {
         this.columnRefs = new HashMap<>();
         this.columnsForIteration = new ArrayList<>();
         this.fields = new ArrayList<>();
         this.listMapping = new HashMap<>();
+        this.fieldMappaing = new HashMap<>();
     }
 
     /**
      * Calculate the columns that are either directly mapped to csv columns, or
      * reference another column.
      */
-    public void setupColumnsForIteration() {
+    public void setupColumnMapping() {
         if (!columnsForIteration.isEmpty()) {
             return;
         }
         final List<CsvColumn> columnsToParse = getColumnsToParse();
-        this.columnsForIteration.addAll(columnsToParse);
+        if (fieldMappaing.isEmpty()) {
+            this.columnsForIteration.addAll(columnsToParse);
+        }
+        else {
+            val lookup = new HashMap<String, CsvColumn>();
+            columnsToParse.forEach(c -> lookup.put(c.name(), c));
+            fieldMappaing.forEach((k, v) -> {
+                val col = lookup.get(v);
+                val field = Field.of(k, col);
+                this.columnsForIteration.add(field);
+            });
+        }
+        // might be necessary to use lookup instead of idxLookup
         final Map<String, Integer> idxLookup = new HashMap<>();
         for (CsvColumn col : columnsToParse) {
             idxLookup.put(col.name(), col.index());
         }
         for (Map.Entry<String, String> entry : this.columnRefs.entrySet()) {
-            final String to = entry.getKey();
-            final String from = entry.getValue();
+            val to = entry.getKey();
+            val from = entry.getValue();
             final Integer idx = idxLookup.get(from);
             if (idx == null) {
                 final String msg = String.format("column %s is not defined, but referenced from column %s", to, from);
@@ -106,6 +122,11 @@ public class ColumnMapping<T> extends HeaderColumnNameMappingStrategy<T> {
 
     public ColumnMapping<T> setColumnRefs(final Map<String, String> columnRefs) {
         this.columnRefs.putAll(columnRefs);
+        return this;
+    }
+    
+    public ColumnMapping<T> setFieldMapping(final Map<String, String> fieldMapping) {
+        this.fieldMappaing.putAll(fieldMapping);
         return this;
     }
 
