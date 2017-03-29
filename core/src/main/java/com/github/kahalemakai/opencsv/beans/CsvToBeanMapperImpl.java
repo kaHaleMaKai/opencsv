@@ -54,7 +54,7 @@ import java.util.function.BiConsumer;
 @ToString
 class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMapper<T> {
     @Getter(AccessLevel.PACKAGE)
-    private final HeaderDirectMappingStrategy<T> strategy;
+    private final ColumnMapping<T> strategy;
     @Getter(AccessLevel.PRIVATE)
     private final AtomicBoolean readerSetup;
     private final DecoderManager decoderManager;
@@ -62,13 +62,8 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final Map<String, MethodHandle> setterMethods;
     private final Map<String, BiConsumer<T, ?>> adderMethods;
     private final Map<String, MethodHandle> getterMethods;
-    private final Map<String, String> columnRefs;
-    private final Map<String, Object> columnData;
-    @Getter(AccessLevel.PRIVATE)
-    private final List<CsvColumn> columnsForIteration;
-    @Getter(AccessLevel.PRIVATE)
-    private final Map<CsvColumn, List<CsvColumn>> listMapping;
     private final Sink sink;
+    private final Map<String, Object> columnData;
     private final ExceptionalAction<IOException> finalizer;
 
     @Getter(AccessLevel.PRIVATE) @Setter
@@ -109,11 +104,8 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         this.setterMethods = new HashMap<>();
         this.adderMethods = new HashMap<>();
         this.getterMethods = new HashMap<>();
-        this.columnRefs = builder.getColumnRefs();
-        this.columnData = builder.getColumnData();
-        this.columnsForIteration = new ArrayList<>();
-        this.listMapping = new HashMap<>();
         this.sink = builder.sink();
+        this.columnData = builder.getColumnData();
         this.finalizer = builder.finalizer();
         this.multiLine = builder.multiLine();
         this.source = defineSource(builder.source(), builder.getReader(), builder.getLineIterator());
@@ -282,7 +274,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      * @param line the parsed line
      * @return the decoded bean
      */
-    private T processLine(final HeaderDirectMappingStrategy<T> mapper,
+    private T processLine(final ColumnMapping<T> mapper,
                             final String[] line) {
         T bean = null;
         try {
@@ -292,7 +284,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             log.error(msg);
             throw new CsvToBeanException(msg, e);
         }
-        for (CsvColumn csvColumn: this.columnsForIteration) {
+        for (CsvColumn csvColumn: strategy.getColumnsForIteration()) {
             processColumn(bean, mapper, csvColumn, line);
         }
         for (val entry : columnData.entrySet()) {
@@ -307,17 +299,17 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     }
 
     private void processColumn(final T bean,
-                               final HeaderDirectMappingStrategy<T> mapper,
+                               final ColumnMapping<T> mapper,
                                final CsvColumn csvColumn,
                                final String[] line) {
-        final String columnName = csvColumn.name();
-        int col = csvColumn.index();
+        val columnName = csvColumn.name();
+        val columnIndex = csvColumn.index();
         PropertyDescriptor prop = null;
         try {
             prop = mapper.findDescriptor(columnName);
         } catch (IntrospectionException e) {
             final String msg =
-                    processingErrorMsg(mapper, col, "could not find descriptor");
+                    processingErrorMsg(mapper, columnIndex, "could not find descriptor");
             log.error(msg);
             throw new CsvToBeanException(msg, e);
         }
@@ -325,7 +317,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             Object obj = null;
             String text;
             try {
-                text = line[col];
+                text = line[columnIndex];
             } catch (ArrayIndexOutOfBoundsException e) {
                 if (!csvColumn.isOptional()) {
                     throw e;
@@ -337,7 +329,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                 obj = decode(value, columnName);
             } catch (CsvToBeanException e) {
                 final String msg =
-                        processingErrorMsg(mapper, col, "could not convert value %s",
+                        processingErrorMsg(mapper, columnIndex, "could not convert value %s",
                                 value == null ? "null" : value);
                 log.error(msg);
                 throw new CsvToBeanException(msg, e);
@@ -347,7 +339,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                 assert setter != null;
                 setter.invoke(bean, obj);
             } catch (Throwable e) {
-                final String msg = processingErrorMsg(mapper, col, "could not assign object %s of type %s",
+                final String msg = processingErrorMsg(mapper, columnIndex, "could not assign object %s of type %s",
                         obj, obj != null ? obj.getClass().getCanonicalName() : "null");
                 log.error(msg);
                 throw new CsvToBeanException(msg, e);
@@ -377,7 +369,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     }
 
     private void processListMapping(final T bean, final CsvColumn column, final String[] line) {
-        for (CsvColumn mappedColumn : listMapping.get(column)) {
+        for (CsvColumn mappedColumn : strategy.getListMapping().get(column)) {
             val index = mappedColumn.index();
             val text = line[index];
             // TODO finish this method
@@ -545,36 +537,12 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                 column.substring(0, 1).toUpperCase(), column.substring(1));
     }
 
-    private String processingErrorMsg(final HeaderDirectMappingStrategy<?> mapper,
+    private String processingErrorMsg(final ColumnMapping<?> mapper,
                                       final int col,
                                       final String formatString,
                                       Object...values) {
         return String.format(formatString, values)
                 + String.format(" (in column %s at csv position %d)", mapper.getColumnName(col), col);
-    }
-
-    /**
-     * Calculate the columns that are either directly mapped to csv columns, or
-     * reference another column.
-     * @param mapper the mapper strategy instance
-     */
-    private void setupColumnsForIteration(final HeaderDirectMappingStrategy<T> mapper) {
-        final List<CsvColumn> columnsToParse = mapper.getColumnsToParse();
-        this.columnsForIteration.addAll(columnsToParse);
-        final Map<String, Integer> idxLookup = new HashMap<>();
-        for (CsvColumn col : this.columnsForIteration) {
-            idxLookup.put(col.name(), col.index());
-        }
-        for (Map.Entry<String, String> entry : this.columnRefs.entrySet()) {
-            final String to = entry.getKey();
-            final String from = entry.getValue();
-            final Integer idx = idxLookup.get(from);
-            if (idx == null) {
-                final String msg = String.format("column %s is not defined, but referenced from column %s", to, from);
-                throw new IllegalStateException(msg);
-            }
-            columnsForIteration.add(CsvColumn.mandatory(to, idx));
-        }
     }
 
     /**
@@ -624,16 +592,14 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                 if (!isHeaderDefined()) {
                     if (this.iterator.hasNext()) {
                         final String[] nextLine = this.iterator.next();
-                        Builder.setHeader(getStrategy(), nextLine);
+                        strategy.captureHeader(nextLine);
                     }
                 }
             } catch (CsvToBeanException e) {
                 final String msg = "caught exception when trying to skip lines on iterator invocation";
                 log.warn(msg, e);
             }
-            if (getColumnsForIteration().isEmpty()) {
-                setupColumnsForIteration(getStrategy());
-            }
+            strategy.setupColumnsForIteration();
         }
 
     }

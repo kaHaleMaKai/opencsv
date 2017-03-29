@@ -18,18 +18,13 @@ package com.github.kahalemakai.opencsv.beans;
 
 import com.github.kahalemakai.opencsv.beans.processing.*;
 import com.github.kahalemakai.opencsv.config.Sink;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -99,6 +94,14 @@ public class Builder<T> {
     /* ********************************
      * members with chainable setters
      * ********************************/
+
+    /**
+     * The strategy used for mapping csv fields to bean properties.
+     *
+     * @return mapping strategy
+     */
+    @Getter(AccessLevel.PACKAGE)
+    private ColumnMapping<T> strategy;
 
     /**
      * Source for the main processing loop.
@@ -198,13 +201,9 @@ public class Builder<T> {
      * variables for bookkeeping
      * ***************************/
 
-    /**
-     * The strategy used for mapping csv fields to bean properties.
-     *
-     * @return mapping strategy
-     */
     @Getter
-    private HeaderDirectMappingStrategy<T> strategy;
+    private final List<String> header;
+
     /**
      * Mark if a reader instance has been setup.
      * <p>
@@ -261,6 +260,9 @@ public class Builder<T> {
      */
     private final Map<String, Object> columnData;
 
+    @Getter(AccessLevel.PACKAGE)
+    private final Map<String, String> fieldMappings;
+
     /**
      * The {@link Sink} that consumes the iterator of beans.
      * @return the {@link Sink} that consumes the iterator of beans
@@ -304,8 +306,10 @@ public class Builder<T> {
         this.readerSetup = new AtomicBoolean(false);
         this.columnRefs = new HashMap<>();
         this.columnData = new HashMap<>();
+        this.fieldMappings = new HashMap<>();
+        this.header = new ArrayList<>();
+        this.strategy = ColumnMapping.of(type);
         log.debug(String.format("setup CsvToBeanMapper for type <%s>", type.getCanonicalName()));
-        this.strategy = HeaderDirectMappingStrategy.of(type);
     }
 
     /**
@@ -335,6 +339,22 @@ public class Builder<T> {
         }
         this.defaultValues.forEach(this.decoderManager::setDefaultValue);
         this.defaultValueStringData.forEach(this.decoderManager::decodeAndSetDefaultValue);
+        this.strategy.setColumnRefs(columnRefs);
+        if (!isHeaderDefined() && source != null) {
+            if (!source.iterator().hasNext()) {
+                final String msg = "the iterable's iterator is empty, thus no column headers can be retrieved from it";
+                log.error(msg);
+                throw new IllegalStateException(msg);
+            }
+            log.debug("retrieving header from input source");
+            final String[] header = source.iterator().next();
+            this.setHeader(header);
+
+        }
+        if (isHeaderDefined()) {
+            this.strategy.captureHeader(this.header.toArray(new String[this.header.size()]));
+            this.strategy.setupColumnsForIteration();
+        }
         return new CsvToBeanMapperImpl<>(this);
     }
 
@@ -354,16 +374,6 @@ public class Builder<T> {
         sourceWasChosen = true;
         log.debug("using iterable of whole lines as source");
         final Iterator<String> iterator = lines.iterator();
-        if (iterator == null) {
-            final String msg = "passed-into iterable's iterator() returns null";
-            log.error(msg);
-            throw new IllegalStateException(msg);
-        }
-        if (!iterator.hasNext()) {
-            final String msg = "passed-into iterable's iterator is depleted";
-            log.error(msg);
-            throw new IllegalStateException(msg);
-        }
         this.lineIterator = iterator;
         return this;
     }
@@ -380,21 +390,6 @@ public class Builder<T> {
         sourceWasChosen = true;
         log.debug("using iterable of splitted lines as source");
         final Iterator<String[]> iterator = lines.iterator();
-        if (iterator == null) {
-            final String msg = "passed-into iterable's iterator() returns null";
-            log.error(msg);
-            throw new IllegalStateException(msg);
-        }
-        if (!iterator.hasNext()) {
-            final String msg = "the iterable's iterator is empty, thus no column headers can be retrieved from it";
-            log.error(msg);
-            throw new IllegalStateException(msg);
-        }
-        if (!isHeaderDefined()) {
-            log.debug("retrieving header from input source");
-            final String[] header = iterator.next();
-            getStrategy().captureHeader(header);
-        }
         // an Iterable may return a fresh iterator on every call to iterator()
         // thus we should rather reuse the iterator we have already read a line from
         source(() -> iterator);
@@ -699,8 +694,21 @@ public class Builder<T> {
      * @return the {@code Builder} instance
      * @throws IllegalArgumentException if the header is malformed
      */
+    public Builder<T> setHeader(List<String> header) throws IllegalArgumentException {
+        this.header.clear();
+        this.header.addAll(header);
+        return this;
+    }
+
+    /**
+     * Set the csv header.
+     * @param header header fields
+     * @return the {@code Builder} instance
+     * @throws IllegalArgumentException if the header is malformed
+     */
     public Builder<T> setHeader(String...header) throws IllegalArgumentException {
-        setHeader(getStrategy(), header);
+        this.header.clear();
+        this.header.addAll(Arrays.asList(header));
         return this;
     }
 
@@ -804,7 +812,7 @@ public class Builder<T> {
     /**
      * Define a default value (as String data) for a column.
      * <p>
-     * The data will be decoded by the {@link DecoderChain#decodeValue()} method.
+     * The data will be decoded by the {@link DecoderChain#decodeValue(String)} method.
      * @param column name of the column
      * @param value the default value to use
      * @return the {@code Builder} instance
@@ -819,58 +827,14 @@ public class Builder<T> {
         return this;
     }
 
+    public Builder<T> mapField(final String field, final String column) {
+        this.fieldMappings.put(field, column);
+        return this;
+    }
+
     private boolean columnHasDefaultValue(final String column) {
         return this.defaultValues.containsKey(column)
                 || this.defaultValueStringData.containsKey(column);
-    }
-
-    /**
-     * Helper method for setting the header of a mapping strategy.
-     * @param strategy strategy for which to set the header
-     * @param header the header fields
-     * @param <S> type of bean, the csv will be converted to
-     * @throws IllegalArgumentException if the header is malformed
-     */
-    public static <S> void setHeader(HeaderDirectMappingStrategy<S> strategy, String[] header) throws IllegalArgumentException {
-//        if (header.length == 0) {
-//            final String msg = "expected: header.length > 0, got: header.length = 0";
-//            log.error(msg);
-//            throw new IllegalArgumentException(msg);
-//        }
-//        log.debug("setting header manually");
-//        List<String> headerList = new LinkedList<>();
-//        for (final String column : header) {
-//            final Matcher matcher = IGNORE_PATTERN.matcher(column);
-//            if (matcher.matches()) {
-//                final Matcher numberMatcher = NUMBER_PATTERN.matcher(column);
-//                int number = 1;
-//                if (numberMatcher.matches()) {
-//                    final String numberAsString = numberMatcher.group(1);
-//                    number = Integer.parseInt(numberAsString);
-//                    if (number == 0) {
-//                        final String msg = "using column name $ignore0$ is not permitted";
-//                        log.error(msg);
-//                        throw new IllegalArgumentException(msg);
-//                    }
-//                }
-//                for (int i = 0; i < number; ++i) {
-//                    headerList.add(IGNORE_COLUMN);
-//                }
-//            } else {
-//                final Matcher acceptedNamesMatcher = ACCEPTED_NAMES.matcher(column);
-//                if (acceptedNamesMatcher.matches() || IGNORE_COLUMN.equals(column)) {
-//                    headerList.add(column);
-//                } else if (ELLIPSIS.equals(column)) {
-//                    headerList.add(IGNORE_COLUMN);
-//                } else {
-//                    final String msg = String.format("invalid column name specified: '%s'", column);
-//                    log.error(msg);
-//                    throw new IllegalArgumentException(msg);
-//                }
-//            }
-//        }
-//        final String[] completeHeader = headerList.toArray(new String[headerList.size()]);
-        strategy.captureHeader(header);
     }
 
     /**
@@ -944,7 +908,7 @@ public class Builder<T> {
      * @return if a header has been defined
      */
     private boolean isHeaderDefined() {
-        return getStrategy().isHeaderDefined();
+        return !header.isEmpty();
     }
 
     ExceptionalAction<IOException> finalizer() {

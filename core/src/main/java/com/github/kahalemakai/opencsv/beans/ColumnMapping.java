@@ -17,8 +17,7 @@
 package com.github.kahalemakai.opencsv.beans;
 
 import com.opencsv.bean.HeaderColumnNameMappingStrategy;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.beans.IntrospectionException;
@@ -40,7 +39,7 @@ import java.util.regex.Pattern;
  * @param <T> type of bean to map to
  */
 @Slf4j
-public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrategy<T> {
+public class ColumnMapping<T> extends HeaderColumnNameMappingStrategy<T> {
 
     private final static Pattern IGNORE_PATTERN = Pattern.compile("^\\(?\\$ignore[0-9]+\\$\\)?$");
     private final static Pattern NUMBER_PATTERN = Pattern.compile("^[^\\d]+(\\d+)\\$\\)?$");
@@ -62,6 +61,53 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
 
     @Getter
     private List<CsvColumn> columnsToParse;
+
+    private final Map<String, String> columnRefs;
+    @Getter(AccessLevel.PACKAGE)
+    private final List<CsvColumn> columnsForIteration;
+
+    @Getter(AccessLevel.PACKAGE)
+    private final List<Field> fields;
+    @Getter(AccessLevel.PACKAGE)
+    private final Map<CsvColumn, List<CsvColumn>> listMapping;
+
+    private ColumnMapping() {
+        this.columnRefs = new HashMap<>();
+        this.columnsForIteration = new ArrayList<>();
+        this.fields = new ArrayList<>();
+        this.listMapping = new HashMap<>();
+    }
+
+    /**
+     * Calculate the columns that are either directly mapped to csv columns, or
+     * reference another column.
+     */
+    public void setupColumnsForIteration() {
+        if (!columnsForIteration.isEmpty()) {
+            return;
+        }
+        final List<CsvColumn> columnsToParse = getColumnsToParse();
+        this.columnsForIteration.addAll(columnsToParse);
+        final Map<String, Integer> idxLookup = new HashMap<>();
+        for (CsvColumn col : columnsToParse) {
+            idxLookup.put(col.name(), col.index());
+        }
+        for (Map.Entry<String, String> entry : this.columnRefs.entrySet()) {
+            final String to = entry.getKey();
+            final String from = entry.getValue();
+            final Integer idx = idxLookup.get(from);
+            if (idx == null) {
+                final String msg = String.format("column %s is not defined, but referenced from column %s", to, from);
+                throw new IllegalStateException(msg);
+            }
+            columnsForIteration.add(CsvColumn.mandatory(to, idx));
+        }
+    }
+
+    public ColumnMapping<T> setColumnRefs(final Map<String, String> columnRefs) {
+        this.columnRefs.putAll(columnRefs);
+        return this;
+    }
 
     /**
      * Set the csv column header.
@@ -133,7 +179,7 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
      * @return the headers of columns that require parsing
      */
     private void setColumnsToParse() {
-        List<CsvColumn> cols = new ArrayList<>();
+        val cols = new ArrayList<CsvColumn>();
         boolean foundOpeningParens = false;
         boolean foundClosingParens = false;
 
@@ -192,15 +238,15 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
      * @param <S> type of bean to map to
      * @return the new mapping strategy
      */
-    public static <S> HeaderDirectMappingStrategy<S> of(final Class<? extends S> type) {
-        final HeaderDirectMappingStrategy<S> strategy = new HeaderDirectMappingStrategy<S>();
+    public static <S> ColumnMapping<S> of(final Class<? extends S> type) {
+        final ColumnMapping<S> strategy = new ColumnMapping<S>();
         strategy.setType(type);
         return strategy;
     }
 
     @Override
     public String toString() {
-        return String.format("HeaderDirectMappingStrategy(type=%s, header=%s)",
+        return String.format("ColumnMapping(type=%s, header=%s)",
                 getType(),
                 getHeader());
     }
@@ -209,8 +255,7 @@ public class HeaderDirectMappingStrategy<T> extends HeaderColumnNameMappingStrat
      * {@inheritDoc}
      */
     @Override
-    protected PropertyDescriptor findDescriptor(String name) throws IntrospectionException {
+    public PropertyDescriptor findDescriptor(String name) throws IntrospectionException {
         return super.findDescriptor(name);
     }
-
 }

@@ -6,8 +6,8 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class HeaderDirectMappingStrategyTest {
-    private HeaderDirectMappingStrategy<TestClass> strategy;
+public class ColumnMappingTest {
+    private ColumnMapping<TestClass> strategy;
 
     @Test(expected = IllegalStateException.class)
     public void captureHeaderThrowsOnNoOpeningParens() throws Exception {
@@ -45,6 +45,6 @@ public class HeaderDirectMappingStrategyTest {
 
     @Before
     public void setUp() throws Exception {
-        strategy = HeaderDirectMappingStrategy.of(TestClass.class);
+        strategy = ColumnMapping.of(TestClass.class);
     }
 }
