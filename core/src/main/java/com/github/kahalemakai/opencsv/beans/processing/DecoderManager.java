@@ -26,20 +26,20 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Indirection layer around the {@code DecoderPropertyEditor} class.
+ * Indirection layer around the {@code DecoderChain} class.
  * <p>
- * This class manages does the bookkeeping of {@code DecoderPropertyEditor} for
+ * This class manages does the bookkeeping of {@code DecoderChain} for
  * all csv columns. In addition, it improves performance by re-using a single instance
- * of decoders, postprocessors or postvalidators to be used in the {@code DecoderPropertyEditor},
+ * of decoders, postprocessors or postvalidators to be used in the {@code DecoderChain},
  * if possible. I.e. if the same decoder (or postprocessor/postvalidator, respectively) is applied
  * to different columns, only a single instance of it will be created and passed around.
  *
- * @see DecoderPropertyEditor
+ * @see DecoderChain
  */
 @Slf4j
 @ToString
 public class DecoderManager {
-    private final Map<String, DecoderPropertyEditor<?>> propertyEditorMap;
+    private final Map<String, DecoderChain<?>> propertyEditorMap;
     private final Map<String, Decoder<?>> decoderClassMap;
     private final Map<String, PostProcessor<?>> postProcessorClassMap;
     private final Map<String, PostValidator<?>> postValidatorClassMap;
@@ -63,7 +63,7 @@ public class DecoderManager {
      */
     public <T> DecoderManager add(final String column, Decoder<? extends T> decoder) {
         @SuppressWarnings("unchecked")
-        final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
+        final DecoderChain<T> propertyEditor = getPropertyEditor(column);
         propertyEditor.add(decoder);
         return this;
     }
@@ -126,7 +126,7 @@ public class DecoderManager {
      */
     public <T> DecoderManager addPostProcessor(final String column, PostProcessor<T> postProcessor) {
         @SuppressWarnings("unchecked")
-        final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
+        final DecoderChain<T> propertyEditor = getPropertyEditor(column);
         propertyEditor.addPostProcessor(postProcessor);
         return this;
     }
@@ -209,7 +209,7 @@ public class DecoderManager {
      * @return the {@code DecoderManager} instance
      */
     public <T> DecoderManager addPostValidator(final String column, PostValidator<T> postValidator) {
-        final DecoderPropertyEditor<T> propertyEditor = getPropertyEditor(column);
+        final DecoderChain<T> propertyEditor = getPropertyEditor(column);
         propertyEditor.addPostValidator(postValidator);
         return this;
     }
@@ -244,14 +244,14 @@ public class DecoderManager {
     }
 
     /**
-     * Return the defined {@code DecoderPropertyEditor} instance as {@code Optional}.
-     * @see DecoderPropertyEditor DecoderPropertyEditor
+     * Return the defined {@code DecoderChain} instance as {@code Optional}.
+     * @see DecoderChain DecoderChain
      * @param column name of column to be looked up
-     * @return {@code Optional} of {@code DecoderPropertyEditor}
+     * @return {@code Optional} of {@code DecoderChain}
      */
-    public DecoderPropertyEditor<?> get(@NonNull final String column) {
-        final DecoderPropertyEditor<?> editor = propertyEditorMap.get(column.toLowerCase());
-        return editor != null ? editor : DecoderPropertyEditor.IDENTITY;
+    public DecoderChain<?> get(@NonNull final String column) {
+        final DecoderChain<?> editor = propertyEditorMap.get(column.toLowerCase());
+        return editor != null ? editor : DecoderChain.IDENTITY;
     }
 
     /**
@@ -319,7 +319,7 @@ public class DecoderManager {
     /**
      * Set a default value for a column by decoding string data.
      * <p>
-     * The data are handled by the {@link DecoderPropertyEditor#decode(String)} method.
+     * The data are handled by the {@link DecoderChain#decode(String)} method.
      * This method throws on repeated invocation for the same column.
      * @param column name of column
      * @param value String data for the default value to use
@@ -334,20 +334,20 @@ public class DecoderManager {
      * Get an immutable view of teh map of columns to propertyEditors.
      * @return the map of columns to propertyEditors
      */
-    public Map<String, DecoderPropertyEditor<?>> getPropertyEditorMap() {
+    public Map<String, DecoderChain<?>> getPropertyEditorMap() {
         return Collections.unmodifiableMap(propertyEditorMap);
     }
 
-    private <R> DecoderPropertyEditor<R> getPropertyEditor(final String column) {
+    private <R> DecoderChain<R> getPropertyEditor(final String column) {
         final String columnToLower = column.toLowerCase();
         if (!propertyEditorMap.containsKey(columnToLower)) {
-            propertyEditorMap.put(columnToLower, DecoderPropertyEditor.forColumn(column));
+            propertyEditorMap.put(columnToLower, DecoderChain.forColumn(column));
         }
-        final DecoderPropertyEditor<R> propertyEditor = (DecoderPropertyEditor<R>) propertyEditorMap.get(columnToLower);
+        final DecoderChain<R> propertyEditor = (DecoderChain<R>) propertyEditorMap.get(columnToLower);
         return propertyEditor;
     }
 
-    private DecoderManager(Map<String, DecoderPropertyEditor<?>> propertyEditorMap,
+    private DecoderManager(Map<String, DecoderChain<?>> propertyEditorMap,
                            Map<String, Decoder<?>> decoderClassMap,
                            Map<String, PostProcessor<?>> postProcessorClassMap,
                            Map<String, PostValidator<?>> postValidatorClassMap) {

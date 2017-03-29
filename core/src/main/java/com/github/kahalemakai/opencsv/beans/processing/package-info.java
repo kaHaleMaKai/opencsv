@@ -4,7 +4,7 @@
  * <p>
  * The {@link com.github.kahalemakai.opencsv.beans.processing.DecoderManager}
  * does all the bookkeeping. For every bean field, a
- * {@link com.github.kahalemakai.opencsv.beans.processing.DecoderPropertyEditor}
+ * {@link com.github.kahalemakai.opencsv.beans.processing.DecoderChain}
  * can be added, that keeps track of
  * {@link com.github.kahalemakai.opencsv.beans.processing.Decoder}s,
  * {@link com.github.kahalemakai.opencsv.beans.processing.PostProcessor}s and

@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- *The {@code DecoderPropertyEditor} contains all the logic of processing csv column values into bean field values.
+ *The {@code DecoderChain} contains all the logic of processing csv column values into bean field values.
  * <p>
- * The {@code DecoderPropertyEditor} extends the {@code PropertyEditorSupport} and relies on its implementation
+ * The {@code DecoderChain} extends the {@code PropertyEditorSupport} and relies on its implementation
  * for {@link #decode(String)}.
  * When processing a split csv line, a the field value is processed as follows:
  * <p>
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @RequiredArgsConstructor(staticName = "forColumn")
 @Slf4j
-public class DecoderPropertyEditor<T> {
+public class DecoderChain<T> {
     private static final String ANY_COLUMN = "*";
     private final List<Decoder<? extends T>> decoders = new LinkedList<>();
     private PostProcessor<T> postProcessor = PostProcessor.identity();
@@ -112,9 +112,9 @@ public class DecoderPropertyEditor<T> {
      * <p>
      * This method throws on repeated invocation.
      * @param value the default value to use
-     * @return the {@code DecoderPropertyEditor} instance
+     * @return the {@code DecoderChain} instance
      */
-    public DecoderPropertyEditor<T> withDefault(final T value) {
+    public DecoderChain<T> withDefault(final T value) {
         if (defaultValueWasSet.compareAndSet(false, true)) {
             this.defaultValue = value;
         }
@@ -132,9 +132,9 @@ public class DecoderPropertyEditor<T> {
      * The data will be decoded by the method {@link #decode(String)}.
      * This method throws on repeated invocation.
      * @param value the default value to use
-     * @return the {@code DecoderPropertyEditor} instance
+     * @return the {@code DecoderChain} instance
      */
-    public DecoderPropertyEditor<T> withDefaultFromString(final String value) {
+    public DecoderChain<T> withDefaultFromString(final String value) {
         if (defaultValueWasSet.compareAndSet(false, true)) {
             this.defaultValue = decode(value);
         }
@@ -151,9 +151,9 @@ public class DecoderPropertyEditor<T> {
      * @see #decodeValue(String) decodeValue()
      *
      * @param decoder decoder instance to be added to the decoding chain
-     * @return the {@code DecoderPropertyEditor} instance
+     * @return the {@code DecoderChain} instance
      */
-    public DecoderPropertyEditor<T> add(Decoder<? extends T> decoder) {
+    public DecoderChain<T> add(Decoder<? extends T> decoder) {
         synchronized ($decoderLock) {
             decoders.add(decoder);
             numDecoders++;
@@ -166,9 +166,9 @@ public class DecoderPropertyEditor<T> {
      * @see #postProcess(Object) postProcess()
      *
      * @param postProcessor postprocessor instance to be added to the postprocessing chain
-     * @return the {@code DecoderPropertyEditor} instance
+     * @return the {@code DecoderChain} instance
      */
-    public DecoderPropertyEditor<T> addPostProcessor(final PostProcessor<T> postProcessor) {
+    public DecoderChain<T> addPostProcessor(final PostProcessor<T> postProcessor) {
         synchronized ($postProcessorLock) {
             this.postProcessor = PostProcessor.compose(this.postProcessor, postProcessor);
         }
@@ -180,9 +180,9 @@ public class DecoderPropertyEditor<T> {
      * @see #postValidate(Object) postValidate()
      *
      * @param postValidator postvalidator instance to be added to the postvalidation chain
-     * @return the {@code DecoderPropertyEditor} instance
+     * @return the {@code DecoderChain} instance
      */
-    public DecoderPropertyEditor<T> addPostValidator(final PostValidator<T> postValidator) {
+    public DecoderChain<T> addPostValidator(final PostValidator<T> postValidator) {
         synchronized ($postValidatorLock) {
             postValidators.add(postValidator);
         }
@@ -204,7 +204,7 @@ public class DecoderPropertyEditor<T> {
      * <h1>Overview of the individual phases</h1>
      *
      * <h2>decode</h2>
-     * The {@code DecoderPropertyEditor} allows for adding an arbitrary amount of
+     * The {@code DecoderChain} allows for adding an arbitrary amount of
      * decoders. The will be invoked sequentially.
      * <p>
      * If a decoder throws any kind of {@code Throwable}, the next decoder
@@ -334,8 +334,8 @@ public class DecoderPropertyEditor<T> {
         }
     }
 
-    static DecoderPropertyEditor<String> IDENTITY =
-            DecoderPropertyEditor
+    static DecoderChain<String> IDENTITY =
+            DecoderChain
                     .<String>forColumn(ANY_COLUMN)
                     .add(Decoder.IDENTITY);
 

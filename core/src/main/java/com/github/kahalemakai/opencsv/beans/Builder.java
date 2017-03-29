@@ -673,7 +673,7 @@ public class Builder<T> {
      * Don't postprocess null returns from decoder chains.
      * @param column name of column
      * @return the {@code Builder} instance
-     * @see DecoderPropertyEditor#setNullFallthroughForPostValidators(boolean) DecoderPropertyEditor.setNullFallthroughForPostProcessors
+     * @see DecoderChain#setNullFallthroughForPostValidators(boolean) DecoderChain.setNullFallthroughForPostProcessors
      */
     public Builder<T> setNullFallthroughForPostProcessors(String column) {
         log.debug("set fallthrough behaviour of nulls for postprocessing");
@@ -685,7 +685,7 @@ public class Builder<T> {
      * Don't post-validate null returns from decoder chains.
      * @param column name of column
      * @return the {@code Builder} instance
-     * @see DecoderPropertyEditor#setNullFallthroughForPostValidators(boolean) DecoderPropertyEditor.setNullFallthroughForPostValidators
+     * @see DecoderChain#setNullFallthroughForPostValidators(boolean) DecoderChain.setNullFallthroughForPostValidators
      */
     public Builder<T> setNullFallthroughForPostValidators(String column) {
         log.debug("set fallthrough behaviour of nulls for postvalidation");
@@ -804,7 +804,7 @@ public class Builder<T> {
     /**
      * Define a default value (as String data) for a column.
      * <p>
-     * The data will be decoded by the {@link DecoderPropertyEditor#decodeValue()} method.
+     * The data will be decoded by the {@link DecoderChain#decodeValue()} method.
      * @param column name of the column
      * @param value the default value to use
      * @return the {@code Builder} instance
@@ -881,10 +881,10 @@ public class Builder<T> {
      * @return
      */
     DecoderManager getDecoderManager() {
-        final Map<String, DecoderPropertyEditor<?>> editorMap = decoderManager.getPropertyEditorMap();
-        for (Map.Entry<String, DecoderPropertyEditor<?>> entry : editorMap.entrySet()) {
+        final Map<String, DecoderChain<?>> editorMap = decoderManager.getPropertyEditorMap();
+        for (Map.Entry<String, DecoderChain<?>> entry : editorMap.entrySet()) {
             final String column = entry.getKey();
-            final DecoderPropertyEditor<?> editor = entry.getValue();
+            final DecoderChain<?> editor = entry.getValue();
             final int numDecoders = editor.getNumDecoders();
             if (numDecoders == 0) {
                 decoderManager.add(column, Decoder.IDENTITY);

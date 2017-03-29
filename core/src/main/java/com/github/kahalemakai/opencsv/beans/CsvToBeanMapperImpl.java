@@ -16,6 +16,7 @@
 
 package com.github.kahalemakai.opencsv.beans;
 
+import com.github.kahalemakai.opencsv.beans.processing.DecoderChain;
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
 import com.github.kahalemakai.opencsv.config.PluginException;
 import com.github.kahalemakai.opencsv.config.Sink;
@@ -276,7 +277,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      * Decode a parsed line into a bean.
      * <p>
      * The heavy-lifting is done by the {@link DecoderManager} and the
-     * {@link com.github.kahalemakai.opencsv.beans.processing.DecoderPropertyEditor}.
+     * {@link DecoderChain}.
      * @param mapper the mapping strategy to be used
      * @param line the parsed line
      * @return the decoded bean
