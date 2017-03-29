@@ -147,6 +147,9 @@ subprojects {
 
 
     test {
+        def map = System.properties
+                .findAll({k, v -> ((String) k).startsWith("opencsv.tests.")})
+        systemProperties = (Map<String, Object>) (Object) map
         useJUnit {
             excludeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
         }

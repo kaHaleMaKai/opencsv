@@ -68,8 +68,15 @@ bintray {
 }
 
 task performanceTest(type: Test, group: "verification") {
+    def map = System.properties
+            .findAll({k, v -> ((String) k).startsWith("opencsv.tests.")})
+    systemProperties = (Map<String, Object>) (Object) map
     useJUnit {
         includeCategories "com.github.kahalemakai.opencsv.categories.PerformanceTests"
     }
+}
+
+task cleanPerformanceTests(group: "verification") {
+    dependsOn cleanPerformanceTest
 }
 
