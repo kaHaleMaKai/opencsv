@@ -27,6 +27,8 @@ class CsvColumn {
     @Getter
     private final int index;
 
+    @Accessors(fluent = true) @Getter
+    private final boolean useUnprocessed;
     /**
      * Check whether a column is optional.
      *
@@ -47,7 +49,17 @@ class CsvColumn {
      * @return a new mandatory csv column instance
      */
     public static CsvColumn mandatory(final String name, final int index) {
-        return new CsvColumn(name, index);
+        return new CsvColumn(name, index, false);
+    }
+
+    /**
+     * Create a new mandatory csv column instance.
+     * @param name name mandatory the csv column
+     * @param index numerical index mandatory the csv column
+     * @return a new mandatory csv column instance
+     */
+    public static CsvColumn unprocessed(final String name, final int index) {
+        return new CsvColumn(name, index, true);
     }
 
     /**

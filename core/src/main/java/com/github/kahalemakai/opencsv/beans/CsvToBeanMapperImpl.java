@@ -30,10 +30,13 @@ import java.beans.PropertyDescriptor;
 import java.beans.PropertyEditor;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
 
 /**
@@ -55,11 +58,15 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final AtomicBoolean readerSetup;
     private final DecoderManager decoderManager;
     private final Iterable<String[]> source;
-    private final Map<String, Method> setterMethods;
+    private final Map<String, MethodHandle> setterMethods;
+    private final Map<String, BiConsumer<T, ?>> adderMethods;
+    private final Map<String, MethodHandle> getterMethods;
     private final Map<String, String> columnRefs;
     private final Map<String, Object> columnData;
     @Getter(AccessLevel.PRIVATE)
     private final List<CsvColumn> columnsForIteration;
+    @Getter(AccessLevel.PRIVATE)
+    private final Map<CsvColumn, List<CsvColumn>> listMapping;
     private final Sink sink;
     private final ExceptionalAction<IOException> finalizer;
 
@@ -99,9 +106,12 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         this.ignoreLeadingWhiteSpace = builder.isIgnoreLeadingWhiteSpace();
         this.strictQuotes = builder.quotingMode().isStrictQuotes();
         this.setterMethods = new HashMap<>();
+        this.adderMethods = new HashMap<>();
+        this.getterMethods = new HashMap<>();
         this.columnRefs = builder.getColumnRefs();
         this.columnData = builder.getColumnData();
         this.columnsForIteration = new ArrayList<>();
+        this.listMapping = new HashMap<>();
         this.sink = builder.sink();
         this.finalizer = builder.finalizer();
         this.multiLine = builder.multiLine();
@@ -293,64 +303,88 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             throw new CsvToBeanException(msg, e);
         }
         for (CsvColumn csvColumn: this.columnsForIteration) {
-            final String columnName = csvColumn.name();
-            int col = csvColumn.index();
-            PropertyDescriptor prop = null;
-            try {
-                prop = mapper.findDescriptor(columnName);
-            } catch (IntrospectionException e) {
-                final String msg =
-                        processingErrorMsg(mapper, col, "could not find descriptor");
-                log.error(msg);
-                throw new CsvToBeanException(msg, e);
-            }
-            if (null != prop) {
-                Object obj = null;
-                String text;
-                try {
-                    text = line[col];
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    if (!csvColumn.isOptional()) {
-                        throw e;
-                    }
-                    text = csvColumn.defaultValue();
-                }
-                final String value = text;
-                try {
-                    obj = convertValue(value, prop);
-                } catch (InstantiationException | IllegalAccessException | CsvToBeanException e) {
-                    final String msg =
-                            processingErrorMsg(mapper, col, "could not convert value %s",
-                                    value == null ? "null" : value);
-                    log.error(msg);
-                    throw new CsvToBeanException(msg, e);
-                }
-                try {
-                    Method setter = getSetter(bean, columnName, prop);
-                    assert setter != null;
-                    setter.invoke(bean, obj);
-                } catch (NoSuchMethodException | InvocationTargetException | NoSuchFieldException | IllegalArgumentException | IllegalAccessException e) {
-                    final String msg = processingErrorMsg(mapper, col, "could not assign object %s of type %s",
-                            obj, obj != null ? obj.getClass().getCanonicalName() : "null");
-                    log.error(msg);
-                    throw new CsvToBeanException(msg, e);
-                }
-            }
+            processColumn(bean, mapper, csvColumn, line);
         }
-        for (Map.Entry<String, Object> entry : columnData.entrySet()) {
+        for (val entry : columnData.entrySet()) {
             final String column = entry.getKey();
             final Object value = entry.getValue();
+            setRefData(bean, column, value);
+        }
+//        for (val listCol : listMapping.keySet()) {
+//            processListMapping(bean, listCol, line);
+//        }
+        return bean;
+    }
+
+    private void processColumn(final T bean,
+                               final HeaderDirectMappingStrategy<T> mapper,
+                               final CsvColumn csvColumn,
+                               final String[] line) {
+        final String columnName = csvColumn.name();
+        int col = csvColumn.index();
+        PropertyDescriptor prop = null;
+        try {
+            prop = mapper.findDescriptor(columnName);
+        } catch (IntrospectionException e) {
+            final String msg =
+                    processingErrorMsg(mapper, col, "could not find descriptor");
+            log.error(msg);
+            throw new CsvToBeanException(msg, e);
+        }
+        if (null != prop) {
+            Object obj = null;
+            String text;
             try {
-                Method setter = getSetter(bean, column, null);
-                setter.invoke(bean, value);
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
-                final String msg = String.format("could not assign object %s of type %s to column %s",
-                        value, value != null ? value.getClass().getCanonicalName() : "null", column);
+                text = line[col];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                if (!csvColumn.isOptional()) {
+                    throw e;
+                }
+                text = csvColumn.defaultValue();
+            }
+            final String value = text;
+            try {
+                obj = convertValue(value, prop);
+            } catch (InstantiationException | IllegalAccessException | CsvToBeanException e) {
+                final String msg =
+                        processingErrorMsg(mapper, col, "could not convert value %s",
+                                value == null ? "null" : value);
+                log.error(msg);
+                throw new CsvToBeanException(msg, e);
+            }
+            try {
+                val setter = getSetter(bean, columnName, prop);
+                assert setter != null;
+                setter.invoke(bean, obj);
+            } catch (Throwable e) {
+                final String msg = processingErrorMsg(mapper, col, "could not assign object %s of type %s",
+                        obj, obj != null ? obj.getClass().getCanonicalName() : "null");
                 log.error(msg);
                 throw new CsvToBeanException(msg, e);
             }
         }
-        return bean;
+
+    }
+
+    private void setRefData(final T bean, final String column, final Object value) {
+        try {
+            val setter = getSetter(bean, column);
+            setter.invoke(bean, value);
+        } catch (Throwable e) {
+            final String msg = String.format("could not assign object %s of type %s to column %s",
+                    value, value != null ? value.getClass().getCanonicalName() : "null", column);
+            log.error(msg);
+            throw new CsvToBeanException(msg, e);
+        }
+    }
+
+    private void processListMapping(final T bean, final CsvColumn column, final String[] line) {
+        for (CsvColumn mappedColumn : listMapping.get(column)) {
+            val index = mappedColumn.index();
+            val text = line[index];
+            // TODO finish this method
+        }
+
     }
 
     /**
@@ -363,7 +397,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      * @throws NoSuchMethodException if no setter method is defined
      * @throws NoSuchFieldException if the field corresponding to the column ought be looked up, but does not exist
      */
-    private Method getSetter(final T bean, final String column, final PropertyDescriptor prop)
+    private MethodHandle getSetter(final T bean, final String column, final PropertyDescriptor prop)
             throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
         // cache it! reflection has to be used only for the first line
         if (!this.setterMethods.containsKey(column)) {
@@ -392,9 +426,107 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                         setter = beanClass.getMethod(setterName, columnType);
                 }
             }
-            this.setterMethods.put(column, setter);
+            this.setterMethods.put(column, MethodHandles.lookup().unreflect(setter));
         }
         return this.setterMethods.get(column);
+    }
+
+    /**
+     * Lookup and cache a setter method for a specific column.
+     * @param bean the bean to emit be {@link #iterator()}
+     * @param column name of the column
+     * @return the setter method
+     * @throws IllegalAccessException if the setter method is non-accessible
+     * @throws NoSuchMethodException if no setter method is defined
+     * @throws NoSuchFieldException if the field corresponding to the column ought be looked up, but does not exist
+     */
+    private MethodHandle getSetter(final T bean, final String column)
+            throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
+        return getSetter(bean, column, null);
+    }
+
+    /**
+     * Lookup and cache a setter method for a specific column.
+     * @param bean the bean to emit be {@link #iterator()}
+     * @param column name of the column
+     * @return the setter method
+     * @throws IllegalAccessException if the setter method is non-accessible
+     * @throws NoSuchMethodException if no setter method is defined
+     * @throws NoSuchFieldException if the field corresponding to the column ought be looked up, but does not exist
+     */
+    private BiConsumer<T, ?> getAdder(final T bean, final String column)
+            throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
+        // cache it! reflection has to be used only for the first line
+        if (!this.adderMethods.containsKey(column)) {
+            val getter = getGetter(bean, column, List.class);
+            final BiConsumer<T, ?> adder = (t, el) -> {
+                try {
+                    ((List<Object>) getter.invokeExact(t)).add(el);
+                } catch (Throwable e) {
+                    final String msg = "cannot get field " + column + " of type <List>";
+                    log.error(msg, e);
+                    throw new IllegalStateException(msg, e);
+                }
+            };
+            adderMethods.put(column, adder);
+        }
+        return adderMethods.get(column);
+    }
+
+    /**
+     * Lookup and cache a setter method for a specific column.
+     * @param bean the bean to emit be {@link #iterator()}
+     * @param column name of the column
+     * @return the setter method
+     * @throws IllegalAccessException if the setter method is non-accessible
+     * @throws NoSuchMethodException if no setter method is defined
+     * @throws NoSuchFieldException if the field corresponding to the column ought be looked up, but does not exist
+     */
+    private MethodHandle getGetter(final T bean, final String column, final Class<?> returnType)
+            throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
+        if (!getterMethods.containsKey(column)) {
+            MethodHandle getter = null;
+            final Class<? extends T> beanClass = (Class<? extends T>) bean.getClass();
+            val type = MethodType.methodType(returnType);
+            val lookup = MethodHandles.lookup();
+            try {
+                getter = lookup.findVirtual(beanClass, getGetterName(column), type);
+            } catch (NoSuchMethodException e) {
+                getter = lookup.findVirtual(beanClass, getGetterName(column, "is"), type);
+            }
+            getterMethods.put(column, getter);
+        }
+        return getterMethods.get(column);
+    }
+
+    /**
+     * Find the name of the setter method.
+     * <p>
+     * Defaults to {@code column -> setColumn}
+     * @param column name of the column to look up
+     * @return name of the setter method
+     * @throws IllegalAccessException if no column name was given
+     */
+    private String getGetterName(final String column) throws IllegalAccessException {
+        return getGetterName(column, "get");
+    }
+
+    /**
+     * Find the name of the setter method.
+     * <p>
+     * Defaults to {@code column -> setColumn}
+     * @param column name of the column to look up
+     * @return name of the setter method
+     * @throws IllegalAccessException if no column name was given
+     */
+    private String getGetterName(final String column, final String prefix) throws IllegalAccessException {
+        if (column == null || column.length() == 0) {
+            final String msg = String.format("cannot find getter method for column %s", column);
+            log.error(msg);
+            throw new IllegalAccessException(msg);
+        }
+        return String.format("get%s%s",
+                column.substring(0, 1).toUpperCase(), column.substring(1));
     }
 
     /**

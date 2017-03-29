@@ -62,6 +62,13 @@
         <xs:attributeGroup ref="bean:EnumMapAttributes" />
     </xs:complexType>
 
+    <xs:complexType name="List">
+        <xs:sequence minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="field" type="bean:Field" />
+        </xs:sequence>
+        <xs:attributeGroup ref="bean:ListAttributes" />
+    </xs:complexType>
+
     <xs:complexType name="Field">
       <xs:sequence minOccurs="0">
         <xs:sequence minOccurs="0" maxOccurs="unbounded">
@@ -118,7 +125,10 @@
     
     <xs:complexType name="Config">
         <xs:sequence maxOccurs="unbounded">
-            <xs:element name="field" type="bean:Field" />
+            <xs:choice>
+                <xs:element name="field" type="bean:Field" />
+                <xs:element name="list" type="bean:List" />
+            </xs:choice>
         </xs:sequence>
 
         <xs:attributeGroup ref="bean:BeanAttributes" />
@@ -147,6 +157,12 @@
         <xs:attribute name="nullable" type="xs:boolean" use="optional" />
         <xs:attribute name="trim" type="xs:boolean" use="optional" />
         <xs:attribute name="default" type="xs:string" use="optional" />
+    </xs:attributeGroup>
+
+    <xs:attributeGroup name="ListAttributes">
+        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="initializeAs" type="xs:string" use="optional" />
+        <xs:attribute name="type" type="bean:ParameterType" use="optional" default="String" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="ProcessorAttributes">

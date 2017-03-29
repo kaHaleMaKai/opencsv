@@ -13,7 +13,7 @@ class OptionalCsvColumn extends CsvColumn {
     private final String defaultValue;
 
     private OptionalCsvColumn(String name, int index, String defaultValue) {
-        super(name, index);
+        super(name, index, true);
         this.defaultValue = defaultValue;
     }
 
