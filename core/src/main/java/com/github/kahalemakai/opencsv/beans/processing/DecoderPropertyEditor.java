@@ -19,7 +19,6 @@ package com.github.kahalemakai.opencsv.beans.processing;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import java.beans.PropertyEditorSupport;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,23 +27,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *The {@code DecoderPropertyEditor} contains all the logic of processing csv column values into bean field values.
  * <p>
  * The {@code DecoderPropertyEditor} extends the {@code PropertyEditorSupport} and relies on its implementation
- * for {@link #getValue()} and {@link #setAsText(String)}.
+ * for {@link #decode(String)}.
  * When processing a split csv line, a the field value is processed as follows:
  * <p>
  * {@code String field -> #setAsText(field) -> #getValue()}
- * @see #getValue()
+ * @see #decode(String)
  *
  * @param <T> class, the csv column should be converted to
  */
 @RequiredArgsConstructor(staticName = "forColumn")
 @Slf4j
-public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
+public class DecoderPropertyEditor<T> {
     private static final String ANY_COLUMN = "*";
     private final List<Decoder<? extends T>> decoders = new LinkedList<>();
     private PostProcessor<T> postProcessor = PostProcessor.identity();
     private final List<PostValidator<T>> postValidators = new LinkedList<>();
-    @Getter(AccessLevel.PACKAGE)
-    private String data;
+
     /**
      * Name of the referenced csv column.
      * @return name of the referenced csv column
@@ -131,15 +129,14 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
     /**
      * Define a default value (by decoding String data) that will be used if no decoder can decode a given value.
      * <p>
-     * The data will be decoded by the method {@link #decodeValue()}.
+     * The data will be decoded by the method {@link #decode(String)}.
      * This method throws on repeated invocation.
      * @param value the default value to use
      * @return the {@code DecoderPropertyEditor} instance
      */
     public DecoderPropertyEditor<T> withDefaultFromString(final String value) {
         if (defaultValueWasSet.compareAndSet(false, true)) {
-            this.setAsText(value);
-            this.defaultValue = decodeValue();
+            this.defaultValue = decode(value);
         }
         else {
             final String msg = String.format("trying to set default value on column %s repeatedly", this.columnName);
@@ -151,7 +148,7 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
 
     /**
      * Add a new decoder to the decoding chain.
-     * @see #decodeValue() decodeValue()
+     * @see #decodeValue(String) decodeValue()
      *
      * @param decoder decoder instance to be added to the decoding chain
      * @return the {@code DecoderPropertyEditor} instance
@@ -246,25 +243,12 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
      * @see PostProcessor PostProcessor
      * @see PostValidator PostValidator
      */
-    @Override
-    public T getValue() throws DataDecodingException, PostProcessingException, PostValidationException {
-        final T decodedValue = decodeValue();
+    public T decode(final String text) throws DataDecodingException, PostProcessingException, PostValidationException {
+        val data = isTrim() ? text.trim() : text;
+        final T decodedValue = decodeValue(data);
         final T postProcessedValue = postProcess(decodedValue);
         postValidate(postProcessedValue);
         return postProcessedValue;
-    }
-
-    /**
-     * Set the String-valued csv field as text for further processing.
-     * <p>
-     * If {@link #isTrim()} evaluates to true, the text will get trimmed before setting it.
-     *
-     * @param text the text to set for further processing
-     * @throws IllegalArgumentException only declared for matching the interface
-     */
-    @Override
-    public void setAsText(String text) throws IllegalArgumentException {
-        this.data = isTrim() ? text.trim() : text;
     }
 
     /**
@@ -277,7 +261,7 @@ public class DecoderPropertyEditor<T> extends PropertyEditorSupport {
         }
     }
 
-    private T decodeValue() throws DataDecodingException {
+    private T decodeValue(final String data) throws DataDecodingException {
         log.debug("decoding value '{}' using decoder chain of length {}", data, decoders.size());
         for (int i = 0; i < decoders.size(); ++i) {
             log.debug("trying decoder nr. {}", i + 1);

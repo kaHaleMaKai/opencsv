@@ -20,7 +20,6 @@ import lombok.NonNull;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-import java.beans.PropertyEditor;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -250,7 +249,7 @@ public class DecoderManager {
      * @param column name of column to be looked up
      * @return {@code Optional} of {@code DecoderPropertyEditor}
      */
-    public PropertyEditor get(@NonNull final String column) {
+    public DecoderPropertyEditor<?> get(@NonNull final String column) {
         final DecoderPropertyEditor<?> editor = propertyEditorMap.get(column.toLowerCase());
         return editor != null ? editor : DecoderPropertyEditor.IDENTITY;
     }
@@ -320,7 +319,7 @@ public class DecoderManager {
     /**
      * Set a default value for a column by decoding string data.
      * <p>
-     * The data are handled by the {@link DecoderPropertyEditor#decodeValue()} method.
+     * The data are handled by the {@link DecoderPropertyEditor#decode(String)} method.
      * This method throws on repeated invocation for the same column.
      * @param column name of column
      * @param value String data for the default value to use

@@ -168,17 +168,6 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     }
 
     /**
-     * Get a property editor.
-     * @param desc a property descriptor
-     * @return a property editor
-     */
-    @Override
-    protected PropertyEditor getPropertyEditor(PropertyDescriptor desc) {
-        final String column = desc.getName();
-        return decoderManager.get(column);
-    }
-
-    /**
      * {@inheritDoc}
      * @throws UnsupportedOperationException if a sink was set up
      */
@@ -344,8 +333,8 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             }
             final String value = text;
             try {
-                obj = convertValue(value, prop);
-            } catch (InstantiationException | IllegalAccessException | CsvToBeanException e) {
+                obj = decode(value, columnName);
+            } catch (CsvToBeanException e) {
                 final String msg =
                         processingErrorMsg(mapper, col, "could not convert value %s",
                                 value == null ? "null" : value);
@@ -364,6 +353,14 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             }
         }
 
+    }
+
+    private Object decode(final String text, final String column) {
+        val decoderChain = decoderManager.get(column);
+        if (null != decoderChain) {
+            return decoderChain.decode(text);
+        }
+        return text;
     }
 
     private void setRefData(final T bean, final String column, final Object value) {
@@ -596,6 +593,11 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         final int linesToSkip = getReaderSetup().get() ? 0 : getSkipLines();
         final Iterator<String[]> iterator = source.iterator();
         return isOnErrorSkipLine() ? new SkippingIterator(linesToSkip, iterator) : new NonSkippingIterator(linesToSkip, iterator);
+    }
+
+    @Override
+    protected PropertyEditor getPropertyEditor(PropertyDescriptor desc) throws InstantiationException, IllegalAccessException {
+        return null;
     }
 
     /**

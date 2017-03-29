@@ -13,20 +13,16 @@ public class DecoderPropertyEditorTest {
         editor.add(new IntDecoder());
         editor.withDefault(23);
 
-        editor.setAsText("1");
-        val = editor.getValue();
+        val = editor.decode("1");
         assertEquals(Integer.valueOf(1), val);
 
-        editor.setAsText("11.5");
-        val = editor.getValue();
+        val = editor.decode("11.5");
         assertEquals(Integer.valueOf(23), val);
 
-        editor.setAsText("s");
-        val = editor.getValue();
+        val = editor.decode("s");
         assertEquals(Integer.valueOf(23), val);
 
-        editor.setAsText("2349283472342342234234");
-        val = editor.getValue();
+        val = editor.decode("2349283472342342234234");
         assertEquals(Integer.valueOf(23), val);
     }
 
@@ -37,20 +33,16 @@ public class DecoderPropertyEditorTest {
         editor.add(new IntDecoder());
         editor.withDefaultFromString("23");
 
-        editor.setAsText("1");
-        val = editor.getValue();
+        val = editor.decode("1");
         assertEquals(Integer.valueOf(1), val);
 
-        editor.setAsText("11.5");
-        val = editor.getValue();
+        val = editor.decode("11.5");
         assertEquals(Integer.valueOf(23), val);
 
-        editor.setAsText("s");
-        val = editor.getValue();
+        val = editor.decode("s");
         assertEquals(Integer.valueOf(23), val);
 
-        editor.setAsText("2349283472342342234234");
-        val = editor.getValue();
+        val = editor.decode("2349283472342342234234");
         assertEquals(Integer.valueOf(23), val);
     }
 
