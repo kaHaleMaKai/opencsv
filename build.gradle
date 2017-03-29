@@ -99,11 +99,13 @@ subprojects {
 
     configurations.compile.transitive = true
 
-    task delombok << {
-        description 'Delomboks the source code'
-        ant.taskdef(classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compile.asPath, name: 'delombok')
-        ant.mkdir(dir: delombokedDir)
-        ant.delombok(verbose: 'true', encoding: 'UTF-8', to: delombokedDir, from: 'src/main/java')
+    task delombok {
+        doLast {
+            description 'Delomboks the source code'
+            ant.taskdef(classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compile.asPath, name: 'delombok')
+            ant.mkdir(dir: delombokedDir)
+            ant.delombok(verbose: 'true', encoding: 'UTF-8', to: delombokedDir, from: 'src/main/java')
+        }
     }
 
     task javadocDelux(type: Javadoc, group: "documentation") {
