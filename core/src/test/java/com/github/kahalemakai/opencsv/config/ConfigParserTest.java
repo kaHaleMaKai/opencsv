@@ -19,11 +19,9 @@ package com.github.kahalemakai.opencsv.config;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanException;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
-import com.github.kahalemakai.opencsv.examples.DecoderArgsTester;
-import com.github.kahalemakai.opencsv.examples.EnlargedPerson;
-import com.github.kahalemakai.opencsv.examples.EnumWrapper;
-import com.github.kahalemakai.opencsv.examples.Person;
+import com.github.kahalemakai.opencsv.examples.*;
 import com.opencsv.CSVParser;
+import lombok.val;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -366,7 +364,60 @@ public class ConfigParserTest {
         mapper = configParser.parse();
     }
 
+    // TODO this does not inherently test if a field mapping throws
+    // it rather throws because referring to an absent (because ignored) column
+    // there should be a separate test for this
+    // furthermore, we have to test that the ColumnMapping throws
+    // when referring to an absent column
+    @Test(expected = IllegalStateException.class)
+    public void testFieldMappingThrows() throws Exception {
+        picard.setAge(8000);
+        drObvious.setAge(8000);
+        picard.setGivenName(picard.getSurName());
+        drObvious.setGivenName(drObvious.getSurName());
+        ConfigParser configParser;
+        CsvToBeanMapper<Person> mapper;
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-field-mapping-throws.xml");
+        assert resource != null;
+        configParser = ConfigParser.ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
+        mapper = configParser.parse();
+        val it = mapper.iterator();
+        picard.setAddress("nowhere");
+        drObvious.setAddress("nowhere");
+        val p1 = PersonWithGender.ofPerson(picard);
+        val p2 = PersonWithGender.ofPerson(drObvious);
+        p1.setGender(PersonWithGender.Gender.MALE);
+        assertEquals(p1, it.next());
+        assertEquals(p2, it.next());
+    }
 
+    @Test
+    public void testFieldMapping() throws Exception {
+        picard.setAge(8000);
+        drObvious.setAge(8000);
+        picard.setGivenName(picard.getSurName());
+        drObvious.setGivenName(drObvious.getSurName());
+        ConfigParser configParser;
+        CsvToBeanMapper<Person> mapper;
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-field-mapping.xml");
+        assert resource != null;
+        configParser = ConfigParser.ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
+        mapper = configParser.parse();
+        val it = mapper.iterator();
+        picard.setAddress("nowhere");
+        drObvious.setAddress("nowhere");
+        val p1 = PersonWithGender.ofPerson(picard);
+        val p2 = PersonWithGender.ofPerson(drObvious);
+        p1.setGender(PersonWithGender.Gender.MALE);
+        assertEquals(p1, it.next());
+        assertEquals(p2, it.next());
+    }
 
     @Test
     public void testColumnRef() throws Exception {

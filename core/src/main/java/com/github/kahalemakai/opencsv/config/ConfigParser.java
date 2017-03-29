@@ -28,6 +28,7 @@ import com.github.kahalemakai.opencsv.beans.processing.decoders.NullChoicesDecod
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -596,14 +597,13 @@ public class ConfigParser {
      */
     private <T> void configureFields(final Node config, Builder<T> builder) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         final NodeList fields = config.getChildNodes();
-//        final Class<? extends T> builderType = builder.getStrategy().getType();
         for (int i = 0; i < fields.getLength(); ++i) {
             final Node field = fields.item(i);
             final String fieldNs = field.getNamespaceURI();
             if (field.getNodeType() != ELEMENT_NODE)
                 continue;
             // presence of "name" attribute is enforced by xsd
-            final String column = getAttributeValue(field, "name").get();
+            val column = getAttributeValue(field, "name").get();
             final Optional<String> nullFallsThrough = getAttributeValue(field, "nullFallsThrough");
             if (nullFallsThrough.isPresent()) {
                 switch (NullFallsThroughType.forText(nullFallsThrough.get())) {
@@ -697,6 +697,10 @@ public class ConfigParser {
                     }
                 }
 
+            }
+            else {
+                val csvColumn = getAttributeValue(field, "csvColumn");
+                builder.mapField(column, csvColumn.orElse(column));
             }
 
             final boolean anyDecoder = registerDecoders(builder, column, processors);

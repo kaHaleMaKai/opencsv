@@ -157,6 +157,7 @@
         <xs:attribute name="nullable" type="xs:boolean" use="optional" />
         <xs:attribute name="trim" type="xs:boolean" use="optional" />
         <xs:attribute name="default" type="xs:string" use="optional" />
+        <xs:attribute name="csvColumn" type="xs:string" use="optional" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="ListAttributes">

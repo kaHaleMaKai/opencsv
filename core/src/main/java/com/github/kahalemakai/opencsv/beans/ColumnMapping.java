@@ -99,6 +99,11 @@ public class ColumnMapping<T> extends HeaderColumnNameMappingStrategy<T> {
             columnsToParse.forEach(c -> lookup.put(c.name(), c));
             fieldMappaing.forEach((k, v) -> {
                 val col = lookup.get(v);
+                if (col == null) {
+                    val msg = "column is not defined in input csv: " + v;
+                    log.error(msg);
+                    throw new IllegalStateException(msg);
+                }
                 val field = Field.of(k, col);
                 this.columnsForIteration.add(field);
             });
