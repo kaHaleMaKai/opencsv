@@ -16,50 +16,25 @@
 
 package com.github.kahalemakai.opencsv.config;
 
+import com.github.kahalemakai.opencsv.DataContainer;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanException;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
-import com.github.kahalemakai.opencsv.beans.QuotingMode;
 import com.github.kahalemakai.opencsv.examples.*;
-import com.opencsv.CSVParser;
 import lombok.val;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
-import java.math.BigDecimal;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertEquals;
 
-public class ConfigParserTest {
-    CSVParser parser;
-    String linesWithUmlauts;
-    String linesWithEscape;
-    String[] linesWithIgnore;
-    String[] linesWithSpaces;
-    String[] linesWithOptionalColumns;
-    String[] lines;
-    String[] linesWithEnum;
-    String[] linesForConstructorArgs;
-    Person picard;
-    Person drObvious;
-    Person fraenkie;
-    EnlargedPerson ePicard;
-    EnlargedPerson eDrObvious;
-    EnumWrapper enumWrapper;
-    Iterator<String[]> iterator;
-    Iterator<String[]> iteratorWithIgnore;
-    Iterator<String> getUnparsedIteratorWithSpaces;
-    Iterator<String> unparsedIterator;
-    Iterator<String> unparsedIteratorWithIgnore;
-    Iterator<String> unparsedLinesWithEnum;
-    Iterator<String> unparsedLinesForConstructorArgs;
-    Reader reader;
+public class ConfigParserTest extends DataContainer {
 
     @Test(expected = CsvToBeanException.class)
     public void testParseEnumThrows() throws Exception {
@@ -275,7 +250,6 @@ public class ConfigParserTest {
                 .injectParameter("invalid", "123");
     }
 
-
     @Test
     public void testParameterInjection() throws Exception {
         picard.setAge(123);
@@ -361,14 +335,9 @@ public class ConfigParserTest {
         assert resource != null;
         configParser = ConfigParser
                 .ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
-        mapper = configParser.parse();
+        configParser.parse();
     }
 
-    // TODO this does not inherently test if a field mapping throws
-    // it rather throws because referring to an absent (because ignored) column
-    // there should be a separate test for this
-    // furthermore, we have to test that the ColumnMapping throws
-    // when referring to an absent column
     @Test(expected = IllegalStateException.class)
     public void testFieldMappingThrows() throws Exception {
         picard.setAge(8000);
@@ -566,122 +535,5 @@ public class ConfigParserTest {
             assertEquals(drObvious, it.next());
         }
     }
-
-    @Before
-    public void setUp() throws Exception {
-        lines = new String[] {
-                "age,givenName,surName,address",
-                "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise'",
-                "null,Dr.,Obvious,Somewhere"
-        };
-        linesWithUmlauts = "X,X,32,X,Fränkie,Fœrchterlich,Österreich,X,X,X,X";
-        linesWithIgnore = new String[] {
-                "X,X,50,X,Jean-Luc,Picard,'Captain\\'s room, Enterprise',X,X,X,X",
-                "X,X,null,X,Dr.,Obvious,Somewhere,X,X,X,X"
-        };
-        linesWithSpaces = new String[] {
-                "    50 ,Jean-Luc,   Picard  , 'Captain\\'s room, Enterprise' ",
-                " null   ,Dr. ,  Obvious  , Somewhere "
-        };
-
-        linesWithOptionalColumns = new String[] {
-                "    50 ,Jean-Luc,   Picard  , 'Captain\\'s room, Enterprise' ,black coffee, 90000",
-                " null   ,Dr. ,  Obvious  , Somewhere "
-        };
-        linesWithEscape = "50xJean-LucxPicardxCaptain9's room, Enterprise";
-
-        linesForConstructorArgs = new String[] {
-                "this is null!!!,yes,11.5",
-                "1,pas de valoir,23",
-                "11,no,123.456",
-                "-498,null,123456.123456"
-        };
-
-        linesWithEnum = new String[] {"n", "x"};
-        picard = new Person();
-        picard.setAge(50);
-        picard.setGivenName("Jean-Luc");
-        picard.setSurName("Picard");
-        picard.setAddress("Captain's room, Enterprise");
-
-        drObvious = new Person();
-        drObvious.setAge(null);
-        drObvious.setGivenName("Dr.");
-        drObvious.setSurName("Obvious");
-        drObvious.setAddress("Somewhere");
-
-        fraenkie = new Person();
-        fraenkie.setAge(32);
-        fraenkie.setGivenName("Fränkie");
-        fraenkie.setSurName("Fœrchterlich");
-        fraenkie.setAddress("Österreich");
-
-        ePicard = EnlargedPerson.of(picard);
-        eDrObvious = EnlargedPerson.of(drObvious);
-
-        enumWrapper = new EnumWrapper();
-        enumWrapper.setQuotingMode(QuotingMode.NON_STRICT_QUOTES);
-
-        iterator = toParsedIterator(lines);
-        iteratorWithIgnore = toParsedIterator(linesWithIgnore);
-        getUnparsedIteratorWithSpaces = toUnparsedIterator(linesWithSpaces);
-        unparsedIterator = toUnparsedIterator(lines);
-        unparsedIteratorWithIgnore = toUnparsedIterator(linesWithIgnore);
-        unparsedLinesWithEnum = toUnparsedIterator(linesWithEnum);
-        unparsedLinesForConstructorArgs = toUnparsedIterator(linesForConstructorArgs);
-        final StringBuilder sb = new StringBuilder();
-        for (String line : lines) {
-            sb.append(line).append("\n");
-        }
-        reader = new StringReader(sb.toString());
-    }
-
-    private Iterator<String> toUnparsedIterator(final String[] lines) {
-        return new Iterator<String>() {
-            int counter = 0;
-            @Override
-            public boolean hasNext() {
-                return counter < lines.length;
-            }
-
-            @Override
-            public String next() {
-                if (!hasNext())
-                    throw new NoSuchElementException();
-                final String line = lines[counter];
-                counter++;
-                return line;
-            }
-        };
-    }
-
-    private Iterator<String[]> toParsedIterator(final String[] lines) {
-        return new Iterator<String[]>() {
-            int counter = 0;
-            @Override
-            public boolean hasNext() {
-                return counter < lines.length;
-            }
-
-            @Override
-            public String[] next() {
-                if (!hasNext())
-                    throw new NoSuchElementException();
-                try {
-                    final String[] line = parser.parseLine(lines[counter]);
-                    counter++;
-                    return line;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        };
-    }
-
-    private static ByteBuffer newDecimal(final String value) {
-        return ByteBuffer.wrap(new BigDecimal(value).unscaledValue().toByteArray());
-    }
-
 
 }

@@ -16,6 +16,7 @@
 
 package com.github.kahalemakai.opencsv.beans;
 
+import com.github.kahalemakai.opencsv.DataContainer;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
 import com.github.kahalemakai.opencsv.beans.processing.DecoderManager;
 import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
@@ -23,13 +24,9 @@ import com.github.kahalemakai.opencsv.beans.processing.decoders.IntDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.IntToBooleanDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
 import com.github.kahalemakai.opencsv.examples.*;
-import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
 import lombok.val;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.Iterator;
@@ -40,27 +37,7 @@ import static com.github.kahalemakai.opencsv.examples.PersonWithGender.Gender.MA
 import static com.github.kahalemakai.opencsv.examples.PersonWithGender.Gender.UNKNOWN;
 import static org.junit.Assert.assertEquals;
 
-public class CsvToBeanMapperImplTest {
-    Builder<Person> builder;
-    CSVParser parser;
-    String[] linesWithIgnore;
-    String[] lines;
-    String[] linesWithOptionals;
-    String[] linesWithSpaces;
-    String[] linesWithSpacesAndNewline;
-    Person picard;
-    BigPerson PICARD;
-    Person drObvious;
-    BigPerson DROBVIOUS;
-    Iterator<String[]> iterator;
-    Iterator<String[]> iteratorWithOptionals;
-    Iterator<String> unparsedIteratorWithSpaces;
-    Iterator<String> unparsedIteratorWithSpacesAndNewline;
-    Iterator<String[]> iteratorWithIgnore;
-    Iterator<String> unparsedIterator;
-    Iterator<String> unparsedIteratorWithIgnore;
-    InputStream is;
-    Reader reader;
+public class CsvToBeanMapperImplTest extends DataContainer {
 
     @Test
     public void testBooleanField() throws Exception {
@@ -243,6 +220,20 @@ public class CsvToBeanMapperImplTest {
         picardWithGender.setSurName("Mr. Picard");
         picardWithGender.setGender(MALE);
         assertEquals(picardWithGender, it.next());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldMappingThrows() throws Exception {
+        builder.registerDecoder("age", IntDecoder.class)
+                .registerDecoder("surName", (data) -> ResultWrapper.of("Mr. "+data))
+                .setHeader("a1", "a2", "a3", "a4")
+                .mapField("age", "a1")
+                .mapField("givenName", "a2")
+                .mapField("surName", "a3")
+                .mapField("address", "a5")
+                .withParsedLines(() -> iterator)
+                .skipLines(1)
+                .build();
     }
 
     @Test
@@ -470,126 +461,6 @@ public class CsvToBeanMapperImplTest {
     @Test(expected = IllegalStateException.class)
     public void testBuildThrows() throws Exception {
         builder.build();
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        builder = CsvToBeanMapper
-                .builder(Person.class)
-                .quoteChar('\'')
-                .nonStrictQuotes();
-
-        parser = new CSVParserBuilder()
-                .withEscapeChar('\\')
-                .withIgnoreLeadingWhiteSpace(true)
-                .withQuoteChar('\'')
-                .withSeparator(',')
-                .withStrictQuotes(false)
-                .build();
-        lines = new String[] {
-                "age,givenName,surName,address",
-                "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise'",
-                "null,Dr.,Obvious,Somewhere"
-        };
-
-        linesWithOptionals = new String[] {
-                "age,givenName,surName,address,(drink,favoriteNumber:null)",
-                "50,Jean-Luc,Picard,'Captain\\'s room, Enterprise',black coffee",
-                "null,Dr.,Obvious,Somewhere"
-        };
-        linesWithSpaces = new String[] {
-                "    50 ,Jean-Luc,   Picard, 'Captain\\'s room, Enterprise' ",
-                " null   ,Dr. ,  Obvious  , Somewhere "
-        };
-        linesWithSpacesAndNewline = new String[] {
-                "    50 ,Jean-Luc,   Picard, 'Captain\\'s room,",
-                " Enterprise'",
-                " null   ,Dr. ,  Obvious  , Somewhere "
-        };
-        linesWithIgnore = new String[] {
-                "X,X,50,X,Jean-Luc,Picard,'Captain\\'s room, Enterprise',X,X,X,X",
-                "X,X,33,X,Dr.,Obvious,Somewhere,X,X,X,X"
-        };
-        picard = new Person();
-        picard.setAge(50);
-        picard.setGivenName("Jean-Luc");
-        picard.setSurName("Picard");
-        picard.setAddress("Captain's room, Enterprise");
-
-        PICARD = new BigPerson();
-        PICARD.setAge(50);
-        PICARD.setGivenName("Jean-Luc");
-        PICARD.setSurName("Picard");
-        PICARD.setAddress("Captain's room, Enterprise");
-
-        drObvious = new Person();
-        drObvious.setAge(null);
-        drObvious.setGivenName("Dr.");
-        drObvious.setSurName("Obvious");
-        drObvious.setAddress("Somewhere");
-
-        DROBVIOUS = new BigPerson();
-        DROBVIOUS.setAge(null);
-        DROBVIOUS.setGivenName("Dr.");
-        DROBVIOUS.setSurName("Obvious");
-        DROBVIOUS.setAddress("Somewhere");
-
-        iterator = toParsedIterator(lines);
-        iteratorWithOptionals = toParsedIterator(linesWithOptionals);
-        unparsedIteratorWithSpaces = toUnparsedIterator(linesWithSpaces);
-        unparsedIteratorWithSpacesAndNewline = toUnparsedIterator(linesWithSpacesAndNewline);
-        iteratorWithIgnore = toParsedIterator(linesWithIgnore);
-        unparsedIterator = toUnparsedIterator(lines);
-        unparsedIteratorWithIgnore = toUnparsedIterator(linesWithIgnore);
-        final StringBuilder sb = new StringBuilder();
-        for (String line : lines) {
-            sb.append(line).append("\n");
-        }
-        reader = new StringReader(sb.toString());
-        is = new ByteArrayInputStream(sb.toString().getBytes());
-    }
-
-    private Iterator<String> toUnparsedIterator(final String[] lines) {
-        return new Iterator<String>() {
-            int counter = 0;
-            @Override
-            public boolean hasNext() {
-                return counter < lines.length;
-            }
-
-            @Override
-            public String next() {
-                if (!hasNext())
-                    throw new NoSuchElementException();
-                final String line = lines[counter];
-                counter++;
-                return line;
-            }
-        };
-    }
-
-    private Iterator<String[]> toParsedIterator(final String[] lines) {
-        return new Iterator<String[]>() {
-            int counter = 0;
-            @Override
-            public boolean hasNext() {
-                return counter < lines.length;
-            }
-
-            @Override
-            public String[] next() {
-                if (!hasNext())
-                    throw new NoSuchElementException();
-                try {
-                    final String[] line = parser.parseLine(lines[counter]);
-                    counter++;
-                    return line;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        };
     }
 
 }
