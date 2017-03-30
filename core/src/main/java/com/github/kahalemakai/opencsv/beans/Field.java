@@ -5,7 +5,7 @@ import lombok.experimental.Accessors;
 
 @EqualsAndHashCode
 @ToString
-@RequiredArgsConstructor(access = AccessLevel.PROTECTED, staticName = "of")
+@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @Accessors(fluent = true)
 public class Field implements Column {
 
@@ -36,4 +36,9 @@ public class Field implements Column {
     public String defaultValue() {
         return reference.defaultValue();
     }
+
+    public static Field of(final String name, final CsvColumn reference) {
+        return new Field(name, reference);
+    }
+
 }

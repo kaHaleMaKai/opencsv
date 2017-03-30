@@ -26,5 +26,19 @@ public class Person {
     private String givenName;
     private String surName;
     private String address;
+
+    public <T extends Person> T as(final Class<? extends T> newClass) {
+        T to;
+        try {
+            to = newClass.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+        to.setAge(this.getAge());
+        to.setGivenName(this.getGivenName());
+        to.setSurName(this.getSurName());
+        to.setAddress(this.getAddress());
+        return to;
+    }
 }
 

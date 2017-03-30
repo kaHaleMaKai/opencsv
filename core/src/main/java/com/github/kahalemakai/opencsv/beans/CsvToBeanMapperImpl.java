@@ -60,7 +60,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final DecoderManager decoderManager;
     private final Iterable<String[]> source;
     private final Map<String, MethodHandle> setterMethods;
-    private final Map<String, BiConsumer<T, ?>> adderMethods;
+    private final Map<String, BiConsumer<T, Object>> adderMethods;
     private final Map<String, MethodHandle> getterMethods;
     private final Sink sink;
     private final Map<String, Object> columnData;
@@ -292,9 +292,11 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             final Object value = entry.getValue();
             setRefData(bean, column, value);
         }
-//        for (val listCol : listMapping.keySet()) {
-//            processListMapping(bean, listCol, line);
-//        }
+        for (val entry : strategy.getListFields().entrySet()) {
+            val field = entry.getKey();
+            val mappedColumns = entry.getValue();
+            processListMapping(bean, field, mappedColumns, line);
+        }
         return bean;
     }
 
@@ -348,8 +350,8 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
 
     }
 
-    private Object decode(final String text, final String column) {
-        val decoderChain = decoderManager.get(column);
+    private Object decode(final String text, final String columnName) {
+        val decoderChain = decoderManager.get(columnName);
         if (null != decoderChain) {
             return decoderChain.decode(text);
         }
@@ -368,13 +370,24 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         }
     }
 
-    private void processListMapping(final T bean, final Field column, final String[] line) {
-        for (Column mappedColumn : strategy.getListMapping().get(column)) {
-            val index = mappedColumn.index();
+    private void processListMapping(final T bean, final Field field, final List<Column> cols, final String[] line) {
+        for (int i = 0; i < cols.size(); ++i) {
+            val col = cols.get(i);
+            val index = col.index();
             val text = line[index];
-            // TODO finish this method
+            BiConsumer<T, Object> adder;
+            val fieldName = field.name();
+            try {
+                adder = getAdder(bean, fieldName);
+            } catch (IllegalAccessException | NoSuchFieldException | NoSuchMethodException e) {
+                val msg = "don't know how to add to list field " + field.name();
+                log.error(msg, e);
+                throw new CsvToBeanException(msg, e);
+            }
+            val decoderName = fieldName + "$" + i ;
+            val obj = decode(text, decoderName);
+            adder.accept(bean, obj);
         }
-
     }
 
     /**
@@ -444,14 +457,14 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      * @throws NoSuchMethodException if no setter method is defined
      * @throws NoSuchFieldException if the field corresponding to the column ought be looked up, but does not exist
      */
-    private BiConsumer<T, ?> getAdder(final T bean, final String column)
+    private BiConsumer<T, Object> getAdder(final T bean, final String column)
             throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
         // cache it! reflection has to be used only for the first line
         if (!this.adderMethods.containsKey(column)) {
             val getter = getGetter(bean, column, List.class);
-            final BiConsumer<T, ?> adder = (t, el) -> {
+            final BiConsumer<T, Object> adder = (t, el) -> {
                 try {
-                    ((List<Object>) getter.invokeExact(t)).add(el);
+                    ((List<Object>) getter.invoke(t)).add(el);
                 } catch (Throwable e) {
                     final String msg = "cannot get field " + column + " of type <List>";
                     log.error(msg, e);
@@ -515,8 +528,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             log.error(msg);
             throw new IllegalAccessException(msg);
         }
-        return String.format("get%s%s",
-                column.substring(0, 1).toUpperCase(), column.substring(1));
+        return "get" + toTitleCase(column);
     }
 
     /**
@@ -533,8 +545,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
             log.error(msg);
             throw new IllegalAccessException(msg);
         }
-        return String.format("set%s%s",
-                column.substring(0, 1).toUpperCase(), column.substring(1));
+        return "set" + toTitleCase(column);
     }
 
     private String processingErrorMsg(final ColumnMapping<?> mapper,
@@ -567,6 +578,14 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     @Override
     protected PropertyEditor getPropertyEditor(PropertyDescriptor desc) throws InstantiationException, IllegalAccessException {
         return null;
+    }
+
+    private static String toTitleCase(final String s) {
+        // s.length() >= 1 holds due to invocation
+        if (s.length() == 1) {
+            return s.toUpperCase();
+        }
+        return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
 
     /**

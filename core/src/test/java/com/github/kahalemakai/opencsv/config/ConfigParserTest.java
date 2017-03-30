@@ -502,7 +502,6 @@ public class ConfigParserTest extends DataContainer {
         assertEquals(eDrObvious, it.next());
     }
 
-
     @Test
     public void testTrim() throws Exception {
         final InputStream resource = ConfigParserTest

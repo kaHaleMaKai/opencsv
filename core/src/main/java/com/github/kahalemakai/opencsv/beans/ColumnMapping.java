@@ -64,40 +64,38 @@ public class ColumnMapping<T> extends HeaderColumnNameMappingStrategy<T> {
 
     private final Map<String, String> columnRefs;
 
-    private final Map<String, String> fieldMappaing;
-    
-    @Getter(AccessLevel.PACKAGE)
-    private final List<Column> columnsForIteration;
+    private final Map<String, String> fieldMapping;
+    private final Map<String, List<String>> listMapping;
 
     @Getter(AccessLevel.PACKAGE)
-    private final List<Field> fields;
+    private final List<Column> columnsForIteration;
     @Getter(AccessLevel.PACKAGE)
-    private final Map<Field, List<Column>> listMapping;
+    private final Map<Field, List<Column>> listFields;
 
     private ColumnMapping() {
         this.columnRefs = new HashMap<>();
         this.columnsForIteration = new ArrayList<>();
-        this.fields = new ArrayList<>();
         this.listMapping = new HashMap<>();
-        this.fieldMappaing = new HashMap<>();
+        this.fieldMapping = new HashMap<>();
+        this.listFields = new HashMap<>();
     }
 
     /**
      * Calculate the columns that are either directly mapped to csv columns, or
      * reference another column.
      */
-    public void setupColumnMapping() {
+    void setupColumnMapping() {
         if (!columnsForIteration.isEmpty()) {
             return;
         }
         final List<CsvColumn> columnsToParse = getColumnsToParse();
-        if (fieldMappaing.isEmpty()) {
+        if (fieldMapping.isEmpty()) {
             this.columnsForIteration.addAll(columnsToParse);
         }
         else {
             val lookup = new HashMap<String, CsvColumn>();
             columnsToParse.forEach(c -> lookup.put(c.name(), c));
-            fieldMappaing.forEach((k, v) -> {
+            fieldMapping.forEach((k, v) -> {
                 val col = lookup.get(v);
                 if (col == null) {
                     val msg = "column is not defined in input csv: " + v;
@@ -108,33 +106,63 @@ public class ColumnMapping<T> extends HeaderColumnNameMappingStrategy<T> {
                 this.columnsForIteration.add(field);
             });
         }
-        // might be necessary to use lookup instead of idxLookup
-        final Map<String, Integer> idxLookup = new HashMap<>();
+        // might be necessary to use lookup from above
+        val lookup = new HashMap<String, Column>();
         for (CsvColumn col : columnsToParse) {
-            idxLookup.put(col.name(), col.index());
+            lookup.put(col.name(), col);
         }
-        for (Map.Entry<String, String> entry : this.columnRefs.entrySet()) {
+        for (val entry : this.columnRefs.entrySet()) {
             val to = entry.getKey();
             val from = entry.getValue();
-            final Integer idx = idxLookup.get(from);
-            if (idx == null) {
+            val column = lookup.get(from);
+            if (column == null) {
                 final String msg = String.format("column %s is not defined, but referenced from column %s", to, from);
+                log.error(msg);
                 throw new IllegalStateException(msg);
             }
-            columnsForIteration.add(CsvColumn.mandatory(to, idx));
+            columnsForIteration.add(CsvColumn.mandatory(to, column.index()));
+        }
+        if (!this.listMapping.isEmpty()) {
+            for (val entry: listMapping.entrySet()) {
+                val fieldName = entry.getKey();
+                val columnNames = entry.getValue();
+                if (columnNames.isEmpty()) {
+                    continue;
+                }
+                val metaField = MetaField.of(fieldName);
+                val mappedColumns = new ArrayList<Column>();
+                for (val columnName : columnNames) {
+                    val col = lookup.get(columnName);
+                    if (col == null) {
+                        val msg = "column is not defined in input csv: " + columnName;
+                        log.error(msg);
+                        throw new IllegalStateException(msg);
+                    }
+                    mappedColumns.add(col);
+                }
+                this.listFields.put(metaField, Collections.unmodifiableList(mappedColumns));
+            }
         }
     }
 
     public ColumnMapping<T> setColumnRefs(final Map<String, String> columnRefs) {
         this.columnRefs.putAll(columnRefs);
+        this.columnRefs.putAll(columnRefs);
         return this;
     }
     
     public ColumnMapping<T> setFieldMapping(final Map<String, String> fieldMapping) {
-        this.fieldMappaing.putAll(fieldMapping);
+        this.fieldMapping.clear();
+        this.fieldMapping.putAll(fieldMapping);
         return this;
     }
 
+    public ColumnMapping<T> setListMapping(final Map<String, List<String>> listMapping) {
+        this.listMapping.clear();
+        this.listMapping.putAll(listMapping);
+        return this;
+    }
+    
     /**
      * Set the csv column header.
      * @param headerLine the csv column header

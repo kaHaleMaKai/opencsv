@@ -27,6 +27,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 /**
  * Build a mapper that converts csvs into java beans.
@@ -90,6 +91,8 @@ public class Builder<T> {
             DEFAULT_CHAR_SET = Charset.defaultCharset();
         }
     }
+
+    private static final Pattern BRACKET_PATTERN = Pattern.compile("^[^\\[\\]]+\\[[a-zA-Z0-9][a-zA-Z0-9_]*\\]$");
 
     /* ********************************
      * members with chainable setters
@@ -263,6 +266,9 @@ public class Builder<T> {
     @Getter(AccessLevel.PACKAGE)
     private final Map<String, String> fieldMappings;
 
+    @Getter(AccessLevel.PACKAGE)
+    private final Map<String, List<String>> listMapping;
+
     /**
      * The {@link Sink} that consumes the iterator of beans.
      * @return the {@link Sink} that consumes the iterator of beans
@@ -307,6 +313,7 @@ public class Builder<T> {
         this.columnRefs = new HashMap<>();
         this.columnData = new HashMap<>();
         this.fieldMappings = new HashMap<>();
+        this.listMapping = new HashMap<>();
         this.header = new ArrayList<>();
         this.strategy = ColumnMapping.of(type);
         log.debug(String.format("setup CsvToBeanMapper for type <%s>", type.getCanonicalName()));
@@ -341,6 +348,7 @@ public class Builder<T> {
         this.defaultValueStringData.forEach(this.decoderManager::decodeAndSetDefaultValue);
         this.strategy.setColumnRefs(columnRefs);
         this.strategy.setFieldMapping(this.fieldMappings);
+        this.strategy.setListMapping(this.listMapping);
         if (!isHeaderDefined() && source != null) {
             if (!source.iterator().hasNext()) {
                 final String msg = "the iterable's iterator is empty, thus no column headers can be retrieved from it";
@@ -464,8 +472,9 @@ public class Builder<T> {
     public Builder<T> registerDecoder(final String column,
                                       final Supplier<? extends Decoder<?>> decoder,
                                       @NonNull final String label) {
-        log.debug(String.format("registering decoder '%s' for column '%s'", label, column));
-        decoderManager.add(column, decoder, label);
+        val columnName = parseDecoderColumn(column);
+        log.debug(String.format("registering decoder '%s' for column '%s'", label, columnName));
+        decoderManager.add(columnName, decoder, label);
         return this;
     }
 
@@ -480,8 +489,9 @@ public class Builder<T> {
      */
     public Builder<T> registerDecoder(String column, Class<? extends Decoder<?>> decoderClass)
             throws InstantiationException {
-        log.debug(String.format("registering decoder of class <%s> for column '%s'", decoderClass.getCanonicalName(), column));
-        decoderManager.add(column, decoderClass);
+        val columnName = parseDecoderColumn(column);
+        log.debug(String.format("registering decoder of class <%s> for column '%s'", decoderClass.getCanonicalName(), columnName));
+        decoderManager.add(columnName, decoderClass);
         return this;
     }
 
@@ -495,8 +505,9 @@ public class Builder<T> {
      */
     public Builder<T> registerDecoder(final String column,
                                       final Decoder<?> decoder) {
-        log.debug(String.format("registering decoder for column '%s'", column));
-        decoderManager.add(column, decoder);
+        val columnName = parseDecoderColumn(column);
+        log.debug(String.format("registering decoder for column '%s'", columnName));
+        decoderManager.add(columnName, decoder);
         return this;
     }
 
@@ -510,8 +521,9 @@ public class Builder<T> {
      * @return the {@code Builder} instance
      */
     public <R> Builder<T> registerPostProcessor(String column, PostProcessor<R> postProcessor) {
-        log.debug(String.format("registering postprocessor for column '%s'", column));
-        decoderManager.addPostProcessor(column, postProcessor);
+        val columnName = parseDecoderColumn(column);
+        log.debug(String.format("registering postprocessor for column '%s'", columnName));
+        decoderManager.addPostProcessor(columnName, postProcessor);
         return this;
     }
 
@@ -530,8 +542,9 @@ public class Builder<T> {
     public <R> Builder<T> registerPostProcessor(final String column,
                                                 final Supplier<? extends PostProcessor<R>> postProcessor,
                                                 @NonNull final String label) {
-        log.debug(String.format("registering postprocessor '%s' for column '%s'", label, column));
-        decoderManager.addPostProcessor(column, postProcessor, label);
+        val columnName = parseDecoderColumn(column);
+        log.debug(String.format("registering postprocessor '%s' for column '%s'", label, columnName));
+        decoderManager.addPostProcessor(columnName, postProcessor, label);
         return this;
     }
 
@@ -547,8 +560,9 @@ public class Builder<T> {
      */
     public <R> Builder<T> registerPostProcessor(String column, Class<? extends PostProcessor<R>> postProcessorClass)
             throws InstantiationException {
-        log.debug(String.format("registering postprocessor of class <%s> for column '%s'", postProcessorClass, column));
-        decoderManager.addPostProcessor(column, postProcessorClass);
+        val columnName = parseDecoderColumn(column);
+        log.debug(String.format("registering postprocessor of class <%s> for column '%s'", postProcessorClass, columnName));
+        decoderManager.addPostProcessor(columnName, postProcessorClass);
         return this;
     }
 
@@ -562,8 +576,9 @@ public class Builder<T> {
      * @return the {@code Builder} instance
      */
     public <R> Builder<T> registerPostValidator(String column, PostValidator<R> postValidator) {
-        log.debug(String.format("registering postvalidator for column '%s'", column));
-        decoderManager.addPostValidator(column, postValidator);
+        val columnName = parseDecoderColumn(column);
+        log.debug(String.format("registering postvalidator for column '%s'", columnName));
+        decoderManager.addPostValidator(columnName, postValidator);
         return this;
     }
 
@@ -579,8 +594,9 @@ public class Builder<T> {
     public Builder<T> registerPostValidator(final String column,
                                             final Supplier<? extends PostValidator<?>> postValidator,
                                             @NonNull final String label) {
-        log.debug(String.format("registering postvalidator '%s' for column '%s'", label, column));
-        decoderManager.addPostValidator(column, postValidator, label);
+        val columnName = parseDecoderColumn(column);
+        log.debug(String.format("registering postvalidator '%s' for column '%s'", label, columnName));
+        decoderManager.addPostValidator(columnName, postValidator, label);
         return this;
     }
 
@@ -595,8 +611,9 @@ public class Builder<T> {
      */
     public Builder<T> registerPostValidator(String column, Class<? extends PostValidator<?>> postValidatorClass)
             throws InstantiationException {
-        log.debug(String.format("registering postvalidator of class <%s> for column '%s'", postValidatorClass, column));
-        decoderManager.addPostValidator(column, postValidatorClass);
+        val columnName = parseDecoderColumn(column);
+        log.debug(String.format("registering postvalidator of class <%s> for column '%s'", postValidatorClass, columnName));
+        decoderManager.addPostValidator(columnName, postValidatorClass);
         return this;
     }
 
@@ -833,6 +850,11 @@ public class Builder<T> {
         return this;
     }
 
+    public Builder<T> mapListField(final String field, final String...columns) {
+        this.listMapping.put(field, Arrays.asList(columns));
+        return this;
+    }
+
     private boolean columnHasDefaultValue(final String column) {
         return this.defaultValues.containsKey(column)
                 || this.defaultValueStringData.containsKey(column);
@@ -910,6 +932,18 @@ public class Builder<T> {
      */
     private boolean isHeaderDefined() {
         return !header.isEmpty();
+    }
+
+    private String parseDecoderColumn(final @NonNull String name) {
+        log.debug("parseDecoderColumn: "+name);
+        if (BRACKET_PATTERN.matcher(name).matches()) {
+            val n = name
+                    .replace("[", "$")
+                    .replace("]", "");
+            log.debug("parseDecoderColumn -> "+n);
+            return n;
+        }
+        return name;
     }
 
     ExceptionalAction<IOException> finalizer() {

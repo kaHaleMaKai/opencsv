@@ -3,10 +3,7 @@ package com.github.kahalemakai.opencsv;
 import com.github.kahalemakai.opencsv.beans.Builder;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
-import com.github.kahalemakai.opencsv.examples.BigPerson;
-import com.github.kahalemakai.opencsv.examples.EnlargedPerson;
-import com.github.kahalemakai.opencsv.examples.EnumWrapper;
-import com.github.kahalemakai.opencsv.examples.Person;
+import com.github.kahalemakai.opencsv.examples.*;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import org.junit.Before;
@@ -26,6 +23,8 @@ public class DataContainer {
     protected EnlargedPerson eDrObvious;
     protected EnlargedPerson ePicard;
     protected EnumWrapper enumWrapper;
+    protected PersonWithStringList picardWithList;
+    protected PersonWithIntList picardWithIntList;
     protected InputStream is;
     protected Iterator<String> getUnparsedIteratorWithSpaces;
     protected Iterator<String> unparsedIterator;
@@ -184,6 +183,15 @@ public class DataContainer {
 
         ePicard = EnlargedPerson.of(picard);
         eDrObvious = EnlargedPerson.of(drObvious);
+
+        picardWithList = picard.as(PersonWithStringList.class);
+        picardWithList.getList().add(picard.getAddress());
+        picardWithList.getList().add(picard.getGivenName());
+
+        picardWithIntList = picard.as(PersonWithIntList.class);
+        picardWithIntList.getList().add(picard.getAge());
+        picardWithIntList.getList().add(picard.getAge() + 10);
+
 
         enumWrapper = new EnumWrapper();
         enumWrapper.setQuotingMode(QuotingMode.NON_STRICT_QUOTES);
