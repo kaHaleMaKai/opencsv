@@ -26,9 +26,9 @@ import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.EnumDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullChoicesDecoder;
 import com.github.kahalemakai.opencsv.beans.processing.decoders.NullDecoder;
-import lombok.NonNull;
+import lombok.*;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -97,6 +97,11 @@ public class ConfigParser {
      * The default null string.
      */
     public static final String DEFAULT_NULL_STRING = "null";
+
+    /**
+     * The default type for fields (as String).
+     */
+    public static final String DEFAULT_TYPE = "String";
 
     /**
      * The default global null string.
@@ -595,33 +600,60 @@ public class ConfigParser {
      * @throws InstantiationException if decoder/... cannot be instantiated, or column ref data cannot be decoded
      * @throws IllegalAccessException if decoder/... default constructor is inaccessible
      */
-    private <T> void configureFields(final Node config, Builder<T> builder) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+    private <T> void configureFields(final Node config,
+                                     final Builder<T> builder)
+            throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        configureFields(config, builder, ParentTransferer.EMPTY);
+    }
+
+    /**
+     * Configure the {@code bean:field} xml objects.
+     * @param config the parent {@code bean:config} node
+     * @param builder the {@code Builder} instance
+     * @param parent transfer object representing a bean:list tag
+     * @param <T> type of bean to be eventually emitted
+     * @throws ClassNotFoundException if class of decoders/... cannot be found
+     * @throws InstantiationException if decoder/... cannot be instantiated, or column ref data cannot be decoded
+     * @throws IllegalAccessException if decoder/... default constructor is inaccessible
+     */
+    private <T> void configureFields(final Node config,
+                                     final Builder<T> builder,
+                                     final ParentTransferer parent) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         final NodeList fields = config.getChildNodes();
+        int listIndex = 0;
         for (int i = 0; i < fields.getLength(); ++i) {
             final Node field = fields.item(i);
             final String fieldNs = field.getNamespaceURI();
-            if (field.getNodeType() != ELEMENT_NODE)
+            if (field.getNodeType() != ELEMENT_NODE) {
                 continue;
-            // presence of "name" attribute is enforced by xsd
-            val column = getAttributeValue(field, "name").get();
+            }
+            val column = getAttributeValue(field, "name");
+            if ("list".equals(field.getLocalName())) {
+                val type = getAttributeValue(field, "type").orElse(DEFAULT_TYPE);
+                val columnName = column.get();
+                configureFields(field, builder, ParentTransferer.withType(columnName, type));
+                continue;
+            }
+            // attribute enforced by xsd for bean:field tags
+            val columnName = column.orElse(parent.columnName(listIndex++));
             final Optional<String> nullFallsThrough = getAttributeValue(field, "nullFallsThrough");
             if (nullFallsThrough.isPresent()) {
                 switch (NullFallsThroughType.forText(nullFallsThrough.get())) {
                     case BOTH:
-                        builder.setNullFallthroughForPostProcessors(column);
-                        builder.setNullFallthroughForPostValidators(column);
+                        builder.setNullFallthroughForPostProcessors(columnName);
+                        builder.setNullFallthroughForPostValidators(columnName);
                         break;
                     case POST_PROCESSOR:
-                        builder.setNullFallthroughForPostProcessors(column);
+                        builder.setNullFallthroughForPostProcessors(columnName);
                         break;
                     case POST_VALIDATOR:
-                        builder.setNullFallthroughForPostValidators(column);
+                        builder.setNullFallthroughForPostValidators(columnName);
                         break;
                 }
             }
             final Optional<String> trim = getAttributeValue(field, "trim");
             final boolean doTrim = Boolean.valueOf(trim.orElse(globalTrimmingMode));
-            builder.trim(column, doTrim);
+            builder.trim(columnName, doTrim);
 
             final NodeList processors = field.getChildNodes();
             final SortedSet<String> nullValues = new TreeSet<>();
@@ -648,20 +680,20 @@ public class ConfigParser {
                 if (nullValues.size() == 1) {
                     final String nullString = nullValues.first();
                     builder.registerDecoder(
-                            column,
+                            columnName,
                             () -> new NullDecoder(nullString),
                             String.format("%s#%s", NullDecoder.class.getCanonicalName(), nullString));
                 }
                 else {
                     builder.registerDecoder(
-                            column,
+                            columnName,
                             () -> new NullChoicesDecoder(nullValues),
                             String.format("%s#%s", NullChoicesDecoder.class.getCanonicalName(), nullValues));
                 }
             }
-            final Optional<String> type = getAttributeValue(field, "type");
-            if (type.isPresent() && !type.get().equals("String")) {
-                defineType(builder, column, fieldNs, type.get());
+            final String type = getAttributeValue(field, "type").orElse(parent.type());
+            if (!DEFAULT_TYPE.equals(type)) {
+                defineType(builder, columnName, fieldNs, type);
             }
             final Optional<String> ref = getAttributeValue(field, "ref");
             if (ref.isPresent()) {
@@ -671,13 +703,13 @@ public class ConfigParser {
                     String data = refData.get();
                     switch (refType) {
                         case "column":
-                            builder.setColumnRef(data, column);
+                            builder.setColumnRef(data, columnName);
                             break;
                         case "value":
                             Object decodedRefData = data;
-                            if (type.isPresent() && !type.get().equals("String")) {
+                            if (!DEFAULT_TYPE.equals(type)) {
                                 final String decoderType = String.format("%s%sDecoder",
-                                        type.get().substring(0, 1).toUpperCase(), type.get().substring(1));
+                                        type.substring(0, 1).toUpperCase(), type.substring(1));
                                 final Class<? extends Decoder<?>> decoderClass =
                                         getProcessorClass(decoderType, fieldNs, BEAN_DECODER);
                                 final Decoder<?> decoder = decoderClass.newInstance();
@@ -692,7 +724,7 @@ public class ConfigParser {
                                     throw new InstantiationError(msg);
                                 }
                             }
-                            builder.setColumnValue(column, decodedRefData);
+                            builder.setColumnValue(columnName, decodedRefData);
                             break;
                     }
                 }
@@ -700,20 +732,25 @@ public class ConfigParser {
             }
             else {
                 val csvColumn = getAttributeValue(field, "csvColumn");
-                builder.mapField(column, csvColumn.orElse(column));
+                if (parent != ParentTransferer.EMPTY) {
+                    builder.mapColumnToList(parent.name(), csvColumn.get());
+                }
+                else {
+                    builder.mapField(columnName, csvColumn.orElse(columnName));
+                }
             }
 
-            final boolean anyDecoder = registerDecoders(builder, column, processors);
+            final boolean anyDecoder = registerDecoders(builder, columnName, processors);
             // if isNullable, then a null decoder has been registered
             // but the null decoder only decodes null-valued Strings to null.
             // if no additional decoder has been registered, we have to assume the
             // target type to be string and thus add the identity decoder t -> t
             if (isNullable && !anyDecoder) {
-                builder.registerDecoder(column, Decoder.IDENTITY);
+                builder.registerDecoder(columnName, Decoder.IDENTITY);
             }
 
             final Optional<String> defaultValue = getAttributeValue(field, "default");
-            defaultValue.ifPresent(s -> builder.defaultValueFromString(column, s));
+            defaultValue.ifPresent(s -> builder.defaultValueFromString(columnName, s));
         }
     }
 
@@ -1288,6 +1325,34 @@ public class ConfigParser {
                                       @NonNull final File inputFile)
             throws FileNotFoundException {
         return new ConfigParser(xmlFile, null, null, null, new FileInputStream(inputFile));
+    }
+
+    @Accessors(fluent = true)
+    @Getter
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    private static class ParentTransferer {
+        public static final ParentTransferer EMPTY;
+        static {
+            EMPTY = new ParentTransferer("", "String");
+        }
+        private final String name;
+        private final String type;
+
+        public String columnName(int index) {
+            return name() + "$" + index;
+        }
+
+        public String columnName(@NonNull String key) {
+            return name() + "$" + key;
+        }
+
+        public static ParentTransferer withoutType(@NonNull final String name) {
+            return new ParentTransferer(name, DEFAULT_TYPE);
+        }
+
+        public static ParentTransferer withType(@NonNull final String name, @NonNull final String type) {
+            return new ParentTransferer(name, type);
+        }
     }
 
 }

@@ -64,12 +64,12 @@
 
     <xs:complexType name="List">
         <xs:sequence minOccurs="0" maxOccurs="unbounded">
-            <xs:element name="field" type="bean:Field" />
+            <xs:element name="element" type="bean:BaseField" />
         </xs:sequence>
         <xs:attributeGroup ref="bean:ListAttributes" />
     </xs:complexType>
 
-    <xs:complexType name="Field">
+    <xs:complexType name="BaseField">
       <xs:sequence minOccurs="0">
         <xs:sequence minOccurs="0" maxOccurs="unbounded">
             <xs:element name="null" type="bean:NullChoices" minOccurs="0" maxOccurs="unbounded" />
@@ -83,7 +83,15 @@
         </xs:choice>
        </xs:sequence>
 
-        <xs:attributeGroup ref="bean:FieldAttributes" />
+        <xs:attributeGroup ref="bean:BaseFieldAttributes" />
+    </xs:complexType>
+
+    <xs:complexType name="Field">
+        <xs:complexContent>
+            <xs:extension base="bean:BaseField">
+                <xs:attributeGroup ref="bean:FieldAttributes" />
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 
     <xs:complexType name="ProcessorContainer">
@@ -147,17 +155,21 @@
         <xs:attribute name="trim" type="xs:boolean" use="optional" />
     </xs:attributeGroup>
 
-    <xs:attributeGroup name="FieldAttributes">
-        <xs:attribute name="name" type="xs:string" use="required" />
+    <xs:attributeGroup name="BaseFieldAttributes">
         <xs:attribute name="ref" type="bean:ColumnDataSource" use="optional" />
         <xs:attribute name="refData" type="xs:string" use="optional" />
-        <xs:attribute name="type" type="bean:ParameterType" use="optional" default="String" />
+        <xs:attribute name="type" type="bean:ParameterType" use="optional" />
         <xs:attribute name="nullFallsThrough" type="bean:NullFallsThrough" />
         <xs:attribute name="nullString" type="xs:string" use="optional" />
         <xs:attribute name="nullable" type="xs:boolean" use="optional" />
         <xs:attribute name="trim" type="xs:boolean" use="optional" />
         <xs:attribute name="default" type="xs:string" use="optional" />
         <xs:attribute name="csvColumn" type="xs:string" use="optional" />
+    </xs:attributeGroup>
+
+    <xs:attributeGroup name="FieldAttributes">
+        <xs:attributeGroup ref="bean:BaseFieldAttributes" />
+        <xs:attribute name="name" type="xs:string" use="required" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="ListAttributes">

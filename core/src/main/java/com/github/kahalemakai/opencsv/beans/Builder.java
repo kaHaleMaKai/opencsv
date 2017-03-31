@@ -850,10 +850,19 @@ public class Builder<T> {
         return this;
     }
 
-    public Builder<T> mapListField(final String field, final String...columns) {
+    public Builder<T> mapColumnsToList(final String field, final String...columns) {
         this.listMapping.put(field, Arrays.asList(columns));
         return this;
     }
+
+    public Builder<T> mapColumnToList(final String field, final String column) {
+        if (!this.listMapping.containsKey(field)) {
+            this.listMapping.put(field, new ArrayList<>());
+        }
+        this.listMapping.get(field).add(column);
+        return this;
+    }
+
 
     private boolean columnHasDefaultValue(final String column) {
         return this.defaultValues.containsKey(column)

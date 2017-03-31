@@ -467,7 +467,7 @@ public class CsvToBeanMapperImplTest extends DataContainer {
     public void testListMappingWithInt() throws Exception {
         val builder = CsvToBeanMapper
                 .builder(PersonWithIntList.class)
-                .mapListField("list", "age", "age")
+                .mapColumnsToList("list", "age", "age")
                 .quoteChar('\'')
                 .nonStrictQuotes()
                 .withParsedLines(() -> iterator)
@@ -484,7 +484,22 @@ public class CsvToBeanMapperImplTest extends DataContainer {
     public void testListMapping() throws Exception {
         val builder = CsvToBeanMapper
                 .builder(PersonWithStringList.class)
-                .mapListField("list", "address", "givenName")
+                .mapColumnsToList("list", "address", "givenName")
+                .quoteChar('\'')
+                .nonStrictQuotes()
+                .withParsedLines(() -> iterator)
+                .registerDecoder("age", IntDecoder.class)
+                .build();
+        val it = builder.iterator();
+        assertEquals(picardWithList, it.next());
+    }
+
+    @Test
+    public void testListMappingOneByOne() throws Exception {
+        val builder = CsvToBeanMapper
+                .builder(PersonWithStringList.class)
+                .mapColumnToList("list", "address")
+                .mapColumnToList("list", "givenName")
                 .quoteChar('\'')
                 .nonStrictQuotes()
                 .withParsedLines(() -> iterator)

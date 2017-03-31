@@ -364,6 +364,26 @@ public class ConfigParserTest extends DataContainer {
     }
 
     @Test
+    public void testListMapping() throws Exception {
+        picard.setAge(8000);
+        drObvious.setAge(8000);
+        picard.setGivenName(picard.getSurName());
+        drObvious.setGivenName(drObvious.getSurName());
+        ConfigParser configParser;
+        CsvToBeanMapper<PersonWithIntList> mapper;
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-list.xml");
+        assert resource != null;
+        configParser = ConfigParser.ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
+        mapper = configParser.parse();
+        val it = mapper.iterator();
+        val p1 = picardWithIntList;
+        assertEquals(p1, it.next());
+    }
+
+    @Test
     public void testFieldMapping() throws Exception {
         picard.setAge(8000);
         drObvious.setAge(8000);

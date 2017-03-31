@@ -89,11 +89,14 @@ public class ColumnMapping<T> extends HeaderColumnNameMappingStrategy<T> {
             return;
         }
         final List<CsvColumn> columnsToParse = getColumnsToParse();
+        Map<String, CsvColumn> lookup = new HashMap<>();
         if (fieldMapping.isEmpty()) {
             this.columnsForIteration.addAll(columnsToParse);
+            for (CsvColumn col : columnsToParse) {
+                lookup.put(col.name(), col);
+            }
         }
         else {
-            val lookup = new HashMap<String, CsvColumn>();
             columnsToParse.forEach(c -> lookup.put(c.name(), c));
             fieldMapping.forEach((k, v) -> {
                 val col = lookup.get(v);
@@ -107,10 +110,6 @@ public class ColumnMapping<T> extends HeaderColumnNameMappingStrategy<T> {
             });
         }
         // might be necessary to use lookup from above
-        val lookup = new HashMap<String, Column>();
-        for (CsvColumn col : columnsToParse) {
-            lookup.put(col.name(), col);
-        }
         for (val entry : this.columnRefs.entrySet()) {
             val to = entry.getKey();
             val from = entry.getValue();
@@ -154,6 +153,14 @@ public class ColumnMapping<T> extends HeaderColumnNameMappingStrategy<T> {
     public ColumnMapping<T> setFieldMapping(final Map<String, String> fieldMapping) {
         this.fieldMapping.clear();
         this.fieldMapping.putAll(fieldMapping);
+        return this;
+    }
+
+    public ColumnMapping<T> mapToList(final String listField, final String columnName) {
+        if (!listMapping.containsKey(listField)) {
+            listMapping.put(listField, new ArrayList<>());
+        }
+        listMapping.get(listField).add(columnName);
         return this;
     }
 
