@@ -35,7 +35,7 @@ public class CsvToBeanException extends RuntimeException {
      * @param message the error message
      * @param cause the re-thrown cause
      */
-    CsvToBeanException(String message, Throwable cause) {
+    public CsvToBeanException(String message, Throwable cause) {
         super(message, cause);
         lastException = cause;
     }
@@ -44,7 +44,7 @@ public class CsvToBeanException extends RuntimeException {
      * Create a new {@code CsvToBeanException}.
      * @param cause the re-thrown cause
      */
-    CsvToBeanException(Throwable cause) {
+    public CsvToBeanException(Throwable cause) {
         super(cause);
         lastException = cause;
     }

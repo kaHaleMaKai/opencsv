@@ -28,10 +28,7 @@ import lombok.val;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import static com.github.kahalemakai.opencsv.examples.PersonWithGender.Gender.MALE;
 import static com.github.kahalemakai.opencsv.examples.PersonWithGender.Gender.UNKNOWN;
@@ -505,8 +502,26 @@ public class CsvToBeanMapperImplTest extends DataContainer {
                 .withParsedLines(() -> iterator)
                 .registerDecoder("age", IntDecoder.class)
                 .build();
-        val it = builder.iterator();
-        assertEquals(picardWithList, it.next());
+        val result = builder.iterator().next();
+        assertEquals(picardWithList, result);
+        assertEquals(ArrayList.class, result.getList().getClass());
+    }
+
+    @Test
+    public void testListInitialization() throws Exception {
+        val builder = CsvToBeanMapper
+                .builder(PersonWithStringList.class)
+                .listType("list", LinkedList.class)
+                .mapColumnToList("list", "address")
+                .mapColumnToList("list", "givenName")
+                .quoteChar('\'')
+                .nonStrictQuotes()
+                .withParsedLines(() -> iterator)
+                .registerDecoder("age", IntDecoder.class)
+                .build();
+        val result = builder.iterator().next();
+        assertEquals(picardWithList, result);
+        assertEquals(LinkedList.class, result.getList().getClass());
     }
 
 }

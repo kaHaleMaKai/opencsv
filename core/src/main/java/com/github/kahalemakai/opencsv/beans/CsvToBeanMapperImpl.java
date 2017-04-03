@@ -64,6 +64,9 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
     private final Map<String, MethodHandle> getterMethods;
     private final Sink sink;
     private final Map<String, Object> columnData;
+    private final Map<String, Class<? extends List>> listTypes;
+    @Getter(AccessLevel.PRIVATE)
+    private final boolean listTypesGiven;
     private final ExceptionalAction<IOException> finalizer;
 
     @Getter(AccessLevel.PRIVATE) @Setter
@@ -107,6 +110,8 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         this.sink = builder.sink();
         this.columnData = builder.getColumnData();
         this.finalizer = builder.finalizer();
+        this.listTypes = builder.getListTypes();
+        this.listTypesGiven = !builder.getListTypes().isEmpty();
         this.multiLine = builder.multiLine();
         this.source = defineSource(builder.source(), builder.getReader(), builder.getLineIterator());
         log.debug("new CsvToBeanMapper instance built:\n{}", this);
@@ -265,6 +270,19 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
         return strategy.isHeaderDefined();
     }
 
+    private T initBean() throws Throwable {
+        val bean = getType().newInstance();
+        if (isListTypesGiven()) {
+            for (val entry : listTypes.entrySet()) {
+                val field = entry.getKey();
+                val type = entry.getValue();
+                val setter = getSetter(bean, field);
+                setter.invoke(bean, type.newInstance());
+            }
+        }
+        return bean;
+    }
+
     /**
      * Decode a parsed line into a bean.
      * <p>
@@ -278,8 +296,8 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
                             final String[] line) {
         T bean = null;
         try {
-            bean = mapper.createBean();
-        } catch (InstantiationException | IllegalAccessException e) {
+            bean = initBean();
+        } catch (Throwable e) {
             final String msg = "could not create new bean";
             log.error(msg);
             throw new CsvToBeanException(msg, e);
@@ -401,10 +419,11 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      * @throws NoSuchFieldException if the field corresponding to the column ought be looked up, but does not exist
      */
     private MethodHandle getSetter(final T bean, final String column, final PropertyDescriptor prop)
-            throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
+            throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException, IntrospectionException {
         // cache it! reflection has to be used only for the first line
         if (!this.setterMethods.containsKey(column)) {
-            Method setter = prop == null ? null : prop.getWriteMethod();
+            val propDesc = prop == null ? strategy.findDescriptor(column) : prop;
+            Method setter = propDesc.getWriteMethod();
             // only keep this in order to deal with chained setters
             // (prop editor doesn't retrieve them)
             if (setter == null) {
@@ -444,7 +463,7 @@ class CsvToBeanMapperImpl<T> extends AbstractCSVToBean implements CsvToBeanMappe
      * @throws NoSuchFieldException if the field corresponding to the column ought be looked up, but does not exist
      */
     private MethodHandle getSetter(final T bean, final String column)
-            throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
+            throws IllegalAccessException, NoSuchMethodException, NoSuchFieldException, IntrospectionException {
         return getSetter(bean, column, null);
     }
 

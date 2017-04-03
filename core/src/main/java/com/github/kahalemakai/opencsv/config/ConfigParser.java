@@ -17,6 +17,7 @@
 package com.github.kahalemakai.opencsv.config;
 
 import com.github.kahalemakai.opencsv.beans.Builder;
+import com.github.kahalemakai.opencsv.beans.CsvToBeanException;
 import com.github.kahalemakai.opencsv.beans.CsvToBeanMapper;
 import com.github.kahalemakai.opencsv.beans.QuotingMode;
 import com.github.kahalemakai.opencsv.beans.processing.Decoder;
@@ -629,9 +630,22 @@ public class ConfigParser {
             }
             val column = getAttributeValue(field, "name");
             if ("list".equals(field.getLocalName())) {
-                val type = getAttributeValue(field, "type").orElse(DEFAULT_TYPE);
                 val columnName = column.get();
-                configureFields(field, builder, ParentTransferer.withType(columnName, type));
+                val type = getAttributeValue(field, "type");
+                if (type.isPresent()) {
+                    Class<? extends List> listType;
+                    try {
+                        listType = (Class<? extends List>) Class.forName(type.get());
+                    } catch (Throwable e) {
+                        val msg = String.format("cannot determine correct class for list column %s and type %s",
+                                columnName, type.get());
+                        log.error(msg, e);
+                        throw new CsvToBeanException(msg, e);
+                    }
+                    builder.listType(columnName, listType);
+                }
+                val elementType = getAttributeValue(field, "elementType").orElse(DEFAULT_TYPE);
+                configureFields(field, builder, ParentTransferer.withType(columnName, elementType));
                 continue;
             }
             // attribute enforced by xsd for bean:field tags

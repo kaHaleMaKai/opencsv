@@ -192,7 +192,6 @@ public class DataContainer {
         picardWithIntList.getList().add(picard.getAge());
         picardWithIntList.getList().add(picard.getAge() + 10);
 
-
         enumWrapper = new EnumWrapper();
         enumWrapper.setQuotingMode(QuotingMode.NON_STRICT_QUOTES);
 

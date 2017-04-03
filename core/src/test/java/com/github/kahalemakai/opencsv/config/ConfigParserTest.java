@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertEquals;
@@ -365,10 +366,6 @@ public class ConfigParserTest extends DataContainer {
 
     @Test
     public void testListMapping() throws Exception {
-        picard.setAge(8000);
-        drObvious.setAge(8000);
-        picard.setGivenName(picard.getSurName());
-        drObvious.setGivenName(drObvious.getSurName());
         ConfigParser configParser;
         CsvToBeanMapper<PersonWithIntList> mapper;
         final URL resource = ConfigParserTest
@@ -381,6 +378,26 @@ public class ConfigParserTest extends DataContainer {
         val it = mapper.iterator();
         val p1 = picardWithIntList;
         assertEquals(p1, it.next());
+    }
+
+    @Test
+    public void testUninitializedListMapping() throws Exception {
+        ConfigParser configParser;
+        CsvToBeanMapper<PersonWithUninitializedIntList> mapper;
+        final URL resource = ConfigParserTest
+                .class
+                .getClassLoader()
+                .getResource("xml-config/config-with-uninitialized-list.xml");
+        assert resource != null;
+        configParser = ConfigParser.ofUnparsedLines(new File(resource.getFile()), () -> unparsedIteratorWithIgnore);
+        mapper = configParser.parse();
+        val result = mapper.iterator().next();
+        val p1 = picard.as(PersonWithUninitializedIntList.class);
+        p1.setList(new LinkedList<>());
+        p1.getList().add(picard.getAge());
+        p1.getList().add(picard.getAge() + 10);
+        assertEquals(p1, result);
+        assertEquals(LinkedList.class, result.getList().getClass());
     }
 
     @Test

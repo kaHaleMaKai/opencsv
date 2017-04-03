@@ -269,6 +269,9 @@ public class Builder<T> {
     @Getter(AccessLevel.PACKAGE)
     private final Map<String, List<String>> listMapping;
 
+    @Getter(AccessLevel.PACKAGE)
+    private final Map<String, Class<? extends List>> listTypes;
+
     /**
      * The {@link Sink} that consumes the iterator of beans.
      * @return the {@link Sink} that consumes the iterator of beans
@@ -314,6 +317,7 @@ public class Builder<T> {
         this.columnData = new HashMap<>();
         this.fieldMappings = new HashMap<>();
         this.listMapping = new HashMap<>();
+        this.listTypes = new HashMap<>();
         this.header = new ArrayList<>();
         this.strategy = ColumnMapping.of(type);
         log.debug(String.format("setup CsvToBeanMapper for type <%s>", type.getCanonicalName()));
@@ -863,6 +867,10 @@ public class Builder<T> {
         return this;
     }
 
+    public Builder<T> listType(final String listField, final Class<? extends List> type) {
+        this.listTypes.put(listField, type);
+        return this;
+    }
 
     private boolean columnHasDefaultValue(final String column) {
         return this.defaultValues.containsKey(column)

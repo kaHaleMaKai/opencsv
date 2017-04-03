@@ -31,7 +31,7 @@
         <csv:ignore count="4" />
     </opencsv:reader>
 
-    <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.PersonWithIntList">
+    <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.PersonWithUninitializedIntList">
         <bean:field name="age" nullable="true" type="int" nullString="null">
             <bean:null value="n/a" />
         </bean:field>
@@ -41,7 +41,7 @@
             <bean:null value="xxxx" />
             <bean:null value="NULL" />
         </bean:field>
-        <bean:list name="list" elementType="int">
+        <bean:list name="list" elementType="int" type="java.util.LinkedList">
             <bean:element csvColumn="age" nullable="true" />
             <bean:element csvColumn="age" nullable="true">
                 <bean:postProcessor type="com.github.kahalemakai.opencsv.examples.IncrementBy10" />

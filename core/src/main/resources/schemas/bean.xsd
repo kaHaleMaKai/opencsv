@@ -130,6 +130,13 @@
             <xs:enumeration value="String" />
         </xs:restriction>
     </xs:simpleType>
+
+    <xs:simpleType name="ListType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="java.util.ArrayList" />
+            <xs:enumeration value="java.util.LinkedList" />
+        </xs:restriction>
+    </xs:simpleType>
     
     <xs:complexType name="Config">
         <xs:sequence maxOccurs="unbounded">
@@ -175,7 +182,8 @@
     <xs:attributeGroup name="ListAttributes">
         <xs:attribute name="name" type="xs:string" use="required" />
         <xs:attribute name="initializeAs" type="xs:string" use="optional" />
-        <xs:attribute name="type" type="bean:ParameterType" use="optional" default="String" />
+        <xs:attribute name="type" type="bean:ListType" use="optional" />
+        <xs:attribute name="elementType" type="bean:ParameterType" use="optional" default="String" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="ProcessorAttributes">
