@@ -54,11 +54,12 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
      * @param key the String key
      * @param value the target Enumeration
      */
-    public final void put(final String key, final String value) {
+    public final EnumDecoder<E> put(final String key, final String value) {
         if (!enumMapping.containsKey(value)) {
             throw new IllegalArgumentException(String.format("cannot map value '%s' to enum constant of enum class %s", value, getClass().getCanonicalName()));
         }
         mapping.put(key, enumMapping.get(value));
+        return this;
     }
 
     private E getEnumConstant(final String key) {
@@ -74,7 +75,7 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
      * @throws UnsupportedOperationException if called twice
      * @param newType target type of enumeration
      */
-    public final void setType(final Class<? extends E> newType) throws UnsupportedOperationException {
+    public final EnumDecoder<E> setType(final Class<? extends E> newType) throws UnsupportedOperationException {
         synchronized (this) {
             if (this.type != null) {
                 throw new UnsupportedOperationException("type has already been set");
@@ -84,6 +85,7 @@ public class EnumDecoder<E extends Enum<E>> implements Decoder<E> {
         for (E e : newType.getEnumConstants()) {
             enumMapping.put(e.name(), e);
         }
+        return this;
     }
 
 }
