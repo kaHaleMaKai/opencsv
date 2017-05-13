@@ -13,10 +13,12 @@ public class EnumDecoderTest {
     @Before
     public void setUp() throws Exception {
         decoder = new EnumDecoder<>();
-        decoder.setType(QuotingMode.class);
-        decoder.put("s", "STRICT_QUOTES");
-        decoder.put("n", "NON_STRICT_QUOTES");
-        decoder.put("i", "IGNORE_QUOTES");
+        decoder.setType(QuotingMode.class)
+                .put("s", "STRICT_QUOTES")
+                .put("n", "NON_STRICT_QUOTES")
+                .put("i", "IGNORE_QUOTES")
+                .put("", "STRICT_QUOTES")
+                .put("ignore", "IGNORE_QUOTES");
     }
 
     public void testDecodeThrows() throws Exception {
@@ -28,5 +30,6 @@ public class EnumDecoderTest {
         assertEquals(STRICT_QUOTES, decoder.decode("s").get());
         assertEquals(NON_STRICT_QUOTES, decoder.decode("n").get());
         assertEquals(IGNORE_QUOTES, decoder.decode("i").get());
+        assertEquals(IGNORE_QUOTES, decoder.decode("ignore").get());
     }
 }
