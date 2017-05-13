@@ -125,6 +125,11 @@ public class ConfigParser {
     public static final String CSV_IGNORE = "ignore";
 
     /**
+     * The namespaced optional column element name.
+     */
+    public static final String CSV_OPTIONAL_COLUMN = "optional";
+
+    /**
      * The namespaced decoder element name.
      */
     public static final String BEAN_DECODER = "decoder";
@@ -1068,11 +1073,11 @@ public class ConfigParser {
                 final String localName = item.getLocalName();
                 final String ns = item.getNamespaceURI();
                 if (CSV_NAMESPACE.equals(ns)) {
-                    if (CSV_COLUMN.equals(localName)) {
+                    final boolean columnIsOptional = localName.equals(CSV_OPTIONAL_COLUMN);
+                    if (CSV_COLUMN.equals(localName) || columnIsOptional) {
                         String columnName = getAttributeValue(item, "name").get();
-                        final boolean columnIsOptional = Boolean.valueOf(getAttributeValue(item, "optional").get());
-                        final Optional<String> defaultValue = getAttributeValue(item, "defaultValue");
-                        if (columnIsOptional || defaultValue.isPresent()) {
+                        if (columnIsOptional) {
+                            final Optional<String> defaultValue = getAttributeValue(item, "defaultValue");
                             if (!foundOpeningParenthesis) {
                                 columnName = "(" + columnName;
                                 foundOpeningParenthesis = true;

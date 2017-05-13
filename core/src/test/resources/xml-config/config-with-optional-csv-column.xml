@@ -26,8 +26,8 @@
         <csv:column name="givenName" />
         <csv:column name="surName" />
         <csv:column name="address" />
-        <csv:column name="drink" optional="true" />
-        <csv:column name="favoriteNumber" defaultValue="NULL" />
+        <csv:optional name="drink" />
+        <csv:optional name="favoriteNumber" defaultValue="NULL" />
     </opencsv:reader>
 
     <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.EnlargedPerson" trim="true">

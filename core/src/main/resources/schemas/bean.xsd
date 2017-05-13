@@ -89,7 +89,7 @@
     <xs:complexType name="Field">
         <xs:complexContent>
             <xs:extension base="bean:BaseField">
-                <xs:attributeGroup ref="bean:FieldAttributes" />
+                <xs:attribute name="name" type="xs:string" use="required" />
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
@@ -172,11 +172,6 @@
         <xs:attribute name="trim" type="xs:boolean" use="optional" />
         <xs:attribute name="default" type="xs:string" use="optional" />
         <xs:attribute name="csvColumn" type="xs:string" use="optional" />
-    </xs:attributeGroup>
-
-    <xs:attributeGroup name="FieldAttributes">
-        <xs:attributeGroup ref="bean:BaseFieldAttributes" />
-        <xs:attribute name="name" type="xs:string" use="required" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="ListAttributes">

@@ -68,6 +68,34 @@
         </xs:union>
     </xs:simpleType>
 
+    <xs:complexType name="Column">
+        <xs:attributeGroup ref="csv:ColumnAttributes" />
+    </xs:complexType>
+
+    <xs:complexType name="OptionalColumn">
+        <xs:complexContent>
+            <xs:extension base="csv:Column">
+                <xs:attributeGroup ref="csv:OptionalColumnAttributes" />
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="Ignore">
+        <xs:attributeGroup ref="csv:IgnoreAttributes" />
+    </xs:complexType>
+
+    <xs:complexType name="Reader">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:choice minOccurs="1" maxOccurs="unbounded">
+                <xs:element name="column" type="csv:Column" />
+                <xs:element name="ignore" type="csv:Ignore" />
+            </xs:choice>
+            <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="optional" type="csv:OptionalColumn" />
+            </xs:sequence>
+        </xs:sequence>
+        <xs:attributeGroup ref="csv:ReaderAttributes" />
+    </xs:complexType>
     <!--attribute definitions-->
 
     <xs:attributeGroup name="ReaderAttributes">
@@ -84,7 +112,9 @@
 
     <xs:attributeGroup name="ColumnAttributes">
         <xs:attribute name="name" type="xs:string" use="required" />
-        <xs:attribute name="optional" type="xs:boolean" use="optional" default="false" />
+    </xs:attributeGroup>
+
+    <xs:attributeGroup name="OptionalColumnAttributes">
         <xs:attribute name="defaultValue" type="xs:string" use="optional" />
     </xs:attributeGroup>
 
@@ -94,23 +124,5 @@
 
     <!--element definitions-->
 
-        <xs:complexType name="Reader">
-            <xs:choice minOccurs="1" maxOccurs="unbounded">
-
-                <xs:element name="column">
-                    <xs:complexType>
-                        <xs:attributeGroup ref="csv:ColumnAttributes" />
-                    </xs:complexType>
-                </xs:element>
-
-                <xs:element name="ignore">
-                    <xs:complexType>
-                        <xs:attributeGroup ref="csv:IgnoreAttributes" />
-                    </xs:complexType>
-                </xs:element>
-
-            </xs:choice>
-            <xs:attributeGroup ref="csv:ReaderAttributes" />
-        </xs:complexType>
 
 </xs:schema>
