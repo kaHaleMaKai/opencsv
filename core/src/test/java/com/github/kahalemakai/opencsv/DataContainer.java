@@ -147,7 +147,8 @@ public class DataContainer {
                 "1,pas de valoir,23",
                 "11,no,123.456",
                 "-498,null,123456.123456",
-                ",yes,12"
+                ",yes,12",
+                "99,,13"
         };
 
         linesWithEnum = new String[] {"n", "x"};

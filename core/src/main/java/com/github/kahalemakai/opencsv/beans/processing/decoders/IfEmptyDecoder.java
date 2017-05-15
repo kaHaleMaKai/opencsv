@@ -1,12 +1,21 @@
 package com.github.kahalemakai.opencsv.beans.processing.decoders;
 
-public class IfEmptyDecoder<T> extends UntypedIfEmptyDecoder<T> {
+import com.github.kahalemakai.opencsv.beans.processing.DataDecodingException;
+import com.github.kahalemakai.opencsv.beans.processing.Decoder;
+import com.github.kahalemakai.opencsv.beans.processing.ResultWrapper;
+import lombok.RequiredArgsConstructor;
 
-    private final Class<? extends T> type;
+@RequiredArgsConstructor
+public class IfEmptyDecoder<T> implements Decoder<T> {
 
-    public IfEmptyDecoder(final Class<? extends T> type, final T elseValue) {
-        super(elseValue);
-        this.type = type;
+    private final T elseValue;
+
+    @Override
+    public ResultWrapper<? extends T> decode(String value) throws DataDecodingException {
+        if (value != null && value.length() == 0) {
+            return success(elseValue);
+        }
+        return decodingFailed();
     }
 
 }

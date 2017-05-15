@@ -33,14 +33,16 @@
         <bean:arg value="this is null!!!" type="String" />
       </bean:decoder>
       <bean:decoder type="IfEmptyDecoder">
-        <bean:arg value="Integer" type="Class" />
-        <bean:arg value="${test:elseValue}" type="int" generic="true" />
+        <bean:arg value="${test:intElseValue}" type="int" generic="true" />
       </bean:decoder>
     </bean:field>
     <bean:field name="flag">
       <bean:decoder type="NullChoicesDecoder">
         <bean:arg value="null" type="String" />
         <bean:arg value="pas de valoir" type="String" />
+      </bean:decoder>
+      <bean:decoder type="IfEmptyDecoder">
+        <bean:arg value="${test:booleanElseValue}" type="boolean" generic="true" />
       </bean:decoder>
       <bean:decoder type="BooleanDecoder">
         <bean:arg value="yes" type="String" />
