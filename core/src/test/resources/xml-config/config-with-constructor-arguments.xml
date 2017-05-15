@@ -29,28 +29,28 @@
 
   <opencsv:beanConfig class="com.github.kahalemakai.opencsv.examples.DecoderArgsTester">
     <bean:field name="number" type="int">
-      <bean:decoder type="NullDecoder">
+      <bean:decoder type="Null">
         <bean:arg value="this is null!!!" type="String" />
       </bean:decoder>
-      <bean:decoder type="IfEmptyDecoder">
+      <bean:decoder type="IfEmpty">
         <bean:arg value="${test:intElseValue}" type="int" generic="true" />
       </bean:decoder>
     </bean:field>
     <bean:field name="flag">
-      <bean:decoder type="NullChoicesDecoder">
+      <bean:decoder type="NullChoices">
         <bean:arg value="null" type="String" />
         <bean:arg value="pas de valoir" type="String" />
       </bean:decoder>
-      <bean:decoder type="IfEmptyDecoder">
+      <bean:decoder type="IfEmpty">
         <bean:arg value="${test:booleanElseValue}" type="boolean" generic="true" />
       </bean:decoder>
-      <bean:decoder type="BooleanDecoder">
+      <bean:decoder type="boolean">
         <bean:arg value="yes" type="String" />
         <bean:arg value="no" type="String" />
       </bean:decoder>
     </bean:field>
     <bean:field name="decimal">
-      <bean:decoder type="DecimalDecoder">
+      <bean:decoder type="decimal">
         <bean:arg value="12" type="int" name="precision" />
         <bean:arg value="6" type="int" name="scale" />
       </bean:decoder>

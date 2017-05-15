@@ -1090,21 +1090,52 @@ public class ConfigParser {
                     break;
             }
         }
-        Class<T> processorClass;
-        try {
-            processorClass = (Class<T>) Class.forName(className);
-        } catch (ClassNotFoundException e) {
-            final String qName = String.format("%s.%s.%s", DEFAULT_PROCESSING_PACKAGE, subPackage, className);
+        val firstChar = className.substring(0, 1);
+        val classNames = new ArrayList<String>();
+        classNames.add(className);
+        if (!firstChar.toUpperCase().equals(firstChar)) {
+            classNames.add(firstChar.toUpperCase() + className.substring(1));
+        }
+        ClassNotFoundException ex = null;
+        for (val cls : classNames) {
             try {
-                processorClass = (Class<T>) Class.forName(qName);
+                return resolveProcessorClass(cls, subPackage);
+            }
+            catch (ClassNotFoundException e) {
+                if (ex == null) {
+                    ex = e;
+                }
+                else {
+                    ex.addSuppressed(e);
+                }
+                if (!className.toLowerCase().endsWith("Decoder")) {
+                    try {
+                        return resolveProcessorClass(cls + "Decoder", subPackage);
+                    } catch (ClassNotFoundException e1) {
+                        ex.addSuppressed(e1);
+                    }
+                }
+            }
+        }
+        assert ex != null;
+        throw ex;
+    }
+
+    static <T> Class<T> resolveProcessorClass(final String className, final String subPackage) throws ClassNotFoundException {
+        try {
+            return (Class<T>) Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            val qName = String.format("%s.%s.%s", DEFAULT_PROCESSING_PACKAGE, subPackage, className);
+            try {
+                return (Class<T>) Class.forName(qName);
             } catch (ClassNotFoundException e1) {
-                final String msg = String.format("neither found class '%s', nor '%s'", className, qName);
-                log.error(msg, e);
+                val msg = String.format("neither found class '%s', nor '%s'", className, qName);
+                e.addSuppressed(e1);
                 throw new ClassNotFoundException(msg, e);
             }
         }
-        return processorClass;
     }
+
 
     /**
      * Parse out the header information.
