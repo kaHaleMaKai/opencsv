@@ -1065,7 +1065,19 @@ public class ConfigParser {
      * Retrieve the class of the desired processor.
      * <p>
      * The class is looked up first as an absolute name, and if not found,
-     * it will be searched for in the appropriate opencsv packages.
+     * it will be searched for in the appropriate opencsv packages. The name
+     * may be given in a simplified form, it may start with a lower-case letter
+     * instead of upper-case, and a "Decoder"-suffix may be omitted. On resolving,
+     * all possible combinations are checked against.
+     * <p>
+     * Exmaple: the decoder name {@code boolean} will be matched against
+     * <ul>
+     *     <li>{@code boolean}</li>
+     *     <li>{@code booleanDecoder}</li>
+     *     <li>{@code Boolean}</li>
+     *     <li>{@code BooleanDecoder}</li>
+     * </ul>
+     * both as an absolute name and in the appropriate opencsv package.
      * @param className name of processor class as found in the xml config file
      * @param processorType type of processor (decoder/postProcessor/postValidator)
      * @param <T> type of corresponding bean field
