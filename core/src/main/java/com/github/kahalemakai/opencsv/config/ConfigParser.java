@@ -1102,16 +1102,33 @@ public class ConfigParser {
                     break;
             }
         }
-        val firstChar = className.substring(0, 1);
+        val isAbsolute = !className.contains(".");
+        String packageName, onlyClassName;
+        if (isAbsolute) {
+            packageName = "";
+            onlyClassName = className;
+        }
+        else {
+            val splits = className.split("\\.");
+            val sb = new StringBuilder();
+            for (int i = 0; i < splits.length - 1; ++i) {
+                sb.append(splits[i]);
+                sb.append(".");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            packageName = sb.toString();
+            onlyClassName = splits[splits.length - 1];
+        }
+        val firstChar = onlyClassName.substring(0, 1);
         val classNames = new ArrayList<String>();
-        classNames.add(className);
+        classNames.add(onlyClassName);
         if (!firstChar.toUpperCase().equals(firstChar)) {
-            classNames.add(firstChar.toUpperCase() + className.substring(1));
+            classNames.add(firstChar.toUpperCase() + onlyClassName.substring(1));
         }
         ClassNotFoundException ex = null;
         for (val cls : classNames) {
             try {
-                return resolveProcessorClass(cls, subPackage);
+                return resolveProcessorClass(cls, packageName, subPackage);
             }
             catch (ClassNotFoundException e) {
                 if (ex == null) {
@@ -1120,9 +1137,9 @@ public class ConfigParser {
                 else {
                     ex.addSuppressed(e);
                 }
-                if (!className.toLowerCase().endsWith("Decoder")) {
+                if (!className.endsWith("Decoder")) {
                     try {
-                        return resolveProcessorClass(cls + "Decoder", subPackage);
+                        return resolveProcessorClass(cls + "Decoder", packageName, subPackage);
                     } catch (ClassNotFoundException e1) {
                         ex.addSuppressed(e1);
                     }
@@ -1133,21 +1150,17 @@ public class ConfigParser {
         throw ex;
     }
 
-    static <T> Class<T> resolveProcessorClass(final String className, final String subPackage) throws ClassNotFoundException {
+    static <T> Class<T> resolveProcessorClass(final String className, final String packageName, final String subPackage) throws ClassNotFoundException {
+        val qName = packageName.length() != 0
+                ? packageName + "." + className
+                : String.format("%s.%s.%s", DEFAULT_PROCESSING_PACKAGE, subPackage, className);
         try {
-            return (Class<T>) Class.forName(className);
+            return (Class<T>) Class.forName(qName);
         } catch (ClassNotFoundException e) {
-            val qName = String.format("%s.%s.%s", DEFAULT_PROCESSING_PACKAGE, subPackage, className);
-            try {
-                return (Class<T>) Class.forName(qName);
-            } catch (ClassNotFoundException e1) {
-                val msg = String.format("neither found class '%s', nor '%s'", className, qName);
-                e.addSuppressed(e1);
-                throw new ClassNotFoundException(msg, e);
-            }
+            val msg = "could not find class " + qName;
+            throw new ClassNotFoundException(msg ,e);
         }
     }
-
 
     /**
      * Parse out the header information.

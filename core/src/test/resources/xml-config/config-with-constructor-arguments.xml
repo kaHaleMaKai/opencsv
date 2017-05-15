@@ -32,7 +32,8 @@
       <bean:decoder type="Null">
         <bean:arg value="this is null!!!" type="String" />
       </bean:decoder>
-      <bean:decoder type="IfEmpty">
+      <bean:decoder type="com.github.kahalemakai.opencsv.examples.typedIfEmpty">
+          <bean:arg value="Integer.class" type="Class" />
         <bean:arg value="${test:intElseValue}" type="int" generic="true" />
       </bean:decoder>
     </bean:field>
