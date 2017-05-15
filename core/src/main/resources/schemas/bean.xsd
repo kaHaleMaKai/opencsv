@@ -128,6 +128,7 @@
             <xs:enumeration value="float" />
             <xs:enumeration value="double" />
             <xs:enumeration value="String" />
+            <xs:enumeration value="Class" />
         </xs:restriction>
     </xs:simpleType>
 
@@ -148,6 +149,19 @@
 
         <xs:attributeGroup ref="bean:BeanAttributes" />
     </xs:complexType>
+    
+    <xs:simpleType name="Namespace">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="java.lang" />
+            <xs:enumeration value="java.util" />
+            <xs:enumeration value="git.github.kahalemakai.opencsv" />
+            <xs:enumeration value="git.github.kahalemakai.opencsv.beans" />
+            <xs:enumeration value="git.github.kahalemakai.opencsv.beans.processing" />
+            <xs:enumeration value="git.github.kahalemakai.opencsv.beans.processing.decoders" />
+            <xs:enumeration value="git.github.kahalemakai.opencsv.beans.processing.postprocessors" />
+            <xs:enumeration value="git.github.kahalemakai.opencsv.beans.processing.postvalidators" />
+        </xs:restriction>
+    </xs:simpleType>
 
     <!--attribute definitions-->
 
@@ -160,6 +174,7 @@
         <xs:attribute name="class" use="required" />
         <xs:attribute name="nullString" use="optional" />
         <xs:attribute name="trim" type="xs:boolean" use="optional" />
+        <xs:attribute name="defaultNamespace" type="bean:Namespace" use="optional" default="java.lang" />
     </xs:attributeGroup>
 
     <xs:attributeGroup name="BaseFieldAttributes">
@@ -188,8 +203,8 @@
   <xs:attributeGroup name="ArgumentAttributes">
       <xs:attribute name="value" type="xs:string" use="required" />
       <xs:attribute name="type" type="bean:ParameterType" use="required" />
+      <xs:attribute name="generic" type="xs:boolean" use="optional" default="false" />
       <xs:attribute name="name" type="xs:string" use="optional" />
   </xs:attributeGroup>
-
 
 </xs:schema>

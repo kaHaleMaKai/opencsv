@@ -175,6 +175,16 @@ public class ConfigParser {
     public static final String DEFAULT_PROCESSING_PACKAGE = "com.github.kahalemakai.opencsv.beans.processing";
 
     /**
+     * The bean config root element.
+     */
+    public static final String BEAN_CONFIG = "beanConfig";
+
+    /**
+     * The bean config default namespace attribute.
+     */
+    public static final String BEAN_CONFIG_DEFAULT_NAMESPACE = "defaultNamespace";
+
+    /**
      * List of all registered plugins.
      */
     private static final ServiceLoader<SinkPlugin> registeredSinkPlugins = ServiceLoader.load(SinkPlugin.class);
@@ -189,6 +199,7 @@ public class ConfigParser {
     private final InputStream inputStream;
     private final ParameterMap parameters;
     private final Map<String, NodeList> defs;
+    private volatile String defaultNamespace = "java.lang";
 
     /**
      * Setup the {@code ConfigParser} with the state defined in the calling class.
@@ -482,9 +493,10 @@ public class ConfigParser {
         final Optional<String> quotingBehaviour = getAttributeValue(reader, "quotingBehaviour");
         final Optional<String> charset = getAttributeValue(reader, "charset");
 
-        final Node config = doc.getElementsByTagNameNS(OPENCSV_NAMESPACE, "beanConfig").item(0);
+        final Node config = doc.getElementsByTagNameNS(OPENCSV_NAMESPACE, BEAN_CONFIG).item(0);
         final Optional<String> className = getAttributeValue(config, "class");
         final Optional<String> nullString = getAttributeValue(config, "nullString");
+        this.defaultNamespace = getAttributeValue(config, BEAN_CONFIG_DEFAULT_NAMESPACE).get();
         this.globalNullString = nullString.orElse(DEFAULT_NULL_STRING);
         final Optional<String> globalTrimming = getAttributeValue(config, "trim");
         globalTrimming.ifPresent(s -> this.globalTrimmingMode = s);
@@ -876,6 +888,7 @@ public class ConfigParser {
             // presence enforced by xsd schema
             final String value = getAttributeValue(arg, "value").get();
             final String type = getAttributeValue(arg, "type").get();
+            final boolean isGeneric = Boolean.valueOf(getAttributeValue(arg, "generic").get());
             final Optional<String> name = getAttributeValue(arg, "name");
             try {
                 sb.append(type);
@@ -883,34 +896,42 @@ public class ConfigParser {
                 sb.append(value);
                 sb.append(',');
                 sb.append(' ');
+                if (isGeneric) {
+                    constructorArgumentTypes.add(Object.class);
+                }
                 switch (type) {
                     case "int":
-                        constructorArgumentTypes.add(int.class);
+                        if (!isGeneric) constructorArgumentTypes.add(int.class);
                         constructorArgumentValues.add(Integer.valueOf(value));
                         break;
                     case "short":
-                        constructorArgumentTypes.add(short.class);
+                        if (!isGeneric) constructorArgumentTypes.add(short.class);
                         constructorArgumentValues.add(Short.valueOf(value));
                         break;
                     case "long":
-                        constructorArgumentTypes.add(long.class);
+                        if (!isGeneric) constructorArgumentTypes.add(long.class);
                         constructorArgumentValues.add(Long.valueOf(value));
                         break;
                     case "float":
-                        constructorArgumentTypes.add(float.class);
+                        if (!isGeneric) constructorArgumentTypes.add(float.class);
                         constructorArgumentValues.add(Float.valueOf(value));
                         break;
                     case "double":
-                        constructorArgumentTypes.add(double.class);
+                        if (!isGeneric) constructorArgumentTypes.add(double.class);
                         constructorArgumentValues.add(Double.valueOf(value));
                         break;
                     case "boolean":
-                        constructorArgumentTypes.add(boolean.class);
+                        if (!isGeneric) constructorArgumentTypes.add(boolean.class);
                         constructorArgumentValues.add(Boolean.valueOf(value));
                         break;
                     case "String":
-                        constructorArgumentTypes.add(String.class);
+                        if (!isGeneric) constructorArgumentTypes.add(String.class);
                         constructorArgumentValues.add(value);
+                        break;
+                    case "Class":
+                        if (!isGeneric) constructorArgumentTypes.add(Class.class);
+                        val cls = this.resolveClassname(value);
+                        constructorArgumentValues.add(cls);
                         break;
                     default:
                 }
@@ -926,7 +947,9 @@ public class ConfigParser {
         }
         else {
             sb.delete(sb.length() - 2, sb.length());
-            final Class<?>[] argTypes = constructorArgumentTypes.stream().toArray(Class<?>[]::new);
+            final Class<?>[] argTypes = constructorArgumentTypes
+                    .stream()
+                    .toArray(Class<?>[]::new);
             final Object[] argValues = constructorArgumentValues.stream().toArray(Object[]::new);
             final String constructorArgsRepr = sb.toString();
             final String repr = String.format("%s#%s", decoderClass.getCanonicalName(), constructorArgsRepr);
@@ -939,11 +962,37 @@ public class ConfigParser {
                          | NoSuchMethodException e) {
                     final String msg = String.format("cannot create new decoder of type %s with arguments (%s)",
                             decoderClass.getCanonicalName(), constructorArgsRepr);
-                    log.error(msg);
+                    log.error(msg, e);
                     // FIXME: use appropriate exception type
-                    throw new RuntimeException(msg);
+                    throw new RuntimeException(msg, e);
                 }
             }, repr);
+        }
+    }
+
+    Class<?> resolveClassname(final String className) throws ClassNotFoundException {
+        return resolveClassname(className, this.defaultNamespace);
+    }
+
+    static Class<?> resolveClassname(final String className, final String defaultNamespace) throws ClassNotFoundException {
+        if (className == null || className.length() == 0) {
+            val msg = "class name may not be null or empty";
+            log.error(msg);
+            throw new IllegalArgumentException(msg);
+        }
+        val cls = className.endsWith(".class")
+                ? className.substring(0, className.length() - 6)
+                : className;
+        if (cls.contains(".")) {
+            return Class.forName(cls);
+        }
+        try {
+            return Class.forName(String.format("%s.%s", defaultNamespace, cls));
+        } catch (ClassNotFoundException e)  {
+            val msg = String.format("cannot find class %s in default namespace %s",
+                    cls, defaultNamespace);
+            log.error(msg);
+            throw new ClassNotFoundException(msg, e);
         }
     }
 

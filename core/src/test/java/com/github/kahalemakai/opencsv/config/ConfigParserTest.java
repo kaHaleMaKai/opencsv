@@ -106,19 +106,23 @@ public class ConfigParserTest extends DataContainer {
                 .getClassLoader()
                 .getResource("xml-config/config-with-constructor-arguments.xml");
         assert resource != null;
+        val elseValue = 23;
         final CsvToBeanMapper<DecoderArgsTester> beanMapper = ConfigParser
                 .ofUnparsedLines(new File(resource.getFile()), () -> unparsedLinesForConstructorArgs)
+                .injectParameter("test:elseValue", Integer.toString(elseValue))
                 .parse();
         final Iterator<DecoderArgsTester> iterator = beanMapper.iterator();
         final DecoderArgsTester line1 = DecoderArgsTester.of(null, true, newDecimal("11.500000"));
         final DecoderArgsTester line2 = DecoderArgsTester.of(1, null, newDecimal("23.000000"));
         final DecoderArgsTester line3 = DecoderArgsTester.of(11, false, newDecimal("123.456000"));
         final DecoderArgsTester line4 = DecoderArgsTester.of(-498, null, newDecimal("123456.123456"));
+        final DecoderArgsTester line5 = DecoderArgsTester.of(elseValue, true, newDecimal("12.000000"));
         final DecoderArgsTester result1 = iterator.next();
         assertEquals(line1, result1);
         assertEquals(line2, iterator.next());
         assertEquals(line3, iterator.next());
         assertEquals(line4, iterator.next());
+        assertEquals(line5, iterator.next());
     }
 
     @Test
